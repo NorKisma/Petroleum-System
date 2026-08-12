@@ -1,0 +1,147 @@
+<style>
+    .petro-nav {
+        background: #fff;
+        border-radius: 12px;
+        padding: 6px 10px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        border: 1px solid #eef2f6;
+        overflow-x: auto !important;
+        position: relative !important;
+        z-index: 9999 !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        width: fit-content;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .petro-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .petro-nav .petro-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        color: #475569;
+        transition: all 0.15s ease;
+        border: 1px solid transparent;
+        flex-shrink: 0;
+    }
+
+    .petro-nav .petro-link:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+
+    .petro-nav .petro-link.active {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    .petro-nav .petro-divider {
+        width: 1px;
+        height: 28px;
+        background: #e2e8f0;
+        margin: 0 4px;
+        flex-shrink: 0;
+    }
+
+    /* Dark Mode Overrides */
+    [data-theme='dark'] .petro-nav {
+        background: #0f172a !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    [data-theme='dark'] .petro-nav .petro-link {
+        color: #94a3b8;
+    }
+
+    [data-theme='dark'] .petro-nav .petro-link:hover {
+        background: #1e293b;
+        color: #f8fafc;
+    }
+
+    [data-theme='dark'] .petro-nav .petro-divider {
+        background: rgba(255, 255, 255, 0.08);
+    }
+</style>
+
+<!-- Unified Navigation (Scrollable on Mobile, Wrapped on Desktop) -->
+<nav class="petro-nav mb-4 p-1 d-flex align-items-center flex-nowrap flex-md-wrap gap-1"
+    style="position: relative; z-index: 9999 !important; border-radius: 12px;">
+
+    <a href="{{ url_for('petroleum.dashboard') }}" class="petro-link {{ 'active' if active == 'dashboard' else '' }}">
+        <i class="fas fa-home"></i> Dashboard
+    </a>
+    <a href="{{ url_for('petroleum.sales') }}" class="petro-link {{ 'active' if active == 'sales' else '' }}">
+        <i class="fas fa-gas-pump"></i> Iibka (Sales)
+    </a>
+    <a href="{{ url_for('petroleum.deliveries') }}" class="petro-link {{ 'active' if active == 'deliveries' else '' }}">
+        <i class="fas fa-truck-loading"></i> Soo-dejin (Deliveries)
+    </a>
+    <a href="{{ url_for('petroleum.dip_readings') }}" class="petro-link {{ 'active' if active == 'dip' else '' }}">
+        <i class="fas fa-ruler-vertical"></i> Qiyaas (Dip)
+    </a>
+    <a href="{{ url_for('petroleum.day_close') }}" class="petro-link {{ 'active' if active == 'dayclose' else '' }}">
+        <i class="fas fa-lock"></i> Xir Maalin (Close Day)
+    </a>
+    <a href="{{ url_for('petroleum.daily_closing_report') }}"
+        class="petro-link {{ 'active' if active == 'report' else '' }}">
+        <i class="fas fa-file-alt"></i> Warbixin (Report)
+    </a>
+    <a href="{{ url_for('petroleum.shift_meters') }}"
+        class="petro-link {{ 'active' if active == 'shiftmeters' else '' }}">
+        <i class="fas fa-tachometer-alt"></i> Akhriska (Meters)
+    </a>
+
+    <!-- Divider -->
+    <div class="petro-divider d-none d-md-block mx-2"></div>
+
+    <!-- Management Dropdown -->
+    <div class="dropdown">
+        <button
+            class="petro-link btn border-0 dropdown-toggle {{ 'active' if active in ['profit', 'tanks', 'tanks_pumps', 'fleet', 'types', 'history', 'setup'] else '' }}"
+            type="button" id="petroMaamulDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+            style="background: none;">
+            <i class="fas fa-cog"></i> Maamul
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-premium border-0" aria-labelledby="petroMaamulDropdown"
+            style="border-radius: 12px; padding: 8px;">
+            <li><a class="dropdown-item rounded-3 {{ 'active bg-primary text-white' if active == 'profit' else '' }}"
+                    href="{{ url_for('petroleum.profit_reports') }}">
+                    <i class="fas fa-chart-line fa-fw me-2"></i>Faa'idada (Profit)
+                </a></li>
+            <li><a class="dropdown-item rounded-3 {{ 'active bg-primary text-white' if active in ['tanks', 'tanks_pumps'] else '' }}"
+                    href="{{ url_for('petroleum.tanks') }}">
+                    <i class="fas fa-database fa-fw me-2"></i>Tankiyada
+                </a></li>
+            <li><a class="dropdown-item rounded-3 {{ 'active bg-primary text-white' if active == 'fleet' else '' }}"
+                    href="{{ url_for('petroleum.fleet_customers') }}">
+                    <i class="fas fa-credit-card fa-fw me-2"></i>Fleet (Deynta)
+                </a></li>
+            <li><a class="dropdown-item rounded-3 {{ 'active bg-primary text-white' if active == 'types' else '' }}"
+                    href="{{ url_for('petroleum.fuel_types') }}">
+                    <i class="fas fa-tags fa-fw me-2"></i>Noocyada (Prices)
+                </a></li>
+            <li><a class="dropdown-item rounded-3 {{ 'active bg-primary text-white' if active == 'history' else '' }}"
+                    href="{{ url_for('petroleum.history_hub') }}">
+                    <i class="fas fa-history fa-fw me-2"></i>Taariikhda (History)
+                </a></li>
+            <li>
+                <hr class="dropdown-divider">
+            </li>
+            <li><a class="dropdown-item rounded-3 {{ 'active bg-primary text-white' if active == 'setup' else '' }}"
+                    href="{{ url_for('petroleum.setup_wizard') }}">
+                    <i class="fas fa-magic fa-fw me-2"></i>Dejinta (Setup Wizard)
+                </a></li>
+        </ul>
+    </div>
+</nav>

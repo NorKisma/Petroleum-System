@@ -1,0 +1,244 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Bank Transfer - Antigravity POS{% endblock %}
+{% block page_title %}Xawilaadda Lacagta (Bank Transfer){% endblock %}
+
+{% block content %}
+
+<!-- ── Add Transfer Form (top) ────────────────────────────────────────── -->
+<div class="card border border-light shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-white py-3 px-4 border-bottom border-light">
+        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-random me-2 text-primary"></i> Xawilaad Samee</h5>
+    </div>
+    <div class="card-body p-4">
+        <form action="{{ url_for('accounting.bank_transfer') }}" method="POST">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold text-dark small">Laga soo qaaday (From) <span class="text-danger">*</span></label>
+                    <select name="from_account_id" class="form-select border-secondary border-opacity-25 rounded-3" required>
+                        <option value="">Dooro Akoonka</option>
+                        {% for acc in accounts %}
+                        <option value="{{ acc.id }}">{{ acc.account_code }} - {{ acc.account_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold text-dark small">Lagu xawilay (To) <span class="text-danger">*</span></label>
+                    <select name="to_account_id" class="form-select border-secondary border-opacity-25 rounded-3" required>
+                        <option value="">Dooro Akoonka</option>
+                        {% for acc in accounts %}
+                        <option value="{{ acc.id }}">{{ acc.account_code }} - {{ acc.account_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold text-dark small">Lacagta ($) <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" name="amount" class="form-control border-secondary border-opacity-25 rounded-3" placeholder="0.00" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold text-dark small">Faahfaahin</label>
+                    <input type="text" name="description" class="form-control border-secondary border-opacity-25 rounded-3" placeholder="Notes (optional)">
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary fw-bold w-100 rounded-3 shadow-sm">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── Transfer History Table ─────────────────────────────────────────── -->
+<div class="card border border-light shadow-sm rounded-4 mb-5">
+    <div class="card-header bg-white py-3 px-4 border-bottom border-light">
+        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-exchange-alt me-2 text-primary"></i> Taariikhda Xawilaadda</h5>
+    </div>
+    <div class="card-body p-4">
+        <div class="table-responsive">
+            <table id="transferTable" class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>From Account</th>
+                        <th>To Account</th>
+                        <th>Lacagta</th>
+                        <th>Description</th>
+                        <th>Taariikhda</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transfers %}
+                    <tr>
+                        <td class="fw-bold text-danger">{{ t.from_account.account_name }}</td>
+                        <td class="fw-bold text-success">{{ t.to_account.account_name }}</td>
+                        <td class="fw-bold text-primary">${{ "{:,.2f}".format(t.amount) }}</td>
+                        <td>{{ t.description or '-' }}</td>
+                        <td class="text-muted">{{ t.transfer_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-2">
+                                <button class="btn btn-sm btn-light border text-primary edit-transfer-btn rounded-3"
+                                        data-id="{{ t.id }}"
+                                        data-from="{{ t.from_account_id }}"
+                                        data-to="{{ t.to_account_id }}"
+                                        data-amount="{{ t.amount }}"
+                                        data-desc="{{ t.description or '' }}"
+                                        title="Edit">
+                                    <i class="fas fa-pencil-alt small"></i>
+                                </button>
+                                <button class="btn btn-sm btn-light border text-danger delete-transfer-btn rounded-3"
+                                        data-id="{{ t.id }}"
+                                        title="Delete">
+                                    <i class="far fa-trash-alt small"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas: Edit Bank Transfer -->
+<div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="editTransferOffcanvas" style="width: 450px;">
+    <div class="offcanvas-header border-bottom py-3">
+        <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-pencil-alt me-2 text-primary"></i> Wax Ka Beddel Xawilaadda</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body" style="background-color: #fafafa;">
+        <form id="editTransferForm">
+            <input type="hidden" id="editTransferId">
+
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Laga soo qaaday (From Account) <span class="text-danger">*</span></label>
+                <select id="editFromAccount" class="form-select border-secondary border-opacity-25 rounded-3" required>
+                    {% for acc in accounts %}
+                    <option value="{{ acc.id }}">{{ acc.account_code }} - {{ acc.account_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Lagu xawilay (To Account) <span class="text-danger">*</span></label>
+                <select id="editToAccount" class="form-select border-secondary border-opacity-25 rounded-3" required>
+                    {% for acc in accounts %}
+                    <option value="{{ acc.id }}">{{ acc.account_code }} - {{ acc.account_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Lacagta (Amount $) <span class="text-danger">*</span></label>
+                <input type="number" step="0.01" id="editAmount" class="form-control border-secondary border-opacity-25 rounded-3" placeholder="0.00" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Faahfaahin (Description)</label>
+                <textarea id="editDescription" class="form-control border-secondary border-opacity-25 rounded-3" rows="3" placeholder="Notes..."></textarea>
+            </div>
+            <div class="d-flex gap-2 mt-5">
+                <button type="button" class="btn btn-light border fw-bold px-4 rounded-3" data-bs-dismiss="offcanvas">Jooji</button>
+                <button type="submit" class="btn btn-primary fw-bold px-4 rounded-3 shadow-sm" id="saveEditBtn">
+                    <i class="fas fa-save me-2"></i>Kaydi Isbeddelka
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#transferTable').DataTable({
+            "pageLength": 10,
+            "order": [[4, "desc"]],
+            "language": {
+                "search": "",
+                "searchPlaceholder": "Raadi xawilaad...",
+                "paginate": { "previous": "Previous", "next": "Next" },
+                "info": "Showing _START_ to _END_ of _TOTAL_ records"
+            },
+            "dom": '<"d-flex justify-content-between align-items-center mb-4"f>rt<"d-flex justify-content-between align-items-center mt-4"ip>',
+            "columnDefs": [{ "orderable": false, "targets": 5 }]
+        });
+    });
+
+    // ── Edit ──────────────────────────────────────────────────────────────────
+    document.querySelectorAll('.edit-transfer-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('editTransferId').value  = this.dataset.id;
+            document.getElementById('editFromAccount').value = this.dataset.from;
+            document.getElementById('editToAccount').value   = this.dataset.to;
+            document.getElementById('editAmount').value      = this.dataset.amount;
+            document.getElementById('editDescription').value = this.dataset.desc;
+            new bootstrap.Offcanvas(document.getElementById('editTransferOffcanvas')).show();
+        });
+    });
+
+    document.getElementById('editTransferForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id  = document.getElementById('editTransferId').value;
+        const btn = document.getElementById('saveEditBtn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        btn.disabled  = true;
+
+        fetch(`/accounting/bank-transfer/edit/${id}`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                from_account_id: document.getElementById('editFromAccount').value,
+                to_account_id:   document.getElementById('editToAccount').value,
+                amount:          document.getElementById('editAmount').value,
+                description:     document.getElementById('editDescription').value
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                Swal.fire('Guul!', res.message, 'success').then(() => location.reload());
+            } else {
+                Swal.fire('Cilad!', res.message, 'error');
+                btn.innerHTML = '<i class="fas fa-save me-2"></i>Kaydi Isbeddelka';
+                btn.disabled  = false;
+            }
+        }).catch(() => {
+            Swal.fire('Cilad!', 'Server-ka ayaa cilad bixiyey', 'error');
+            btn.innerHTML = '<i class="fas fa-save me-2"></i>Kaydi Isbeddelka';
+            btn.disabled  = false;
+        });
+    });
+
+    // ── Delete ────────────────────────────────────────────────────────────────
+    document.querySelectorAll('.delete-transfer-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            Swal.fire({
+                title: 'Ma hubtaa?',
+                text: 'Xawilaaddan dib looma soo celin karo!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f94a4a',
+                cancelButtonColor:  '#64748b',
+                confirmButtonText:  'Haa, tirtir!',
+                cancelButtonText:   'Iska daa'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    fetch(`/accounting/bank-transfer/delete/${id}`, {
+                        method:  'DELETE',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            Swal.fire('La tirtiray!', res.message, 'success').then(() => location.reload());
+                        } else {
+                            Swal.fire('Cilad!', res.message, 'error');
+                        }
+                    }).catch(() => Swal.fire('Cilad!', 'Server-ka ayaa cilad bixiyey', 'error'));
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

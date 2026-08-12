@@ -1,0 +1,305 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Transactions – All Business Activity{% endblock %}
+
+{% block styles %}
+<style>
+/* ── Layout ─────────────────────────────────────────────────────── */
+.txn-layout {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────────── */
+.txn-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    position: sticky;
+    top: 80px;
+}
+[data-theme='dark'] .txn-sidebar {
+    background: rgba(15,23,42,0.8);
+    border-color: rgba(255,255,255,0.06);
+}
+
+.txn-sidebar h6 {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    padding: 0.5rem 0.75rem 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.txn-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #64748b;
+    text-decoration: none;
+    transition: all 0.2s;
+    margin-bottom: 2px;
+}
+[data-theme='dark'] .txn-nav-item { color: #94a3b8; }
+.txn-nav-item:hover {
+    background: rgba(59,130,246,0.08);
+    color: #4ba3e3;
+}
+.txn-nav-item.active {
+    background: #4ba3e3;
+    color: white;
+    box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+}
+.txn-nav-item .icon {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    background: rgba(0,0,0,0.04);
+}
+.txn-nav-item.active .icon { background: rgba(255,255,255,0.2); }
+
+/* ── Main Content ───────────────────────────────────────────────── */
+.txn-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.txn-card {
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    overflow: hidden;
+}
+[data-theme='dark'] .txn-card {
+    background: rgba(15,23,42,0.8);
+    border-color: rgba(255,255,255,0.06);
+}
+
+/* ── Table ──────────────────────────────────────────────────────── */
+#txnTable thead th {
+    background: #f8fafc;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #64748b;
+    padding: 1rem 1.25rem;
+    border: none !important;
+    white-space: nowrap;
+}
+[data-theme='dark'] #txnTable thead th { background: #1e293b; color: #94a3b8; }
+#txnTable tbody td {
+    padding: 0.9rem 1.25rem;
+    border: none !important;
+    border-bottom: 1px solid rgba(0,0,0,0.04) !important;
+    vertical-align: middle;
+    font-size: 0.85rem;
+}
+#txnTable tbody tr:hover td { background: rgba(59,130,246,0.03); }
+
+/* ── Type badge ─────────────────────────────────────────────────── */
+.type-pill {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+/* ── Top title bar ──────────────────────────────────────────────── */
+.txn-title-bar {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+    .txn-layout { flex-direction: column; }
+    .txn-sidebar { width: 100%; position: static; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header-elite animate-up mb-4">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h4 class="mb-0 fw-bold text-white">
+                <i class="fas fa-exchange-alt me-2 text-primary"></i> Transactions
+            </h4>
+            <p class="text-white text-opacity-50 small mb-0">View and map all business transactions.</p>
+        </div>
+        <a href="{{ url_for('accounting.reports_hub') }}" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm">
+            <i class="fas fa-chart-pie me-2 text-primary"></i> Reports Hub
+        </a>
+    </div>
+</div>
+
+<div class="txn-layout animate-up">
+    <!-- ── SIDEBAR ─────────────────────────────────────────────────────── -->
+    <div class="txn-sidebar">
+        <h6>Transaction Type</h6>
+
+        {% set nav_items = [
+            ('sell',             'fa-shopping-cart',  'Sell',              'rgba(59,130,246,0.1)',   '#4ba3e3'),
+            ('sales_payments',   'fa-hand-holding-usd','Sales Payments',   'rgba(16,185,129,0.1)',   '#10b981'),
+            ('purchases',        'fa-truck',          'Purchases',         'rgba(245,158,11,0.1)',   '#f59e0b'),
+            ('purchase_payments','fa-credit-card',    'Purchase Payments', 'rgba(239,68,68,0.1)',    '#f94a4a'),
+            ('expenses',         'fa-receipt',        'Expenses',          'rgba(168,85,247,0.1)',   '#a855f7'),
+        ] %}
+
+        {% for key, icon, label, bg, color in nav_items %}
+        <a href="{{ url_for('accounting.transactions', type=key) }}"
+           class="txn-nav-item {% if txn_type == key %}active{% endif %}">
+            <span class="icon" style="background:{{ bg if txn_type != key else 'rgba(255,255,255,0.2)' }}; color:{{ color if txn_type != key else 'white' }};">
+                <i class="fas {{ icon }}"></i>
+            </span>
+            {{ label }}
+        </a>
+        {% endfor %}
+
+        <hr class="border-light my-3">
+        <h6>Quick Actions</h6>
+        <a href="{{ url_for('sales.pos') }}" class="txn-nav-item">
+            <span class="icon" style="background:rgba(6,182,212,0.1); color:#06b6d4;">
+                <i class="fas fa-cash-register"></i>
+            </span>
+            POS Terminal
+        </a>
+        <a href="{{ url_for('accounting.expenses') }}" class="txn-nav-item">
+            <span class="icon" style="background:rgba(100,116,139,0.1); color:#64748b;">
+                <i class="fas fa-plus-circle"></i>
+            </span>
+            Add Expense
+        </a>
+    </div>
+
+    <!-- ── MAIN CONTENT ────────────────────────────────────────────────── -->
+    <div class="txn-main">
+        <div class="txn-card">
+            <!-- Title Bar -->
+            <div class="txn-title-bar">
+                <div>
+                    {% if txn_type == 'sell' %}
+                        <h6 class="fw-bold mb-0"><i class="fas fa-shopping-cart me-2 text-primary"></i> Sales Payments</h6>
+                        <div class="text-muted small">Payments received for sales</div>
+                    {% elif txn_type == 'sales_payments' %}
+                        <h6 class="fw-bold mb-0"><i class="fas fa-hand-holding-usd me-2 text-success"></i> Sales Payments</h6>
+                        <div class="text-muted small">Customer payment receipts</div>
+                    {% elif txn_type == 'purchases' %}
+                        <h6 class="fw-bold mb-0"><i class="fas fa-truck me-2 text-warning"></i> Purchases</h6>
+                        <div class="text-muted small">All purchase transactions</div>
+                    {% elif txn_type == 'purchase_payments' %}
+                        <h6 class="fw-bold mb-0"><i class="fas fa-credit-card me-2 text-danger"></i> Purchase Payments</h6>
+                        <div class="text-muted small">Payments made to suppliers</div>
+                    {% elif txn_type == 'expenses' %}
+                        <h6 class="fw-bold mb-0"><i class="fas fa-receipt me-2" style="color:#a855f7;"></i> Expenses</h6>
+                        <div class="text-muted small">All recorded operating expenses</div>
+                    {% endif %}
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-bold">
+                        {{ rows|length }} Records
+                    </span>
+                </div>
+            </div>
+
+            <!-- DataTable -->
+            <div class="table-responsive p-3">
+                <table id="txnTable" class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Date</th>
+                            <th>Payment Ref No.</th>
+                            <th>Invoice No./Ref. No.</th>
+                            <th>Amount</th>
+                            <th>Payment Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                        <tr>
+                            <td>
+                                <button class="btn btn-sm btn-warning rounded-pill px-3 fw-bold"
+                                        style="font-size:0.75rem;">
+                                    <i class="fas fa-edit me-1"></i> Edit Mapping
+                                </button>
+                            </td>
+                            <td class="text-muted">{{ row.date }}</td>
+                            <td class="fw-bold text-primary">{{ row.ref }}</td>
+                            <td>
+                                <a href="#" class="text-primary fw-bold text-decoration-none">{{ row.invoice }}</a>
+                            </td>
+                            <td class="fw-bold text-dark">$ {{ "{:,.2f}".format(row.amount) }}</td>
+                            <td>
+                                <span class="type-pill
+                                    {% if row.type == 'Sell' %}bg-success bg-opacity-10 text-success
+                                    {% elif row.type == 'Purchase' %}bg-warning bg-opacity-10 text-warning
+                                    {% elif row.type == 'Expense' %}bg-danger bg-opacity-10 text-danger
+                                    {% else %}bg-primary bg-opacity-10 text-primary{% endif %}">
+                                    {{ row.type }}
+                                </span>
+                            </td>
+                            <td class="text-muted small">{{ row.description }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="fas fa-inbox fa-2x d-block mb-2 opacity-20"></i>
+                                No transactions found for this type.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function () {
+    if ($('#txnTable tbody tr td').length > 1) {
+        $('#txnTable').DataTable({
+            pageLength: 25,
+            dom: '<"d-flex justify-content-between align-items-center mb-3"Bf>rt<"d-flex justify-content-between align-items-center mt-3"ip>',
+            buttons: [
+                { extend: 'csv',    className: 'btn btn-sm btn-light border rounded-pill px-3 me-1', text: '<i class="fas fa-file-csv me-1"></i> Export CSV' },
+                { extend: 'excel',  className: 'btn btn-sm btn-light border rounded-pill px-3 me-1', text: '<i class="fas fa-file-excel me-1"></i> Export Excel' },
+                { extend: 'print',  className: 'btn btn-sm btn-light border rounded-pill px-3 me-1', text: '<i class="fas fa-print me-1"></i> Print' },
+                { extend: 'colvis', className: 'btn btn-sm btn-light border rounded-pill px-3',       text: '<i class="fas fa-columns me-1"></i> Column visibility' }
+            ],
+            language: {
+                searchPlaceholder: 'Search...',
+                search: '',
+                paginate: { previous: '‹', next: '›' }
+            },
+            order: [[1, 'desc']]
+        });
+    }
+});
+</script>
+{% endblock %}

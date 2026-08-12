@@ -1,0 +1,279 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Trial Balance – Financial Intelligence{% endblock %}
+
+{% block styles %}
+<style>
+.tb-card {
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+[data-theme='dark'] .tb-card {
+    background: rgba(15,23,42,0.8);
+    border-color: rgba(255,255,255,0.06);
+}
+
+/* Metric cards */
+.tb-metric {
+    border-radius: 20px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+.tb-metric::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; right: -20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    opacity: 0.06;
+    background: currentColor;
+}
+.tb-metric .label { font-size: 0.72rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; opacity: 0.7; }
+.tb-metric .value { font-size: 1.8rem; font-weight: 900; margin-top: 0.25rem; }
+
+/* Status banner */
+.status-banner {
+    border-radius: 16px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-weight: 700;
+}
+.status-banner.balanced {
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.2);
+    color: #10b981;
+}
+.status-banner.unbalanced {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.2);
+    color: #f94a4a;
+}
+.status-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.status-banner.balanced .status-icon   { background: rgba(16,185,129,0.15); }
+.status-banner.unbalanced .status-icon { background: rgba(239,68,68,0.15); }
+
+/* Table */
+.tb-table thead th {
+    background: #f8fafc;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #64748b;
+    padding: 1rem 1.5rem;
+    border: none !important;
+}
+[data-theme='dark'] .tb-table thead th { background: #1e293b; color: #94a3b8; }
+.tb-table tbody td {
+    padding: 1rem 1.5rem;
+    border: none !important;
+    border-bottom: 1px solid rgba(0,0,0,0.04) !important;
+    font-size: 0.88rem;
+    vertical-align: middle;
+}
+[data-theme='dark'] .tb-table tbody td { border-bottom-color: rgba(255,255,255,0.04) !important; }
+.tb-table tbody tr:hover td { background: rgba(59,130,246,0.02); }
+.tb-table tfoot td {
+    padding: 1.25rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 900;
+    border: none !important;
+    background: #f8fafc;
+}
+[data-theme='dark'] .tb-table tfoot td { background: #1e293b; }
+
+/* Filter bar */
+.filter-bar {
+    background: rgba(248,250,252,0.8);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    flex-wrap: wrap;
+}
+[data-theme='dark'] .filter-bar { background: rgba(30,41,59,0.6); border-color: rgba(255,255,255,0.04); }
+.filter-bar input {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: white;
+    color: #1e293b;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    transition: border-color 0.2s;
+}
+[data-theme='dark'] .filter-bar input { background: #1e293b; color: #e2e8f0; border-color: rgba(255,255,255,0.1); }
+.filter-bar input:focus { border-color: #4ba3e3; outline: none; box-shadow: 0 0 0 4px rgba(59,130,246,0.08); }
+
+@media print {
+    .page-header-elite, .filter-bar, .btn, .sidebar, nav { display: none !important; }
+    .tb-card { box-shadow: none !important; border: 1px solid #eee !important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="page-header-elite animate-up mb-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h4 class="mb-0 fw-bold text-white">
+                <i class="fas fa-list-ol me-2 text-primary"></i> Trial Balance
+            </h4>
+            <p class="text-white text-opacity-50 small mb-0">Summary of all ledger account balances for the period.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('accounting.reports_hub') }}" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-th-large me-2 text-primary"></i> All Reports
+            </a>
+            <button onclick="window.print()" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-print me-2 text-muted"></i> Print
+            </button>
+            <a href="{{ url_for('accounting.trial_balance') }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-file-pdf me-2"></i> Export PDF
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Metric Cards -->
+<div class="row g-4 mb-4 animate-up">
+    <div class="col-md-4">
+        <div class="tb-metric" style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.15); color:#10b981;">
+            <div class="label">Total Debits</div>
+            <div class="value">${{ "{:,.2f}".format(total_debit) }}</div>
+            <div class="small mt-1 opacity-70">All debit-side entries</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="tb-metric" style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.15); color:#f94a4a;">
+            <div class="label">Total Credits</div>
+            <div class="value">${{ "{:,.2f}".format(total_credit) }}</div>
+            <div class="small mt-1 opacity-70">All credit-side entries</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        {% set diff = total_debit - total_credit %}
+        <div class="tb-metric" style="background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.15); color:#4ba3e3;">
+            <div class="label">Difference</div>
+            <div class="value">${{ "{:,.2f}".format(diff | abs) }}</div>
+            <div class="small mt-1 opacity-70">{{ '✅ Balanced' if diff == 0 else '⚠️ Discrepancy found' }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Banner -->
+<div class="animate-up mb-4">
+    {% if total_debit == total_credit %}
+    <div class="status-banner balanced">
+        <div class="status-icon"><i class="fas fa-check-circle"></i></div>
+        <div>
+            <div class="fw-bold">Balanced — Xisaabtu waa dheelitirantahay!</div>
+            <div class="small opacity-70 fw-normal mt-1">Total debits and credits match perfectly. Your books are in order.</div>
+        </div>
+    </div>
+    {% else %}
+    <div class="status-banner unbalanced">
+        <div class="status-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div>
+            <div class="fw-bold">Discrepancy Detected — Khalad ayaa jira!</div>
+            <div class="small opacity-70 fw-normal mt-1">Debits (${{ "{:,.2f}".format(total_debit) }}) and Credits (${{ "{:,.2f}".format(total_credit) }}) do not match. Please review your journal entries.</div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Table Card -->
+<div class="tb-card animate-up">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <i class="fas fa-filter text-muted"></i>
+        <input type="text" id="searchInput" placeholder="Search accounts..." class="flex-grow-1" style="max-width:300px;">
+        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-bold ms-auto">
+            {{ trial_data|length }} Accounts
+        </span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table tb-table mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-4" style="width:140px">Account Code</th>
+                    <th>Account Name</th>
+                    <th class="text-end" style="width:180px">Debit ($)</th>
+                    <th class="text-end pe-4" style="width:180px">Credit ($)</th>
+                </tr>
+            </thead>
+            <tbody id="tbBody">
+                {% for item in trial_data %}
+                <tr class="tb-row">
+                    <td class="ps-4 fw-bold text-primary">{{ item.code or '—' }}</td>
+                    <td class="fw-600 text-main account-name">{{ item.name }}</td>
+                    <td class="text-end fw-bold {% if item.debit > 0 %}text-success{% else %}text-muted{% endif %}">
+                        {% if item.debit > 0 %}
+                            ${{ "{:,.2f}".format(item.debit) }}
+                        {% else %}
+                            <span class="opacity-25">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end fw-bold pe-4 {% if item.credit > 0 %}text-danger{% else %}text-muted{% endif %}">
+                        {% if item.credit > 0 %}
+                            ${{ "{:,.2f}".format(item.credit) }}
+                        {% else %}
+                            <span class="opacity-25">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center py-5 text-muted">
+                        <i class="fas fa-inbox fa-2x d-block mb-3 opacity-20"></i>
+                        No journal entries found. Post some transactions first.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="2" class="ps-4 text-main">GRAND TOTAL</td>
+                    <td class="text-end text-success">${{ "{:,.2f}".format(total_debit) }}</td>
+                    <td class="text-end text-danger pe-4">${{ "{:,.2f}".format(total_credit) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Live search filter
+document.getElementById('searchInput').addEventListener('input', function () {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.tb-row').forEach(row => {
+        const name = row.querySelector('.account-name').textContent.toLowerCase();
+        row.style.display = name.includes(q) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

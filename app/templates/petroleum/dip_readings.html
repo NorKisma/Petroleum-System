@@ -1,0 +1,133 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Qiyaasta Tankiga{% endblock %}
+{% block page_title %}Qiyaasta Tankiga (Dip){% endblock %}
+{% block content %}
+{% set active = 'dip' %}
+
+{% set morning_mode = tenant.petroleum_morning_mode or ('automatic' if tenant.petroleum_auto_morning_dip != False else
+'manual') %}
+{% if morning_mode == 'automatic' %}
+<div
+    class="alert alert-info rounded-4 animate-up border-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div><i class="fas fa-robot me-2"></i>
+        <strong>Toos ah:</strong> Subax walba {{ "%02d"|format(tenant.petroleum_morning_auto_hour or 6) }}:00 — {{
+        "%02d"|format(tenant.petroleum_morning_auto_hour or 6) }}:30 — tankiyada wax ku jiraan si toos ah ayaa loo
+        qiyaasaa & maalintii shalay waa la xiraa.
+    </div>
+    {% if current_user.role in ['admin', 'developer'] or current_user.is_super_admin %}
+    <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" onclick="runAutoNow()"><i
+            class="fas fa-play me-1"></i> Hadda orod</button>
+    {% endif %}
+</div>
+{% endif %}
+{% if tenant.petroleum_require_daily_dip and not today_summary.has_opening_dip %}
+<div class="alert alert-warning rounded-4 animate-up border-0">
+    <i class="fas fa-exclamation-circle me-2"></i>
+    Qiyaasta subaxnimo: {{ today_summary.opening_dips|length }}/{{ today_summary.tanks_requiring_dip|length }} tank —
+    sug automation ama gali gacanta.
+</div>
+{% elif today_summary.has_opening_dip %}
+<div class="alert alert-success rounded-4 animate-up border-0 py-2">
+    <i class="fas fa-check-circle me-2"></i> Qiyaasta subaxnimo waa diyaar ({{ today_summary.opening_dips|length }}/{{
+    today_summary.tanks_requiring_dip|length }})
+</div>
+{% endif %}
+
+<div class="row g-4 animate-up">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-premium rounded-4">
+            <div class="card-header card-header-elite-blue py-3">
+                <h6 class="mb-0 text-white fw-bold"><i class="fas fa-ruler-vertical me-2"></i>Gali Qiyaas</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Tankiga</label>
+                    <select id="dipTank" class="form-select rounded-3 form-select-lg">
+                        {% for t in tanks %}
+                        <option value="{{ t.id }}">{{ t.name }} (Buugga: {{ "{:,.0f}".format(t.current_level) }}L)
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Imisa litir ayaa tankiga ku jira?</label>
+                    <input type="number" id="dipReading"
+                        class="form-control rounded-3 form-control-lg fw-bold text-center" step="0.1" placeholder="0"
+                        autofocus>
+                </div>
+                <input type="hidden" id="dipType" value="opening">
+                <input type="hidden" id="dipApplyVariance" value="1">
+                <button class="btn btn-primary w-100 rounded-pill py-3 fw-bold fs-5" onclick="submitDip()">
+                    <i class="fas fa-ruler-vertical me-2"></i> Kaydi Qiyaasta
+                </button>
+                <p class="text-muted small text-center mt-3 mb-0">Haddii tirada kala duwan tahay buugga, stock-ka si
+                    toos ah ayaa loo hagaajinayaa.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-premium rounded-4">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="mb-0 fw-bold">Qiyaasihii U Dambeeyay</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0" id="dipTable">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-4">Waqtiga</th>
+                            <th>Tankiga</th>
+                            <th>Qiyaas</th>
+                            <th>Buugga</th>
+                            <th>Faraq</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in readings %}
+                        <tr>
+                            <td class="ps-4 small">{{ r.reading_date.strftime('%d/%m %H:%M') }}</td>
+                            <td class="fw-bold">{{ r.tank.name }}</td>
+                            <td>{{ "{:,.1f}".format(r.reading_liters) }} L</td>
+                            <td>{{ "{:,.1f}".format(r.book_stock) }} L</td>
+                            <td
+                                class="fw-bold {{ 'text-danger' if r.variance < 0 else 'text-success' if r.variance > 0 else '' }}">
+                                {{ "{:+,.1f}".format(r.variance) }} L
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">Qiyaas ma jirto</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    function submitDip() {
+        const reading = parseFloat(document.getElementById('dipReading').value);
+        if (!reading && reading !== 0) { alert('Geli qiyaasta litirka!'); return; }
+        fetch('{{ url_for("petroleum.add_dip_reading") }}', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tank_id: document.getElementById('dipTank').value,
+                reading_liters: reading,
+                reading_type: document.getElementById('dipType').value,
+                apply_variance: true,
+                notes: ''
+            })
+        }).then(r => r.json()).then(d => { alert(d.message); if (d.success) location.reload(); });
+    }
+    function runAutoNow() {
+        fetch('{{ url_for("petroleum.run_morning_automation_now") }}', { method: 'POST' })
+            .then(r => r.json()).then(d => {
+                alert(d.message);
+                if (d.success) location.reload();
+            });
+    }
+    $(document).ready(function () { if ($('#dipTable tbody tr').length > 1) $('#dipTable').DataTable({ order: [[0, 'desc']], pageLength: 10 }); });
+</script>
+{% endblock %}

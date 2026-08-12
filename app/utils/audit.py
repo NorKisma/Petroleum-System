@@ -7,7 +7,7 @@ def log_audit(action, module=None, description=None):
     """
     Utility function to log user actions for audit trail.
     """
-    if not current_user.is_authenticated:
+    if not current_user or not current_user.is_authenticated:
         return
         
     try:

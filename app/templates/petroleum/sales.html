@@ -1,0 +1,362 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Iibka Shidaalka{% endblock %}
+{% block page_title %}Iibka Shidaalka{% endblock %}
+
+{% block styles %}
+<style>
+    .payment-btn {
+        transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .payment-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .card.shadow-premium {
+        transition: box-shadow 0.3s ease;
+    }
+
+    .card.shadow-premium:hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    #salesTable tbody tr {
+        transition: background 0.2s;
+    }
+
+    #salesTable tbody tr:hover {
+        background-color: var(--bs-primary-bg-subtle) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set active = 'sales' %}
+{% set cur = company_settings.currency if company_settings else '$' %}
+{% set is_admin = current_user.role in ['admin', 'developer'] or current_user.is_super_admin %}
+
+<div class="row g-4 animate-up">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-premium rounded-4">
+            <div class="card-header card-header-elite-blue py-3">
+                <h6 class="mb-0 text-white fw-bold"><i class="fas fa-gas-pump me-2"></i>Iib Cusub</h6>
+            </div>
+            <div class="card-body" id="saleForm">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">0. Shaqaalaha (Attendant)</label>
+                    <select id="saleAttendant" class="form-select rounded-3">
+                        {% for s in staff %}
+                        <option value="{{ s.id }}" {% if current_user.id==s.id %}selected{% endif %}>{{ s.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">1. Dooro Pombada (Pump)</label>
+                    <select id="salePump" class="form-select rounded-3 form-select-lg" onchange="syncSaleFuel()">
+                        {% for p in pumps %}
+                        {% set price = p.selling_price if p.selling_price > 0 else p.fuel_type.sell_price %}
+                        <option value="{{ p.id }}" data-fuel="{{ p.fuel_type_id }}" data-tank="{{ p.tank_id }}"
+                            data-price="{{ price }}">
+                            {{ p.pump_number }} ({{ p.fuel_type.name }}) — ${{ "{:,.2f}".format(price) }} / L
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted text-uppercase letter-spacing-1">2. Geli Litir
+                        (Liters)</label>
+                    <div class="position-relative">
+                        <input type="number" id="saleLiters"
+                            class="form-control rounded-4 form-control-lg fw-bold text-center"
+                            style="font-size: 2.5rem; height: 80px; background: rgba(0,0,0,0.02); border-color: rgba(0,0,0,0.1);"
+                            step="0.1" placeholder="0.0" oninput="calcTotal()" autofocus>
+                        <span class="position-absolute top-50 end-0 translate-middle-y pe-4 text-muted fw-bold"
+                            style="font-size: 1.5rem;">L</span>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mb-4 justify-content-center">
+                    {% for q in [5, 10, 20, 50, 100] %}
+                    <button type="button" class="btn btn-outline-primary rounded-pill flex-fill payment-btn fw-bold"
+                        style="padding: 10px 15px;" onclick="setLiters({{ q }})"><i
+                            class="fas fa-plus me-1 small"></i>{{ q }}</button>
+                    {% endfor %}
+                </div>
+                <div class="mb-4 p-4 rounded-4 text-center border"
+                    style="background: linear-gradient(145deg, rgba(59,130,246,0.05), rgba(59,130,246,0.15)); border-color: rgba(59,130,246,0.2) !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted fw-bold text-uppercase">Qiimaha Iibka / Litr</small>
+                        <strong class="text-dark fs-5" id="salePriceDisplay">0</strong>
+                    </div>
+                    <hr class="opacity-10 my-2">
+                    <div class="text-start">
+                        <small class="text-muted fw-bold text-uppercase d-block mb-1">Wadarta Guud</small>
+                        <h1 class="fw-bold text-primary mb-0" style="font-size: 3rem; letter-spacing: -1px;">
+                            <span class="fs-4 text-muted me-1" id="saleTotalCur">{{ cur }}</span><span
+                                id="saleTotal">0.00</span>
+                        </h1>
+                    </div>
+                    <input type="hidden" id="salePrice" value="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">3. Lacag Bixinta</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-success flex-fill rounded-pill py-2 fw-bold payment-btn"
+                            data-method="Cash" onclick="setPayment('Cash')">
+                            <i class="fas fa-money-bill-wave me-1"></i> Caddaan
+                        </button>
+                        <button type="button"
+                            class="btn btn-outline-primary flex-fill rounded-pill py-2 fw-bold payment-btn"
+                            data-method="EVC Plus" onclick="setPayment('EVC Plus')">
+                            <i class="fas fa-mobile-alt me-1"></i> EVC
+                        </button>
+                        <button type="button"
+                            class="btn btn-outline-info flex-fill rounded-pill py-2 fw-bold payment-btn"
+                            data-method="eDahab" onclick="setPayment('eDahab')">
+                            <i class="fas fa-wallet me-1"></i> E-DAHAB
+                        </button>
+                        <button type="button"
+                            class="btn btn-outline-warning flex-fill rounded-pill py-2 fw-bold payment-btn"
+                            data-method="Credit" onclick="setPayment('Credit')">
+                            <i class="fas fa-credit-card me-1"></i> Deyn
+                        </button>
+                    </div>
+                    <input type="hidden" id="salePayment" value="Cash">
+                </div>
+                <div class="mb-3 d-none" id="fleetSection">
+                    <label class="form-label fw-bold small">4. Macmiilka & Taarikada</label>
+                    <div class="row g-2">
+                        <div class="col-8">
+                            <select id="saleFleet" class="form-select rounded-3">
+                                <option value="">-- Dooro Macmiilka --</option>
+                                {% for f in fleet %}
+                                <option value="{{ f.id }}">{{ f.customer.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <input type="text" id="salePlate" class="form-control rounded-3" placeholder="Taarikada">
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary w-100 rounded-pill py-3 fw-bold fs-5" id="saleSubmitBtn"
+                    onclick="submitSale()">
+                    <i class="fas fa-check me-2"></i> Kaydi Iibka
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-premium rounded-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between">
+                <h6 class="mb-0 fw-bold">Liiska Iibka</h6>
+                <span class="badge bg-primary rounded-pill">{{ sales|length }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0" id="salesTable">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-4">Lambarka</th>
+                            <th>Baabuurka</th>
+                            <th>Shidaal</th>
+                            <th>Litir</th>
+                            <th>Wadarta</th>
+                            <th>Lacag</th>
+                            <th>Taariikh</th>
+                            {% if is_admin %}<th class="text-end pe-4">Fal</th>{% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in sales %}
+                        <tr>
+                            <td class="ps-4 fw-bold small">{{ s.invoice_no }}</td>
+                            <td class="small">{{ s.vehicle_plate or (s.customer.name if s.customer else '—') }}</td>
+                            <td>{{ s.fuel_type.name }}</td>
+                            <td>{{ "{:,.1f}".format(s.liters_sold) }} L</td>
+                            <td class="fw-bold">{{ cur }}{{ "{:,.2f}".format(s.total_amount) }}</td>
+                            <td>
+                                {% if s.payment_method == 'Credit' %}
+                                <span class="badge bg-warning bg-opacity-10 text-dark">Deyn</span>
+                                {% elif s.payment_method and 'evc' in s.payment_method|lower %}
+                                <span class="badge bg-primary bg-opacity-10 text-primary">EVC</span>
+                                {% elif s.payment_method and 'dahab' in s.payment_method|lower %}
+                                <span class="badge bg-info bg-opacity-10 text-info">E-DAHAB</span>
+                                {% else %}
+                                <span class="badge bg-success bg-opacity-10 text-dark">Caddaan</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">{{ s.sale_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                            {% if is_admin %}
+                            <td class="text-end pe-4 text-nowrap">
+                                {% if not s.is_locked %}
+                                <button class="btn btn-link text-primary p-0 me-2 edit-sale-btn" title="Beddel"
+                                    data-id="{{ s.id }}" data-invoice="{{ s.invoice_no }}"
+                                    data-liters="{{ s.liters_sold }}" data-price="{{ s.unit_price }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-link text-danger p-0 delete-sale-btn" title="Tirtir"
+                                    data-id="{{ s.id }}" data-invoice="{{ s.invoice_no }}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                {% else %}<i class="fas fa-lock text-muted small"></i>{% endif %}
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="{{ 7 if is_admin else 6 }}" class="text-center text-muted py-4">Iib ma jiro
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if is_admin %}
+<div class="modal fade" id="editSaleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold">Beddel Iibka</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small" id="editSaleInvoice"></p>
+                <input type="hidden" id="editSaleId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Litir</label>
+                    <input type="number" id="editLiters" class="form-control rounded-3" step="0.1"
+                        oninput="calcEditTotal()">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Qiimaha Iibka</label>
+                    <input type="number" id="editPrice" class="form-control rounded-3" step="0.01"
+                        oninput="calcEditTotal()">
+                </div>
+                <div class="p-3 bg-light rounded-3 text-center">
+                    <small class="text-muted">Wadarta</small>
+                    <h4 class="fw-bold text-primary mb-0">{{ cur }}<span id="editTotal">0.00</span></h4>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Jooji</button>
+                <button type="button" class="btn btn-primary rounded-pill fw-bold"
+                    onclick="saveEditSale()">Kaydi</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const CUR = '{{ cur }}';
+    const DT_SO = {
+        search: '', searchPlaceholder: 'Raadi...', lengthMenu: 'Muuji _MENU_', info: '_START_–_END_ / _TOTAL_',
+        paginate: { previous: 'Hore', next: 'Xiga' }, zeroRecords: 'Wax ma jiro', emptyTable: 'Wax ma jiro'
+    };
+
+    function syncSaleFuel() {
+        const opt = document.getElementById('salePump').selectedOptions[0];
+        document.getElementById('salePrice').value = opt.dataset.price;
+        document.getElementById('salePriceDisplay').textContent = parseFloat(opt.dataset.price).toFixed(2);
+        calcTotal();
+    }
+    function setLiters(n) { document.getElementById('saleLiters').value = n; calcTotal(); }
+    function calcTotal() {
+        const liters = parseFloat(document.getElementById('saleLiters').value) || 0;
+        const price = parseFloat(document.getElementById('salePrice').value) || 0;
+        document.getElementById('saleTotal').textContent = (liters * price).toFixed(2);
+    }
+    function setPayment(method) {
+        document.getElementById('salePayment').value = method;
+        const styles = {
+            'Cash': ['btn-success', 'btn-outline-success'],
+            'EVC Plus': ['btn-primary', 'btn-outline-primary'],
+            'eDahab': ['btn-info', 'btn-outline-info'],
+            'Credit': ['btn-warning', 'btn-outline-warning'],
+        };
+        document.querySelectorAll('.payment-btn').forEach(b => {
+            const m = b.dataset.method;
+            const [on, off] = styles[m] || ['btn-secondary', 'btn-outline-secondary'];
+            b.className = 'btn flex-fill rounded-pill py-2 fw-bold payment-btn ' + (m === method ? on : off);
+        });
+        document.getElementById('fleetSection').classList.toggle('d-none', method !== 'Credit');
+    }
+    function submitSale() {
+        const liters = parseFloat(document.getElementById('saleLiters').value);
+        if (!liters || liters <= 0) { Swal.fire('Fiiro', 'Geli litirka!', 'warning'); return; }
+        const opt = document.getElementById('salePump').selectedOptions[0];
+        const btn = document.getElementById('saleSubmitBtn');
+        btn.disabled = true;
+        fetch('{{ url_for("petroleum.add_sale") }}', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pump_id: document.getElementById('salePump').value,
+                attendant_id: document.getElementById('saleAttendant').value,
+                liters_sold: liters,
+                unit_price: document.getElementById('salePrice').value,
+                payment_method: document.getElementById('salePayment').value,
+                fleet_profile_id: document.getElementById('salePayment').value === 'Credit' ? document.getElementById('saleFleet').value : null,
+                vehicle_plate: document.getElementById('salePayment').value === 'Credit' ? document.getElementById('salePlate').value : null
+            })
+        }).then(r => r.json()).then(d => {
+            btn.disabled = false;
+            if (d.success) {
+                document.getElementById('saleLiters').value = '';
+                calcTotal();
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: d.message, showConfirmButton: false, timer: 1500 })
+                    .then(() => location.reload());
+            } else { Swal.fire('Cillad', d.message, 'error'); }
+        }).catch(() => { btn.disabled = false; });
+    }
+    function calcEditTotal() {
+        const l = parseFloat(document.getElementById('editLiters').value) || 0;
+        const p = parseFloat(document.getElementById('editPrice').value) || 0;
+        document.getElementById('editTotal').textContent = (l * p).toFixed(2);
+    }
+    function saveEditSale() {
+        const id = document.getElementById('editSaleId').value;
+        const liters = parseFloat(document.getElementById('editLiters').value);
+        if (!liters || liters <= 0) return;
+        fetch(`/petroleum/sales/${id}/update`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ liters_sold: liters, unit_price: document.getElementById('editPrice').value })
+        }).then(r => r.json()).then(d => {
+            if (d.success) location.reload();
+            else Swal.fire('Cillad', d.message, 'error');
+        });
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        syncSaleFuel();
+        setPayment('Cash');
+        document.getElementById('saleLiters').addEventListener('keydown', e => { if (e.key === 'Enter') submitSale(); });
+        if ($('#salesTable tbody tr').length > 0 && !$('#salesTable tbody tr td[colspan]').length) {
+            $('#salesTable').DataTable({ order: [[5, 'desc']], pageLength: 10, language: DT_SO });
+        }
+        $('.edit-sale-btn').on('click', function () {
+            document.getElementById('editSaleId').value = $(this).data('id');
+            document.getElementById('editSaleInvoice').textContent = $(this).data('invoice');
+            document.getElementById('editLiters').value = $(this).data('liters');
+            document.getElementById('editPrice').value = $(this).data('price');
+            calcEditTotal();
+            new bootstrap.Modal(document.getElementById('editSaleModal')).show();
+        });
+        $('.delete-sale-btn').on('click', function () {
+            const id = $(this).data('id'), inv = $(this).data('invoice');
+            Swal.fire({
+                title: 'Ma hubtaa?', text: `${inv} waa la tirtirayaa`, icon: 'warning',
+                showCancelButton: true, confirmButtonText: 'Haa, tirtir', cancelButtonText: 'Jooji', confirmButtonColor: '#ef4444'
+            }).then(r => {
+                if (r.isConfirmed) fetch(`/petroleum/sales/${id}/delete`, { method: 'DELETE' })
+                    .then(x => x.json()).then(d => { if (d.success) location.reload(); else Swal.fire('Cillad', d.message, 'error'); });
+            });
+        });
+    });
+</script>
+{% endblock %}

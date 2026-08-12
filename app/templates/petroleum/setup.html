@@ -1,0 +1,891 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Petroleum Setup{% endblock %}
+{% block page_title %}Setup Qaybinta Shidaalka{% endblock %}
+
+{% block content %}
+{% set active = 'setup' %}
+
+{% if setup_done %}
+<div class="alert alert-success rounded-4 animate-up border-0 shadow-sm d-flex align-items-center gap-3">
+    <div class="setup-done-icon"><i class="fas fa-check"></i></div>
+    <div class="flex-grow-1">
+        <strong>Setup horey ayaa loo sameeyay.</strong>
+        <div class="small opacity-75">Waxaad hore u dejisay nidaamka shidaalka.</div>
+    </div>
+    <a href="{{ url_for('petroleum.dashboard') }}" class="btn btn-sm btn-success rounded-pill px-4 fw-bold">
+        <i class="fas fa-home me-1"></i> Tag Dashboard
+    </a>
+</div>
+{% endif %}
+
+<!-- Header -->
+<div class="setup-hero animate-up mb-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h4 class="mb-1 fw-bold"><i class="fas fa-magic me-2"></i>Dejinta Bilowga</h4>
+            <p class="mb-0 small opacity-75">4 tallaabo — tankiyada, pombada & macaamiisha deynta</p>
+        </div>
+        <div class="setup-progress-badge">
+            <span class="setup-progress-pct" id="progressPct">25%</span>
+            <small class="d-block opacity-75">Dhammaystiran</small>
+        </div>
+    </div>
+    <div class="setup-progress-track mt-3">
+        <div class="setup-progress-fill" id="progressFill" style="width:25%"></div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-premium rounded-4 animate-up setup-card">
+    <div class="card-body p-4 p-lg-5">
+
+        <!-- Stepper -->
+        <div class="setup-stepper mb-5">
+            {% set steps = [
+            ('1', 'Noocyada', 'fa-fill-drip'),
+            ('2', 'Tanks', 'fa-database'),
+            ('3', 'Pumps', 'fa-gas-pump'),
+            ('4', 'Fleet', 'fa-truck')
+            ] %}
+            {% for step, label, icon in steps %}
+            <div class="setup-step-item" id="stepper-{{ step }}" data-step="{{ step }}">
+                <div class="setup-step-circle" id="dot-{{ step }}">
+                    <i class="fas {{ icon }} setup-step-icon"></i>
+                    <span class="setup-step-num">{{ step }}</span>
+                </div>
+                <span class="setup-step-label">{{ label }}</span>
+            </div>
+            {% if not loop.last %}
+            <div class="setup-step-line" id="line-{{ step }}"></div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Step 1 -->
+        <div class="setup-step" id="step-1">
+            <div class="setup-step-header">
+                <div class="setup-step-badge bg-primary bg-opacity-10 text-primary">
+                    <i class="fas fa-fill-drip"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1">Noocyada Shidaalka & Xisaabaadka</h5>
+                    <p class="text-muted small mb-0">Petrol, Diesel, Kerosene + chart accounts (1210, 4010, ...)</p>
+                </div>
+            </div>
+
+            <div class="row g-3 my-4">
+                <div class="col-md-4">
+                    <div class="setup-fuel-card setup-fuel-petrol text-start p-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="setup-fuel-icon mb-0 me-2"><i class="fas fa-gas-pump"></i></div>
+                            <h6 class="fw-bold mb-0">Shidaalka 1</h6>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small text-muted mb-0">Magaca</label>
+                            <input type="text" class="form-control form-control-sm custom-ft-name" value="Petrol">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small text-muted mb-0">Code</label>
+                            <input type="text" class="form-control form-control-sm custom-ft-code" value="PET">
+                        </div>
+                        <div class="mb-2">
+                            <input type="hidden" class="custom-ft-buy" value="0">
+                            <label class="form-label small text-muted mb-0">Qiimaha Iibka</label>
+                            <input type="number" step="0.001" class="form-control form-control-sm custom-ft-sell"
+                                value="1.45">
+                        </div>
+                        <input type="hidden" class="custom-ft-color" value="#ef4444">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="setup-fuel-card setup-fuel-diesel text-start p-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="setup-fuel-icon mb-0 me-2"><i class="fas fa-oil-can"></i></div>
+                            <h6 class="fw-bold mb-0">Shidaalka 2</h6>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small text-muted mb-0">Magaca</label>
+                            <input type="text" class="form-control form-control-sm custom-ft-name" value="Diesel">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small text-muted mb-0">Code</label>
+                            <input type="text" class="form-control form-control-sm custom-ft-code" value="DSL">
+                        </div>
+                        <div class="mb-2">
+                            <input type="hidden" class="custom-ft-buy" value="0">
+                            <label class="form-label small text-muted mb-0">Qiimaha Iibka</label>
+                            <input type="number" step="0.001" class="form-control form-control-sm custom-ft-sell"
+                                value="1.35">
+                        </div>
+                        <input type="hidden" class="custom-ft-color" value="#f59e0b">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="setup-fuel-card setup-fuel-kerosene text-start p-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="setup-fuel-icon mb-0 me-2"><i class="fas fa-fire"></i></div>
+                            <h6 class="fw-bold mb-0">Shidaalka 3</h6>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small text-muted mb-0">Magaca</label>
+                            <input type="text" class="form-control form-control-sm custom-ft-name" value="Kerosene">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small text-muted mb-0">Code</label>
+                            <input type="text" class="form-control form-control-sm custom-ft-code" value="KER">
+                        </div>
+                        <div class="mb-2">
+                            <input type="hidden" class="custom-ft-buy" value="0">
+                            <label class="form-label small text-muted mb-0">Qiimaha Iibka</label>
+                            <input type="number" step="0.001" class="form-control form-control-sm custom-ft-sell"
+                                value="1.15">
+                        </div>
+                        <input type="hidden" class="custom-ft-color" value="#3b82f6">
+                    </div>
+                </div>
+            </div>
+
+            <div class="setup-action-box">
+                <button class="btn btn-primary rounded-pill px-4 py-2 fw-bold" id="btnSeed" onclick="seedTypes()">
+                    <i class="fas fa-seedling me-2"></i> Abuur Noocyada & Accounts
+                </button>
+                <span id="seedStatus" class="setup-status-badge d-none">
+                    <i class="fas fa-check-circle"></i> La sameeyay
+                </span>
+                <div id="seedMsg" class="setup-inline-msg d-none"></div>
+            </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="setup-step d-none" id="step-2">
+            <div class="setup-step-header">
+                <div class="setup-step-badge bg-info bg-opacity-10 text-info">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1">Tankiyada</h5>
+                    <p class="text-muted small mb-0">Deji tankiyada shidaalka iyo awooddooda</p>
+                </div>
+            </div>
+
+            <div class="row g-3 my-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-uppercase text-muted">Laanta</label>
+                    <select id="setupBranch" class="form-select rounded-3 setup-input">
+                        <option value="">— Default —</option>
+                        {% for b in branches %}<option value="{{ b.id }}">{{ b.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-uppercase text-muted">Imisa tank?</label>
+                    <select id="tankCount" class="form-select rounded-3 setup-input" onchange="renderTanks()">
+                        {% for n in [2,3,4,5] %}<option value="{{ n }}">{{ n }} Tanks</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div id="tankFields" class="row g-3"></div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="setup-step d-none" id="step-3">
+            <div class="setup-step-header">
+                <div class="setup-step-badge bg-warning bg-opacity-10 text-warning">
+                    <i class="fas fa-gas-pump"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1">Pombada</h5>
+                    <p class="text-muted small mb-0">Ku xidh pombada tankiyada saxda ah</p>
+                </div>
+            </div>
+
+            <div class="my-4" style="max-width:280px">
+                <label class="form-label fw-bold small text-uppercase text-muted">Imisa pump?</label>
+                <select id="pumpCount" class="form-select rounded-3 setup-input" onchange="renderPumps()">
+                    {% for n in [2,3,4,5,6] %}<option value="{{ n }}">{{ n }} Pumps</option>{% endfor %}
+                </select>
+            </div>
+            <div id="pumpFields" class="row g-3"></div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="setup-step d-none" id="step-4">
+            <div class="setup-step-header">
+                <div class="setup-step-badge bg-success bg-opacity-10 text-success">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1">Fleet Customers (Credit)</h5>
+                    <p class="text-muted small mb-0">Dooro macaamiisha jira ama ku dar kuwa cusub</p>
+                </div>
+            </div>
+
+            <div id="fleetFields" class="mt-4">
+                <div class="fleet-row setup-fleet-card">
+                    <div class="setup-fleet-header">
+                        <i class="fas fa-building text-primary"></i>
+                        <span class="fw-bold small">Macmiil #1</span>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">Macmiil jira</label>
+                            <select class="form-select rounded-3 setup-input fleet-customer">
+                                <option value="">— Cusub —</option>
+                                {% for c in customers %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-muted">Magac cusub</label>
+                            <input type="text" class="form-control rounded-3 setup-input fleet-name"
+                                placeholder="Shirkadda ABC">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold text-muted">Credit Limit</label>
+                            <input type="number" class="form-control rounded-3 setup-input fleet-limit" value="50000">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-muted">Fleet Code</label>
+                            <input type="text" class="form-control rounded-3 setup-input fleet-code"
+                                placeholder="FLT-001">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill mt-3 px-4" onclick="addFleetRow()">
+                <i class="fas fa-plus me-1"></i> Ku dar Fleet
+            </button>
+        </div>
+
+        <!-- Navigation -->
+        <div class="setup-nav mt-5 pt-4">
+            <button class="btn btn-light rounded-pill px-4 py-2" id="btnPrev" onclick="prevStep()" disabled>
+                <i class="fas fa-arrow-left me-2"></i> Dib
+            </button>
+            <div class="setup-nav-dots">
+                {% for n in [1,2,3,4] %}
+                <span class="setup-nav-dot" id="nav-dot-{{ n }}"></span>
+                {% endfor %}
+            </div>
+            <button class="btn btn-primary rounded-pill px-4 py-2 fw-bold" id="btnNext" onclick="nextStep()">
+                Xiga <i class="fas fa-arrow-right ms-2"></i>
+            </button>
+            <button class="btn btn-success rounded-pill px-5 py-2 fw-bold d-none" id="btnFinish" onclick="runSetup()">
+                <i class="fas fa-rocket me-2"></i> Dhammaystir Setup
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .setup-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1d4ed8 100%);
+        border-radius: 20px;
+        padding: 24px 28px;
+        color: #fff;
+        box-shadow: 0 8px 32px rgba(29, 78, 216, 0.25);
+    }
+
+    .setup-progress-badge {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        padding: 10px 20px;
+        backdrop-filter: blur(8px);
+    }
+
+    .setup-progress-pct {
+        font-size: 1.5rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .setup-progress-track {
+        height: 6px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 99px;
+        overflow: hidden;
+    }
+
+    .setup-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #60a5fa, #34d399);
+        border-radius: 99px;
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .setup-card {
+        overflow: hidden;
+    }
+
+    /* Stepper */
+    .setup-stepper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+    }
+
+    .setup-step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        z-index: 1;
+        transition: all 0.3s ease;
+    }
+
+    .setup-step-circle {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f1f5f9;
+        color: #94a3b8;
+        font-size: 1.1rem;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        border: 3px solid #e2e8f0;
+    }
+
+    .setup-step-circle .setup-step-num {
+        display: none;
+    }
+
+    .setup-step-circle .setup-step-icon {
+        display: block;
+    }
+
+    .setup-step-item.active .setup-step-circle {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: #fff;
+        border-color: #3b82f6;
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+        transform: scale(1.08);
+    }
+
+    .setup-step-item.done .setup-step-circle {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: #fff;
+        border-color: #10b981;
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    }
+
+    .setup-step-label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: color 0.3s;
+    }
+
+    .setup-step-item.active .setup-step-label,
+    .setup-step-item.done .setup-step-label {
+        color: #1e293b;
+    }
+
+    .setup-step-line {
+        flex: 1;
+        height: 3px;
+        background: #e2e8f0;
+        margin: 0 8px;
+        margin-bottom: 28px;
+        border-radius: 99px;
+        transition: background 0.4s ease;
+        max-width: 80px;
+    }
+
+    .setup-step-line.filled {
+        background: linear-gradient(90deg, #10b981, #3b82f6);
+    }
+
+    /* Step content */
+    .setup-step-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .setup-step-badge {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    /* Fuel cards */
+    .setup-fuel-card {
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+        transition: transform 0.2s, box-shadow 0.2s;
+        background: #fff;
+    }
+
+    .setup-fuel-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    .setup-fuel-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+
+    .setup-fuel-petrol .setup-fuel-icon {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .setup-fuel-diesel .setup-fuel-icon {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+
+    .setup-fuel-kerosene .setup-fuel-icon {
+        background: #fce7f3;
+        color: #db2777;
+    }
+
+    /* Action box */
+    .setup-action-box {
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-radius: 16px;
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .setup-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #ecfdf5;
+        color: #059669;
+        font-weight: 700;
+        font-size: 0.85rem;
+        padding: 8px 16px;
+        border-radius: 99px;
+        border: 1px solid #a7f3d0;
+    }
+
+    .setup-inline-msg {
+        width: 100%;
+        padding: 10px 16px;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .setup-inline-msg.success {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    .setup-inline-msg.error {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    .setup-done-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    /* Tank / Pump cards */
+    .setup-item-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px;
+        transition: box-shadow 0.2s;
+        height: 100%;
+    }
+
+    .setup-item-card:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .setup-item-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .setup-item-card-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    .setup-input {
+        border-color: #e2e8f0;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .setup-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+    }
+
+    /* Fleet */
+    .setup-fleet-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 12px;
+    }
+
+    .setup-fleet-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    /* Navigation */
+    .setup-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .setup-nav-dots {
+        display: flex;
+        gap: 8px;
+    }
+
+    .setup-nav-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        transition: all 0.3s;
+    }
+
+    .setup-nav-dot.active {
+        background: #3b82f6;
+        width: 24px;
+        border-radius: 99px;
+    }
+
+    /* Step fade */
+    .setup-step {
+        animation: setupFadeIn 0.35s ease;
+    }
+
+    @keyframes setupFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 576px) {
+        .setup-stepper {
+            gap: 0;
+        }
+
+        .setup-step-circle {
+            width: 42px;
+            height: 42px;
+            font-size: 0.9rem;
+        }
+
+        .setup-step-label {
+            font-size: 0.65rem;
+        }
+
+        .setup-step-line {
+            max-width: 30px;
+            margin: 0 4px;
+            margin-bottom: 24px;
+        }
+
+        .setup-nav-dots {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentStep = 1;
+    const fuelCodes = ['PET', 'DSL', 'KER', 'DSL', 'PET'];
+    const stepIcons = { 1: 'fa-fill-drip', 2: 'fa-database', 3: 'fa-gas-pump', 4: 'fa-truck' };
+
+    function showStep(n) {
+        currentStep = n;
+        document.querySelectorAll('.setup-step').forEach(el => el.classList.add('d-none'));
+        const stepEl = document.getElementById('step-' + n);
+        stepEl.classList.remove('d-none');
+        stepEl.style.animation = 'none';
+        stepEl.offsetHeight;
+        stepEl.style.animation = '';
+
+        document.getElementById('btnPrev').disabled = n === 1;
+        document.getElementById('btnNext').classList.toggle('d-none', n === 4);
+        document.getElementById('btnFinish').classList.toggle('d-none', n !== 4);
+
+        const pct = Math.round((n / 4) * 100);
+        document.getElementById('progressPct').textContent = pct + '%';
+        document.getElementById('progressFill').style.width = pct + '%';
+
+        for (let i = 1; i <= 4; i++) {
+            const item = document.getElementById('stepper-' + i);
+            const icon = item.querySelector('.setup-step-icon');
+            item.classList.remove('active', 'done');
+            if (i < n) {
+                item.classList.add('done');
+                icon.className = 'fas fa-check setup-step-icon';
+            } else if (i === n) {
+                item.classList.add('active');
+                icon.className = 'fas ' + stepIcons[i] + ' setup-step-icon';
+            } else {
+                icon.className = 'fas ' + stepIcons[i] + ' setup-step-icon';
+            }
+
+            const line = document.getElementById('line-' + i);
+            if (line) line.classList.toggle('filled', i < n);
+
+            const navDot = document.getElementById('nav-dot-' + i);
+            navDot.classList.toggle('active', i === n);
+        }
+    }
+    function nextStep() { if (currentStep < 4) showStep(currentStep + 1); }
+    function prevStep() { if (currentStep > 1) showStep(currentStep - 1); }
+
+    function showMsg(elId, msg, ok) {
+        const el = document.getElementById(elId);
+        el.textContent = msg;
+        el.className = 'setup-inline-msg ' + (ok ? 'success' : 'error');
+        el.classList.remove('d-none');
+        setTimeout(() => el.classList.add('d-none'), 4000);
+    }
+
+    function seedTypes() {
+        const btn = document.getElementById('btnSeed');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Waa la abuurayaa...';
+
+        const customTypes = [];
+        document.querySelectorAll('#step-1 .setup-fuel-card').forEach(card => {
+            customTypes.push({
+                name: card.querySelector('.custom-ft-name').value,
+                code: card.querySelector('.custom-ft-code').value,
+                buy: card.querySelector('.custom-ft-buy').value,
+                sell: card.querySelector('.custom-ft-sell').value,
+                color: card.querySelector('.custom-ft-color').value
+            });
+        });
+
+        fetch('{{ url_for("petroleum.seed_defaults") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ custom_types: customTypes })
+        })
+            .then(r => r.json()).then(d => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-seedling me-2"></i> Abuur Noocyada & Accounts';
+                if (d.success) {
+                    document.getElementById('seedStatus').classList.remove('d-none');
+                    showMsg('seedMsg', d.message, true);
+                } else {
+                    showMsg('seedMsg', d.message, false);
+                }
+            }).catch(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-seedling me-2"></i> Abuur Noocyada & Accounts';
+                showMsg('seedMsg', 'Cilad ayaa dhacday. Isku day mar kale.', false);
+            });
+    }
+
+    const fuelColors = { PET: 'warning', DSL: 'primary', KER: 'danger' };
+
+    function renderTanks() {
+        const n = parseInt(document.getElementById('tankCount').value);
+        const container = document.getElementById('tankFields');
+        container.innerHTML = '';
+        for (let i = 0; i < n; i++) {
+            const code = fuelCodes[i % fuelCodes.length];
+            const color = fuelColors[code] || 'secondary';
+            container.innerHTML += `
+        <div class="col-md-6">
+            <div class="setup-item-card">
+                <div class="setup-item-card-header">
+                    <div class="setup-item-card-icon bg-${color} bg-opacity-10 text-${color}">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h6 class="fw-bold mb-0">Tank ${i + 1}</h6>
+                </div>
+                <input type="hidden" class="tank-key" value="t${i}">
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Magaca</label>
+                    <input type="text" class="form-control rounded-3 setup-input tank-name" value="Tank ${i + 1} - ${code}">
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label small text-muted">Nooca</label>
+                        <select class="form-select rounded-3 setup-input tank-fuel">
+                            <option value="PET" ${code === 'PET' ? 'selected' : ''}>Shidaalka 1</option>
+                            <option value="DSL" ${code === 'DSL' ? 'selected' : ''}>Shidaalka 2</option>
+                            <option value="KER" ${code === 'KER' ? 'selected' : ''}>Shidaalka 3</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-muted">Capacity (L)</label>
+                        <input type="number" class="form-control rounded-3 setup-input tank-capacity" value="50000">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-muted">Opening (L)</label>
+                        <input type="number" class="form-control rounded-3 setup-input tank-opening" value="0">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-muted">Min Alert (L)</label>
+                        <input type="number" class="form-control rounded-3 setup-input tank-alert" value="5000">
+                    </div>
+                </div>
+            </div>
+        </div>`;
+        }
+    }
+
+    function renderPumps() {
+        const n = parseInt(document.getElementById('pumpCount').value);
+        const tankCount = parseInt(document.getElementById('tankCount').value);
+        const container = document.getElementById('pumpFields');
+        container.innerHTML = '';
+        for (let i = 0; i < n; i++) {
+            let opts = '';
+            for (let t = 0; t < tankCount; t++) opts += `<option value="t${t}">Tank ${t + 1}</option>`;
+            container.innerHTML += `
+        <div class="col-md-4 col-sm-6">
+            <div class="setup-item-card">
+                <div class="setup-item-card-header">
+                    <div class="setup-item-card-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="fas fa-gas-pump"></i>
+                    </div>
+                    <h6 class="fw-bold mb-0">Pump ${i + 1}</h6>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small text-muted">Lambarka</label>
+                    <input type="text" class="form-control rounded-3 setup-input pump-number" value="Pump ${i + 1}">
+                </div>
+                <div>
+                    <label class="form-label small text-muted">Tank</label>
+                    <select class="form-select rounded-3 setup-input pump-tank">${opts}</select>
+                </div>
+            </div>
+        </div>`;
+        }
+    }
+
+    let fleetCount = 1;
+    function addFleetRow() {
+        fleetCount++;
+        const tpl = document.querySelector('.fleet-row').cloneNode(true);
+        tpl.querySelectorAll('input').forEach(i => i.value = i.classList.contains('fleet-limit') ? '50000' : '');
+        tpl.querySelector('.fleet-customer').value = '';
+        tpl.querySelector('.setup-fleet-header span').textContent = 'Macmiil #' + fleetCount;
+        document.getElementById('fleetFields').appendChild(tpl);
+    }
+
+    function collectData() {
+        const tanks = [];
+        document.querySelectorAll('#tankFields .col-md-6').forEach(col => {
+            tanks.push({
+                key: col.querySelector('.tank-key').value,
+                name: col.querySelector('.tank-name').value,
+                fuel_code: col.querySelector('.tank-fuel').value,
+                capacity: col.querySelector('.tank-capacity').value,
+                opening_level: col.querySelector('.tank-opening').value,
+                min_alert: col.querySelector('.tank-alert').value
+            });
+        });
+        const pumps = [];
+        document.querySelectorAll('#pumpFields .col-md-4, #pumpFields .col-sm-6').forEach(col => {
+            pumps.push({
+                number: col.querySelector('.pump-number').value,
+                tank_key: col.querySelector('.pump-tank').value
+            });
+        });
+        const fleet = [];
+        document.querySelectorAll('.fleet-row').forEach(row => {
+            const cid = row.querySelector('.fleet-customer').value;
+            const name = row.querySelector('.fleet-name').value;
+            if (!cid && !name) return;
+            fleet.push({
+                customer_id: cid || null,
+                customer_name: name,
+                credit_limit: row.querySelector('.fleet-limit').value,
+                fleet_code: row.querySelector('.fleet-code').value
+            });
+        });
+        return {
+            branch_id: document.getElementById('setupBranch').value || null,
+            tanks, pumps, fleet
+        };
+    }
+
+    function runSetup() {
+        const btn = document.getElementById('btnFinish');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Waa la kaydinayaa...';
+        fetch('{{ url_for("petroleum.run_setup") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(collectData())
+        }).then(r => r.json()).then(d => {
+            if (d.success) {
+                btn.innerHTML = '<i class="fas fa-check me-2"></i> Guul!';
+                btn.classList.replace('btn-success', 'btn-success');
+                setTimeout(() => window.location.href = '{{ url_for("petroleum.dashboard") }}', 800);
+            } else {
+                alert(d.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-rocket me-2"></i> Dhammaystir Setup';
+            }
+        });
+    }
+
+    showStep(1);
+    renderTanks();
+    renderPumps();
+</script>
+{% endblock %}

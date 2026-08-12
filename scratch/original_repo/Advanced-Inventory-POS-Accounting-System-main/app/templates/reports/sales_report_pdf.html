@@ -1,0 +1,47 @@
+{% extends "reports/base_pdf.html" %}
+
+{% block content %}
+<div class="summary-grid">
+    <div class="summary-card">
+        <span class="label">Total Invoices</span>
+        <span class="value">{{ sales|length }}</span>
+    </div>
+    <div class="summary-card">
+        <span class="label">Total Revenue</span>
+        <span class="value" style="color: #059669;">${{ "%.2f"|format(total_sales) }}</span>
+    </div>
+    <div class="summary-card">
+        <span class="label">Avg Order Value</span>
+        <span class="value">${{ "%.2f"|format(total_sales / sales|length if sales|length > 0 else 0) }}</span>
+    </div>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Invoice #</th>
+            <th>Customer</th>
+            <th>Payment</th>
+            <th class="text-right">Total Amount</th>
+            <th>Date</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in sales %}
+        <tr>
+            <td><code>{{ s.invoice_no }}</code></td>
+            <td style="font-weight: 600;">{{ s.customer.name if s.customer else 'Walk-in Customer' }}</td>
+            <td><span class="badge badge-warning">{{ s.payment_method }}</span></td>
+            <td class="text-right" style="font-weight: 700;">${{ "%.2f"|format(s.total_amount) }}</td>
+            <td class="text-muted">{{ s.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td><span class="badge badge-success">Completed</span></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div style="margin-top: 40px; text-align: right;">
+    <p style="font-size: 14px; color: #64748b;">Grand Total: <span style="font-size: 24px; font-weight: 800; color: #0f172a;">${{ "%.2f"|format(total_sales) }}</span></p>
+</div>
+{% endblock %}

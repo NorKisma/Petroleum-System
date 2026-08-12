@@ -1,0 +1,215 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Account Receivable Ageing Details (Details) - Rays Technology{% endblock %}
+{% block page_title %}Account Receivable Ageing Details (Details){% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+    <!-- ── Filter & Action Bar ────────────────────────────────────────────── -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+        <div class="card-body p-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width: 200px;">
+                    <label class="form-label small text-muted mb-1">Business Location</label>
+                    <select class="form-select border-light bg-light-subtle shadow-none rounded-3">
+                        <option value="all">All locations</option>
+                    </select>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-white rounded-pill px-4 fw-bold border text-muted" onclick="expandAllBuckets()">
+                    <i class="fas fa-expand-arrows-alt me-2 text-primary"></i> Expand all
+                </button>
+                <button class="btn btn-white rounded-pill px-4 fw-bold border text-muted" onclick="collapseAllBuckets()">
+                    <i class="fas fa-compress-arrows-alt me-2 text-primary"></i> Collapse all
+                </button>
+                <button class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm" style="background-color: #0f172a; border: none;">Portrait</button>
+                <button class="btn btn-white rounded-pill px-4 fw-bold border text-muted">Landscape</button>
+                <button class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm" style="background-color: #0f172a; border: none;" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i> Print
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Report Print Area ──────────────────────────────────────────────── -->
+    <div class="card border-0 shadow-premium rounded-4 bg-white" id="printableArea">
+        <div class="card-body p-5">
+            
+            <!-- Report Header -->
+            <div class="text-center mb-5">
+                <h4 class="fw-bold text-main mb-1" style="color: #0f172a;">{{ current_user.tenant.business_name if current_user.tenant else 'Pharmacy Store' }}</h4>
+                <p class="text-muted small mb-1">{{ current_user.tenant.address if current_user.tenant else 'Unit 12, Industrial Park, London, United Kingdom' }}</p>
+                <p class="text-muted small mb-3">
+                    <i class="fas fa-phone-alt me-1"></i> {{ current_user.tenant.phone if current_user.tenant else '+44 7700123456' }}
+                    <span class="mx-2">|</span>
+                    <i class="fas fa-envelope me-1"></i> {{ current_user.tenant.email if current_user.tenant else 'pharmacy@nanzige.com' }}
+                </p>
+                
+                <h5 class="fw-bold mb-3" style="color: #0f172a;">Account Receivable Ageing Details (Details)</h5>
+                
+                <div class="d-inline-flex align-items-center bg-primary-soft rounded-pill px-4 py-2 text-primary fw-bold" style="background-color: #eff6ff; color: #4ba3e3;">
+                    <span class="small me-2 opacity-75">As at:</span> {{ now.strftime('%d %b %Y') }}
+                </div>
+            </div>
+
+            <!-- Report Table -->
+            <div class="table-responsive">
+                <table class="table table-borderless align-middle" id="ageingTable">
+                    <thead>
+                        <tr style="background-color: #0f172a; color: white;">
+                            <th class="py-3 px-4 rounded-start-4" style="width: 15%;">Date</th>
+                            <th class="py-3" style="width: 15%;">Transaction Type</th>
+                            <th class="py-3" style="width: 15%;">Invoice No.</th>
+                            <th class="py-3" style="width: 25%;">Customer</th>
+                            <th class="py-3" style="width: 15%;">Due Date</th>
+                            <th class="py-3 px-4 text-end rounded-end-4" style="width: 15%;">Due</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set buckets = [
+                            ('Current', '#10b981', 'rgba(16, 185, 129, 0.05)'),
+                            ('1 - 30 days past due', '#d97706', 'rgba(217, 119, 6, 0.05)'),
+                            ('31 - 60 days past due', '#ea580c', 'rgba(234, 88, 12, 0.05)'),
+                            ('61 - 90 days past due', '#dc2626', 'rgba(220, 38, 38, 0.05)'),
+                            ('91 days and over past due', '#991b1b', 'rgba(153, 27, 27, 0.05)')
+                        ] %}
+                        
+                        {% for name, color, bg_color in buckets %}
+                        {% set items = detailed_data[name] %}
+                        {% set bucket_id = loop.index %}
+                        <!-- Section Header -->
+                        <tr class="bucket-header cursor-pointer" 
+                            style="background-color: {{ bg_color }}; transition: all 0.2s ease;" 
+                            onclick="toggleBucket({{ bucket_id }})"
+                            id="header-{{ bucket_id }}">
+                            <td colspan="6" class="py-3 px-4 fw-bold" style="color: {{ color }};">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-chevron-right me-3 toggle-icon transition-all" id="icon-{{ bucket_id }}"></i>
+                                    {{ name }}
+                                    <span class="badge rounded-pill ms-3 small px-3" style="background-color: {{ color }}; color: white;">{{ items|length }} Invoices</span>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Items -->
+                        {% set total_for_bucket = 0 %}
+                        {% for item in items %}
+                            {% set total_for_bucket = total_for_bucket + item.balance %}
+                            <tr class="bucket-items-{{ bucket_id }} border-bottom border-light item-row" style="display: none;">
+                                <td class="py-2 px-4 text-muted small">{{ item.date.strftime('%Y-%m-%d') }}</td>
+                                <td class="py-2 text-muted small">Sales Invoice</td>
+                                <td class="py-2 text-muted small">{{ item.invoice_no }}</td>
+                                <td class="py-2 text-main fw-medium small">{{ item.customer_name }}</td>
+                                <td class="py-2 text-muted small">{{ item.due_date.strftime('%Y-%m-%d') }}</td>
+                                <td class="py-2 px-4 text-end text-main fw-medium small">$ {{ "%.2f"|format(item.balance) }}</td>
+                            </tr>
+                        {% endfor %}
+                        
+                        {% if items|length > 0 %}
+                        <!-- Subtotal -->
+                        <tr class="bucket-items-{{ bucket_id }} border-bottom border-2 subtotal-row" style="display: none;">
+                            <td colspan="5" class="py-3 px-4 text-end text-muted small">Total for {{ name }}</td>
+                            <td class="py-3 px-4 text-end fw-bold" style="color: {{ color }};">$ {{ "%.2f"|format(total_for_bucket) }}</td>
+                        </tr>
+                        {% endif %}
+                        
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-5 text-muted small">
+                <span>Generated: {{ now.strftime('%d %b %Y, %H:%M') }}</span>
+                <span>Account Receivable Ageing Details (Details)</span>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --shadow-premium: 0 10px 30px rgba(0,0,0,0.05);
+    }
+    .shadow-premium { box-shadow: var(--shadow-premium) !important; }
+    .cursor-pointer { cursor: pointer; }
+    .transition-all { transition: all 0.3s ease; }
+    .toggle-icon.expanded { transform: rotate(90deg); }
+    
+    .bucket-header:hover {
+        filter: brightness(0.95);
+    }
+
+    @media print {
+        body * { visibility: hidden; }
+        #printableArea, #printableArea * { visibility: visible; }
+        #printableArea { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; border: none !important; }
+        .card { box-shadow: none !important; border: none !important; }
+        .item-row, .subtotal-row { display: table-row !important; } /* Force show in print */
+        .toggle-icon { display: none !important; }
+        @page { size: landscape; margin: 10mm; }
+    }
+</style>
+
+<script>
+function toggleBucket(id) {
+    const rows = document.querySelectorAll('.bucket-items-' + id);
+    const icon = document.getElementById('icon-' + id);
+    
+    if (rows.length === 0) {
+        // Even if empty, toggle the icon for visual feedback
+        icon.classList.toggle('expanded');
+        return;
+    }
+
+    // Determine current state based on the first row
+    const isHidden = rows[0].style.display === 'none';
+    
+    rows.forEach(row => {
+        row.style.display = isHidden ? 'table-row' : 'none';
+    });
+    
+    if (isHidden) {
+        icon.classList.add('expanded');
+    } else {
+        icon.classList.remove('expanded');
+    }
+}
+
+function expandAllBuckets() {
+    console.log("Expanding all ageing buckets...");
+    document.querySelectorAll('.item-row, .subtotal-row').forEach(row => {
+        row.style.display = 'table-row';
+    });
+    document.querySelectorAll('.toggle-icon').forEach(icon => {
+        icon.classList.add('expanded');
+    });
+}
+
+function collapseAllBuckets() {
+    console.log("Collapsing all ageing buckets...");
+    document.querySelectorAll('.item-row, .subtotal-row').forEach(row => {
+        row.style.display = 'none';
+    });
+    document.querySelectorAll('.toggle-icon').forEach(icon => {
+        icon.classList.remove('expanded');
+    });
+}
+
+// Initial state: Expand the first bucket (Current) for better UX
+document.addEventListener('DOMContentLoaded', function() {
+    const firstBucketItems = document.querySelectorAll('.bucket-items-1');
+    if (firstBucketItems.length > 0) {
+        // Force expand the first one if it has items
+        const rows = document.querySelectorAll('.bucket-items-1');
+        const icon = document.getElementById('icon-1');
+        rows.forEach(row => row.style.display = 'table-row');
+        icon.classList.add('expanded');
+    }
+});
+</script>
+{% endblock %}
+
+

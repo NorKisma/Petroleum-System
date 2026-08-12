@@ -1,0 +1,99 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}System Audit Logs - Elite POS{% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up mb-4">
+    <div class="header-left">
+        <h4 class="mb-0 fw-bold text-main">System Audit Logs</h4>
+        <p class="text-muted small mb-0">La socodka dhaqdhaqaaqa iyo isbedelada nidaamka (Activity Tracking).</p>
+    </div>
+    <div class="header-right">
+        <div class="header-actions">
+            <button class="btn btn-light border shadow-sm px-4 fw-bold small no-print me-2" onclick="window.print()">
+                <i class="fas fa-print me-2"></i> Print Logs
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-premium rounded-4 mb-5">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0" id="logsTable">
+                <thead class="bg-light bg-opacity-50">
+                    <tr>
+                        <th class="ps-4">Timestamp</th>
+                        <th>User</th>
+                        <th>Action / Operation</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="fw-bold text-dark small">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle-sm me-2 bg-primary bg-opacity-10 text-primary" style="width: 28px; height: 28px; font-size: 0.7rem;">
+                                    {{ log.user.username[0]|upper if log.user else 'S' }}
+                                </div>
+                                <span class="small fw-bold">{{ log.user.username if log.user else 'System' }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if 'Delete' in log.action or 'Remove' in log.action %}
+                                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 small">
+                                    {{ log.action }}
+                                </span>
+                            {% elif 'Add' in log.action or 'Create' in log.action %}
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 small">
+                                    {{ log.action }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-info bg-opacity-10 text-info rounded-pill px-3 py-1 small">
+                                    {{ log.action }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="text-muted small" style="max-width: 400px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ log.details }}">
+                                {{ log.details }}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-circle-sm {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#logsTable').DataTable({
+            "pageLength": 25,
+            "order": [[0, "desc"]],
+            "language": {
+                "search": "",
+                "searchPlaceholder": "Raadi logs...",
+                "dom": '<"d-flex justify-content-between align-items-center mb-4"f>rt<"d-flex justify-content-between align-items-center mt-4"ip>'
+            }
+        });
+    });
+</script>
+{% endblock %}

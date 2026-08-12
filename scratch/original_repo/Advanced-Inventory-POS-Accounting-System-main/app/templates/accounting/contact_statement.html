@@ -1,0 +1,379 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Contact Account Statement{% endblock %}
+
+{% block styles %}
+<!-- Include Date Range Picker CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+.form-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    margin-bottom: 2rem;
+}
+[data-theme='dark'] .form-card { background: #1e293b; box-shadow: none; border: 1px solid rgba(255,255,255,0.05); }
+
+.type-toggle {
+    display: inline-flex;
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 4px;
+}
+[data-theme='dark'] .type-toggle { background: #0f172a; }
+
+.type-btn {
+    border: none;
+    background: transparent;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.type-btn.active.customer { background: #50a5e6; color: white; }
+.type-btn.active.supplier { background: #f59e0b; color: white; }
+
+.statement-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+[data-theme='dark'] .statement-card { background: #1e293b; border: 1px solid rgba(255,255,255,0.05); }
+
+.statement-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+.company-name { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 0.25rem; }
+[data-theme='dark'] .company-name { color: #f8fafc; }
+.company-details { font-size: 0.8rem; color: #64748b; margin-bottom: 1rem; }
+.statement-title { font-size: 1.2rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
+[data-theme='dark'] .statement-title { color: #f8fafc; }
+
+.period-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: #f1f5f9;
+    color: #334155;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+[data-theme='dark'] .period-badge { background: #334155; color: #cbd5e1; }
+
+.contact-info-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+[data-theme='dark'] .contact-info-bar { border-color: #334155; }
+.contact-name { font-size: 1.1rem; font-weight: 800; color: #0f172a; }
+[data-theme='dark'] .contact-name { color: #f8fafc; }
+.contact-sub { font-size: 0.8rem; color: #64748b; }
+
+.table-statement { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.table-statement th {
+    background: #0f172a;
+    color: white;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+}
+.table-statement th:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+.table-statement th:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; text-align: right; }
+.table-statement td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+}
+[data-theme='dark'] .table-statement td { border-color: #334155; color: #cbd5e1; }
+.table-statement td:last-child { text-align: right; font-weight: 700; }
+
+.amount-dr { color: #f94a4a; } /* Debit */
+.amount-cr { color: #10b981; } /* Credit */
+.amount-bal { color: #4ba3e3; }
+
+.closing-row td {
+    background: #f8fafc;
+    font-weight: 800;
+    border-top: 2px solid #cbd5e1;
+}
+[data-theme='dark'] .closing-row td { background: #0f172a; border-color: #475569; }
+
+.print-btn { background: #50a5e6; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; }
+
+@media print {
+    body { background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .navbar, .sidebar, .page-header-elite, .form-card, .btn, .print-btn { display: none !important; }
+    .main-content { margin: 0 !important; padding: 0 !important; }
+    .statement-card { box-shadow: none; border: none; padding: 0; }
+    .table-statement th { background: #0f172a !important; color: white !important; }
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="top-bar">
+    <h4 class="mb-0 fw-bold">Contact Account Statement</h4>
+    <a href="{{ url_for('accounting.reports_hub') }}" class="btn btn-light border btn-sm fw-bold">
+        <i class="fas fa-arrow-left me-1"></i> Reports
+    </a>
+</div>
+
+<!-- FORM CARD -->
+<div class="form-card animate-up">
+    <form action="{{ url_for('accounting.contact_statement') }}" method="GET" id="filterForm">
+        <div class="mb-3">
+            <h6 class="fw-bold mb-1"><i class="fas fa-user-circle text-primary me-2"></i>Select Contact</h6>
+            <p class="text-muted small mb-3">Choose a customer or supplier to view their account statement.</p>
+        </div>
+
+        <div class="row g-3 align-items-end">
+            <!-- Toggle Type -->
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Contact Type</label>
+                <div class="type-toggle w-100 d-flex">
+                    <button type="button" class="type-btn flex-fill justify-content-center customer {% if not contact_type or contact_type == 'customer' %}active{% endif %}" onclick="setContactType('customer')">
+                        <i class="fas fa-user"></i> Customer
+                    </button>
+                    <button type="button" class="type-btn flex-fill justify-content-center supplier {% if contact_type == 'supplier' %}active{% endif %}" onclick="setContactType('supplier')">
+                        <i class="fas fa-truck"></i> Supplier
+                    </button>
+                </div>
+                <input type="hidden" name="type" id="contactTypeInput" value="{{ contact_type or 'customer' }}">
+            </div>
+
+            <!-- Contact Select -->
+            <div class="col-md-5">
+                <label class="form-label small text-muted mb-1" id="contactLabel">
+                    {% if contact_type == 'supplier' %}Supplier{% else %}Customer{% endif %}
+                </label>
+                <select name="contact_id" id="contactSelect" class="form-select select2" required>
+                    <option value="">Select contact...</option>
+                    {% if not contact_type or contact_type == 'customer' %}
+                        {% for c in customers %}
+                            <option value="{{ c.id }}" {% if contact_id == c.id %}selected{% endif %}>{{ c.name }} — {{ c.phone }}</option>
+                        {% endfor %}
+                    {% else %}
+                        {% for s in suppliers %}
+                            <option value="{{ s.id }}" {% if contact_id == s.id %}selected{% endif %}>{{ s.name }} — {{ s.phone }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+
+            <!-- Date Range -->
+            <div class="col-md-3">
+                <label class="form-label small text-muted mb-1">Date Range</label>
+                <input type="text" name="date_range" id="dateRange" class="form-control text-center fw-bold" value="{{ date_range }}" required>
+            </div>
+
+            <!-- Submit -->
+            <div class="col-md-1">
+                <button type="submit" class="btn w-100 btn-primary-elite">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- STATEMENT PREVIEW -->
+{% if contact_info %}
+<div class="d-flex justify-content-end mb-3 gap-2">
+    <button class="print-btn text-dark bg-light border" onclick="window.print()">
+        <i class="fas fa-print me-2"></i> Print
+    </button>
+</div>
+
+<div class="statement-card animate-up" id="printableStatement">
+    <div class="statement-header">
+        <div class="company-name">{{ current_user.tenant.company_name or 'My Company' }}</div>
+        <div class="company-details">
+            <i class="fas fa-phone me-1"></i> {{ current_user.tenant.phone or 'N/A' }} 
+            <span class="mx-2">•</span> 
+            <i class="fas fa-envelope me-1"></i> {{ current_user.tenant.email or 'N/A' }}
+        </div>
+        <div class="statement-title">Account Statement</div>
+        <div class="period-badge">
+            For the period: <span class="text-primary">{{ start_date.strftime('%d/%m/%Y') }} — {{ end_date.strftime('%d/%m/%Y') }}</span>
+        </div>
+    </div>
+
+    <div class="contact-info-bar">
+        <div>
+            <div class="contact-sub text-uppercase fw-bold mb-1">Statement For</div>
+            <div class="contact-name">{{ contact_info.name }}</div>
+            <div class="contact-sub mt-1">
+                <i class="fas fa-phone me-1"></i> {{ contact_info.phone or 'N/A' }}
+                {% if contact_info.email %}<span class="ms-2"><i class="fas fa-envelope me-1"></i> {{ contact_info.email }}</span>{% endif %}
+            </div>
+        </div>
+        <div class="text-end">
+            <div class="contact-sub text-uppercase fw-bold mb-1">Type</div>
+            <div class="fw-bold {% if contact_type == 'supplier' %}text-warning{% else %}text-success{% endif %}">
+                {{ contact_type | capitalize }}
+            </div>
+        </div>
+    </div>
+
+    <table class="table-statement">
+        <thead>
+            <tr>
+                <th width="15%">Date</th>
+                <th width="20%">Reference</th>
+                <th width="35%">Description</th>
+                <th width="10%">Debit</th>
+                <th width="10%">Credit</th>
+                <th width="10%">Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Opening Balance -->
+            <tr>
+                <td class="text-muted">{{ start_date.strftime('%d/%m/%Y') }}</td>
+                <td></td>
+                <td class="fw-bold text-primary">Opening Balance (brought forward)</td>
+                <td></td>
+                <td></td>
+                <td class="amount-bal">
+                    $ {{ "{:,.2f}".format(opening_balance|abs) }} {% if opening_balance > 0 %}{% if contact_type == 'customer' %}DR{% else %}CR{% endif %}{% endif %}
+                </td>
+            </tr>
+
+            <!-- Transactions -->
+            {% if statement_data|length == 0 %}
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    <i class="fas fa-info-circle me-2"></i> No transactions found for this period.
+                </td>
+            </tr>
+            {% endif %}
+
+            {% for t in statement_data %}
+            <tr>
+                <td class="text-muted">{{ t.date.strftime('%d/%m/%Y') }}</td>
+                <td class="text-muted">{{ t.ref }}</td>
+                <td>{{ t.desc }}</td>
+                <td class="amount-dr fw-bold">{% if t.debit > 0 %}$ {{ "{:,.2f}".format(t.debit) }}{% endif %}</td>
+                <td class="amount-cr fw-bold">{% if t.credit > 0 %}$ {{ "{:,.2f}".format(t.credit) }}{% endif %}</td>
+                <td class="amount-bal">
+                    $ {{ "{:,.2f}".format(t.balance|abs) }}
+                    {% if t.balance > 0 %}{% if contact_type == 'customer' %}DR{% else %}CR{% endif %}{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+
+            <!-- Closing Balance -->
+            <tr class="closing-row">
+                <td colspan="3" class="text-end pe-4">
+                    <span class="text-dark">Closing Balance</span>
+                    <span class="fw-normal text-muted small ms-2">
+                        {% if closing_balance == 0 %}Settled — no amount due{% else %}Amount due{% endif %}
+                    </span>
+                </td>
+                <td class="amount-dr">$ {{ "{:,.2f}".format(statement_data | sum(attribute='debit')) }}</td>
+                <td class="amount-cr">$ {{ "{:,.2f}".format(statement_data | sum(attribute='credit')) }}</td>
+                <td class="amount-bal">
+                    $ {{ "{:,.2f}".format(closing_balance|abs) }}
+                    <div class="small fw-normal text-muted mt-1">{% if closing_balance == 0 %}Nil{% endif %}</div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="mt-5 d-flex justify-content-between text-muted small border-top pt-3">
+        <div>Generated: {{ now.strftime('%d %b %Y, %H:%M') if now else '' }}</div>
+        <div>{{ contact_info.name }} — Account Statement — {{ start_date.strftime('%d/%m/%Y') }} to {{ end_date.strftime('%d/%m/%Y') }}</div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Include Date Range Picker JS -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    // Data for dynamic select
+    const customers = [
+        {% for c in customers %}
+        {id: '{{ c.id }}', text: '{{ c.name }} — {{ c.phone }}'},
+        {% endfor %}
+    ];
+    
+    const suppliers = [
+        {% for s in suppliers %}
+        {id: '{{ s.id }}', text: '{{ s.name }} — {{ s.phone }}'},
+        {% endfor %}
+    ];
+
+    $(document).ready(function() {
+        $('.select2').select2({
+            theme: 'bootstrap-5', // if using bootstrap-5 theme, otherwise default
+            width: '100%'
+        });
+
+        $('#dateRange').daterangepicker({
+            locale: { format: 'DD/MM/YYYY' },
+            ranges: {
+               'Today': [moment(), moment()],
+               'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+               'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+               'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+               'This Month': [moment().startOf('month'), moment().endOf('month')],
+               'This Year': [moment().startOf('year'), moment().endOf('year')]
+            }
+        });
+    });
+
+    function setContactType(type) {
+        document.getElementById('contactTypeInput').value = type;
+        
+        // Update buttons
+        document.querySelector('.type-btn.customer').classList.remove('active');
+        document.querySelector('.type-btn.supplier').classList.remove('active');
+        document.querySelector('.type-btn.' + type).classList.add('active');
+        
+        // Update Label
+        document.getElementById('contactLabel').textContent = type === 'customer' ? 'Customer' : 'Supplier';
+        
+        // Update Select Options
+        const select = $('#contactSelect');
+        select.empty();
+        select.append(new Option('Select contact...', '', true, true));
+        
+        const data = type === 'customer' ? customers : suppliers;
+        data.forEach(item => {
+            select.append(new Option(item.text, item.id, false, false));
+        });
+        
+        // Trigger change to update Select2
+        select.trigger('change');
+    }
+</script>
+{% endblock %}

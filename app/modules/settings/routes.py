@@ -91,34 +91,36 @@ def update():
     company.email_from_address = request.form.get('email_from_address')
     company.email_encryption = request.form.get('email_encryption', 'tls')
     
-    # Module Controls
-    company.module_purchases = 'module_purchases' in request.form
-    company.module_pos = 'module_pos' in request.form
-    company.module_accounting = 'module_accounting' in request.form
-    company.module_expenses = 'module_expenses' in request.form
-    company.module_stock_transfer = 'module_stock_transfer' in request.form
-    company.module_stock_adjustment = 'module_stock_adjustment' in request.form
-    company.module_hrm = 'module_hrm' in request.form
-    company.module_service_staff = 'module_service_staff' in request.form
-    company.module_bookings = 'module_bookings' in request.form
-    company.module_add_sale = 'module_add_sale' in request.form
-    company.module_tables = 'module_tables' in request.form
-    company.module_modifiers = 'module_modifiers' in request.form
-    company.module_kitchen = 'module_kitchen' in request.form
-    company.module_subscription = 'module_subscription' in request.form
-    company.module_types_of_service = 'module_types_of_service' in request.form
-    company.module_crm = 'module_crm' in request.form
-    company.module_manufacturing = 'module_manufacturing' in request.form
-    company.module_project = 'module_project' in request.form
-    company.module_assets = 'module_assets' in request.form
-    company.module_repair = 'module_repair' in request.form
-    
-    # Core Base Modules (module_settings is NEVER toggled — always keep True)
-    company.module_share = 'module_share' in request.form
-    company.module_sales = 'module_sales' in request.form
-    company.module_customers = 'module_customers' in request.form
-    company.module_inventory = 'module_inventory' in request.form
-    # module_settings intentionally excluded — must always remain enabled
+    # Module toggles are auto-saved via /settings/toggle-module (not this form).
+
+    # Petroleum Settings
+    company.petroleum_require_daily_dip = 'petroleum_require_daily_dip' in request.form
+    company.petroleum_fleet_credit_enabled = 'petroleum_fleet_credit_enabled' in request.form
+    company.petroleum_require_vehicle_plate = 'petroleum_require_vehicle_plate' in request.form
+    morning_mode = request.form.get('petroleum_morning_mode', 'manual')
+    if morning_mode not in ('automatic', 'manual'):
+        morning_mode = 'manual'
+    company.petroleum_morning_mode = morning_mode
+    company.petroleum_auto_morning_dip = morning_mode == 'automatic'
+    try:
+        company.petroleum_morning_auto_hour = int(request.form.get('petroleum_morning_auto_hour', 6))
+    except (TypeError, ValueError):
+        company.petroleum_morning_auto_hour = 6
+    try:
+        company.petroleum_variance_threshold = float(request.form.get('petroleum_variance_threshold', 0.5))
+    except ValueError:
+        company.petroleum_variance_threshold = 0.5
+
+    company.petroleum_shift1_name = request.form.get('petroleum_shift1_name') or 'Saaka (7AM-5PM)'
+    company.petroleum_shift1_attendant = request.form.get('petroleum_shift1_attendant') or None
+    company.petroleum_shift2_name = request.form.get('petroleum_shift2_name') or 'Habeen (5PM-7AM)'
+    company.petroleum_shift2_attendant = request.form.get('petroleum_shift2_attendant') or None
+    for field in ('petroleum_shift1_start_hour', 'petroleum_shift1_end_hour',
+                  'petroleum_shift2_start_hour', 'petroleum_shift2_end_hour'):
+        try:
+            setattr(company, field, int(request.form.get(field, 0)))
+        except (TypeError, ValueError):
+            pass
     
     # SaaS & Sales Controls
     try:
@@ -162,6 +164,42 @@ def update():
         flash(f'Khalad ayaa dhacay xiligii la keydinayay: {str(e)}', 'danger')
         
     return redirect(url_for('settings.index'))
+MODULE_TOGGLE_FIELDS = {
+    'module_purchases', 'module_pos', 'module_accounting', 'module_expenses',
+    'module_stock_transfer', 'module_stock_adjustment', 'module_hrm',
+    'module_service_staff', 'module_bookings', 'module_add_sale', 'module_tables',
+    'module_modifiers', 'module_kitchen', 'module_subscription', 'module_types_of_service',
+    'module_crm', 'module_manufacturing', 'module_project', 'module_assets',
+    'module_repair', 'module_petroleum', 'module_share', 'module_sales',
+    'module_customers', 'module_inventory',
+}
+
+
+@settings.route('/settings/toggle-module', methods=['POST'])
+@login_required
+def toggle_module():
+    if current_user.role not in ['developer'] and not getattr(current_user, 'is_super_admin', False):
+        return jsonify({'success': False, 'message': 'Ma haysatid ogolaansho.'}), 403
+
+    data = request.get_json(silent=True) or {}
+    field = data.get('module')
+    if field not in MODULE_TOGGLE_FIELDS:
+        return jsonify({'success': False, 'message': 'Module aan la aqoonsanayn.'}), 400
+
+    company = db.session.get(Tenant, current_user.tenant_id)
+    if not company:
+        return jsonify({'success': False, 'message': 'Tenant lama helin.'}), 404
+
+    enabled = data.get('enabled') in (True, 'true', '1', 1)
+    setattr(company, field, enabled)
+    try:
+        db.session.commit()
+        return jsonify({'success': True, 'module': field, 'enabled': enabled})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 @settings.route('/settings/users')
 @login_required
 def manage_users():

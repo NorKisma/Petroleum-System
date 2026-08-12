@@ -1,0 +1,415 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Shidaal - Dispatch Station{% endblock %}
+{% block page_title %}Shidaal{% endblock %}
+
+{% block styles %}
+<style>
+    /* ── Petro Dashboard: Theme-Aware Stat Cards ── */
+    .petro-stat-card {
+        border-radius: 20px;
+        padding: 24px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        background: var(--surface);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .petro-stat-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+    }
+
+    .petro-stat-card:hover {
+        transform: translateY(-5px) scale(1.01);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border-color: rgba(59, 130, 246, 0.4);
+    }
+
+    .petro-stat-card:hover::after {
+        opacity: 1;
+    }
+
+    .petro-stat-title {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .petro-stat-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--heading-color);
+        margin: 10px 0 6px 0;
+    }
+
+    .petro-stat-sub {
+        font-size: 0.73rem;
+        color: var(--text-muted);
+    }
+
+    /* ── Tank Gauge ── */
+    .tank-gauge-container {
+        width: 70px;
+        height: 120px;
+        background: var(--bg-main);
+        border-radius: 10px;
+        margin: 16px auto;
+        position: relative;
+        overflow: hidden;
+        border: 2px solid var(--glass-border);
+        box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .tank-gauge-fill {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        transition: height 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        opacity: 0.9;
+        /* create liquid effect */
+        box-shadow: inset 0 6px 12px rgba(255, 255, 255, 0.3);
+        border-top: 2px solid rgba(255, 255, 255, 0.4);
+    }
+
+    @keyframes pulse-icon {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .petro-stat-card:hover .p-2.rounded-3 i {
+        animation: pulse-icon 1s infinite;
+    }
+
+    .tank-gauge-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    .tank-gauge-label {
+        background: rgba(0, 0, 0, 0.45);
+        padding: 4px 6px;
+        border-radius: 6px;
+        backdrop-filter: blur(2px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #fff;
+    }
+
+    .tank-gauge-pct {
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .tank-gauge-vol {
+        font-size: 0.6rem;
+        font-weight: 600;
+        opacity: 0.9;
+        margin-top: 4px;
+    }
+
+    /* ── Rate List ── */
+    .rate-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .rate-item:last-child {
+        border-bottom: none;
+    }
+
+    .rate-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+
+    /* Global Visibility Fixes */
+    .petroleum-dashboard-container .text-muted {
+        color: var(--text-muted) !important;
+    }
+
+    .petroleum-dashboard-container .fw-bold {
+        color: var(--heading-color) !important;
+    }
+
+    .petroleum-dashboard-container .text-dark {
+        color: var(--text-color) !important;
+    }
+
+    .petroleum-dashboard-container .card-header:-not(.card-header-elite-blue) .text-white {
+        /* Let regular headers have their text */
+    }
+
+    .card-header-elite-blue .text-white,
+    .card-header-elite-blue i {
+        color: #ffffff !important;
+    }
+
+    .rate-item .fw-bold {
+        color: var(--heading-color) !important;
+    }
+
+    .rate-item .text-muted {
+        color: var(--text-muted) !important;
+    }
+
+    .tank-label {
+        color: var(--heading-color) !important;
+        font-weight: 700;
+    }
+
+    /* Info box fix */
+    .bg-primary.bg-opacity-10 {
+        background-color: rgba(0, 97, 242, 0.08) !important;
+    }
+
+    .bg-primary.bg-opacity-10 .text-muted {
+        color: #0042a5 !important;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set active = 'dashboard' %}
+
+<div class="animate-up mb-5 petroleum-dashboard-container">
+
+    {# 1. Dashboard Header #}
+    <div class="card border-0 shadow-premium rounded-4 mb-4"
+        style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); position: relative; overflow: hidden;">
+        <div class="position-absolute top-0 end-0 p-5 mt-n5 me-n5" style="opacity: 0.05; z-index: 1;">
+            <i class="fas fa-gas-pump" style="font-size: 15rem; color:#ffffff; pointer-events: none;"></i>
+        </div>
+        <div class="card-body px-4 py-4" style="position: relative; z-index: 3;">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <h4 class="text-white fw-bold mb-1">Ku soo dhowaw Dashboard-ka Saldhiga</h4>
+                    <p class="text-white text-opacity-75 small mb-0">
+                        Mogadishu Central Petroleum &bull; Live operational logs &amp; status.
+                    </p>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    {% if low_tanks %}
+                    <div
+                        class="bg-danger bg-opacity-25 text-white px-3 py-2 rounded-pill small fw-bold d-flex align-items-center border border-danger border-opacity-50">
+                        <i class="fas fa-exclamation-triangle me-2"></i> {{ low_tanks|length }} Taangi hooseeya
+                    </div>
+                    {% else %}
+                    <div
+                        class="bg-success bg-opacity-25 text-white px-3 py-2 rounded-pill small fw-bold d-flex align-items-center border border-success border-opacity-50">
+                        <i class="far fa-check-circle me-2"></i> Dhammaan Taangiyada OK
+                    </div>
+                    {% endif %}
+                    <div class="bg-white bg-opacity-20 text-white px-3 py-2 rounded-pill small fw-bold">
+                        Furan (Active)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# 2. Top Stats Row #}
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="petro-stat-card">
+                <div class="petro-stat-title">
+                    IIBKA MAANTA
+                    <div class="bg-success bg-opacity-10 p-2 rounded-3 text-success"><i class="fas fa-dollar-sign"></i>
+                    </div>
+                </div>
+                <div class="petro-stat-value">${{ "{:,.2f}".format(summary.total_sales_amount) }}</div>
+                <div class="petro-stat-sub">
+                    <span class="text-success">${{ "{:,.1f}".format(summary.sales_cash|default(0)) }} Naqad</span>
+                    &bull;
+                    <span class="text-primary">${{ "{:,.1f}".format(summary.sales_credit|default(0)) }} Deym</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="petro-stat-card">
+                <div class="petro-stat-title">
+                    LITIR-KA LA SHUBAY
+                    <div class="bg-primary bg-opacity-10 p-2 rounded-3 text-primary"><i class="fas fa-gas-pump"></i>
+                    </div>
+                </div>
+                <div class="petro-stat-value">{{ "{:,.0f}".format(summary.total_sales_liters) }} L</div>
+                <div class="petro-stat-sub">Mugga guud ee maanta</div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="petro-stat-card">
+                <div class="petro-stat-title">
+                    DEYNTA FLEET
+                    <div class="bg-warning bg-opacity-10 p-2 rounded-3 text-warning"><i class="fas fa-users"></i></div>
+                </div>
+                <div class="petro-stat-value">${{ "{:,.2f}".format(fleet_debt_balance|default(0)) }}</div>
+                <div class="petro-stat-sub">Guud ahaan dhimista credit-ka</div>
+            </div>
+        </div>
+        {% set total_capacity = 0 %}{% set total_current = 0 %}
+        {% for tk in tanks %}{% set total_capacity = total_capacity + tk.capacity_liters %}{% set total_current =
+        total_current + (tk.current_level or 0) %}{% endfor %}
+        <div class="col-6 col-xl-3">
+            <div class="petro-stat-card">
+                <div class="petro-stat-title">
+                    KAYDKA SALIIDDA
+                    <div class="bg-info bg-opacity-10 p-2 rounded-3 text-info"><i class="fas fa-database"></i></div>
+                </div>
+                <div class="petro-stat-value">{{ "{:,.0f}".format(total_current) }} L</div>
+                <div class="petro-stat-sub">
+                    {% if total_capacity > 0 %}{{ ((total_current / total_capacity) * 100)|round|int }}% oo buuxa{% else
+                    %}Qalabka lama dejin{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# 3. Tanks & Rates Row #}
+    <div class="row g-4">
+        {# Tanks #}
+        <div class="col-xl-8 col-lg-7">
+            <div class="card border-0 shadow-premium rounded-4 h-100">
+                <div class="card-header card-header-elite-blue d-flex justify-content-between align-items-center py-3">
+                    <h6 class="mb-0 fw-bold text-white"><i class="fas fa-database me-2"></i>Heerka Taangiyada <span
+                            class="fw-normal opacity-75">(Tank Fill Status)</span></h6>
+                    <a href="{{ url_for('petroleum.tanks') }}"
+                        class="btn btn-sm btn-light rounded-pill px-3 fw-bold small">
+                        <i class="fas fa-cog me-1"></i> Maamul
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for tank in tanks %}
+                        {% set pct = (tank.current_level / tank.capacity_liters * 100) if tank.capacity_liters else 0 %}
+                        <div class="col-md-4 col-6">
+                            <div class="text-center p-3 rounded-4 border" style="background: var(--bg-main);">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <div class="text-start">
+                                        <div class="fw-bold small">{{ tank.name }}</div>
+                                        <div class="text-muted" style="font-size:0.68rem;">{{
+                                            "{:,.0f}".format(tank.capacity_liters) }} L Cap</div>
+                                    </div>
+                                    <span class="badge rounded-pill fw-bold"
+                                        style="background:{{ tank.fuel_type.color_code }}20; color:{{ tank.fuel_type.color_code }}; font-size:0.65rem;">{{
+                                        tank.fuel_type.code }}</span>
+                                </div>
+                                <div class="tank-gauge-container">
+                                    <div class="tank-gauge-fill"
+                                        style="height:{{ [pct|round|int, 100]|min }}%; background-color:{{ tank.fuel_type.color_code|default('#3b82f6') }};">
+                                    </div>
+                                    <div class="tank-gauge-text">
+                                        <div class="tank-gauge-label">
+                                            <span class="tank-gauge-pct">{{ pct|round|int }}%</span>
+                                            <span class="tank-gauge-vol">{{ "{:,.0f}".format(tank.current_level) }}
+                                                L</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if pct <= (tank.min_alert_level/tank.capacity_liters*100 if tank.capacity_liters else
+                                    20) %} <div class="text-danger small fw-bold"><i
+                                        class="fas fa-exclamation-triangle me-1"></i>Hooseeya!
+                            </div>
+                            {% else %}
+                            <div class="text-success small fw-bold"><i class="fas fa-check-circle me-1"></i>Waa ku filan
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="col-12 py-5 text-center text-muted">
+                        <i class="fas fa-database fa-2x mb-3 opacity-25"></i>
+                        <p class="mb-0">Taangiyo lama helin. Fadlan ku dar taangiyo shidaal.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Live Rates #}
+    <div class="col-xl-4 col-lg-5">
+        <div class="card border-0 shadow-premium rounded-4 h-100">
+            <div class="card-header card-header-elite-blue d-flex justify-content-between align-items-center py-3">
+                <h6 class="mb-0 fw-bold text-white"><i class="fas fa-fill-drip me-2"></i>Qiimaha Live</h6>
+                <a href="{{ url_for('petroleum.fuel_types') }}"
+                    class="btn btn-sm btn-light rounded-pill px-3 fw-bold small">Beddel</a>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <div class="flex-grow-1">
+                    {% for ft in fuel_types %}
+                    <div class="rate-item">
+                        <div class="d-flex align-items-center">
+                            <div class="rate-dot" style="background-color:{{ ft.color_code|default('#3b82f6') }};">
+                            </div>
+                            <div>
+                                <div class="fw-bold small">{{ ft.name }}</div>
+                                <div class="text-muted"
+                                    style="font-size:0.63rem; text-transform:uppercase; letter-spacing:1px;">{{ ft.code
+                                    }}</div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold text-primary fs-6">${{ "{:,.2f}".format(ft.sell_price) }}</div>
+                            <div class="text-muted" style="font-size:0.63rem;">/ Litir</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="py-4 text-center text-muted small">Noocyo shidaal ma jiraan.</div>
+                    {% endfor %}
+                </div>
+                <div class="mt-3 p-3 rounded-3 bg-primary bg-opacity-10 border border-primary border-opacity-25">
+                    <p class="mb-0 text-muted small">
+                        <i class="fas fa-info-circle me-1 text-primary"></i>
+                        Qiimaha wuxuu la jaanqaadayaa sarifka suuqa maxaliga ah.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+{% endblock %}

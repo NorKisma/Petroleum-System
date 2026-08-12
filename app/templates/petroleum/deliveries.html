@@ -1,0 +1,315 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Soo-dejinta Shidaalka{% endblock %}
+{% block page_title %}Soo-dejinta Shidaalka{% endblock %}
+{% block content %}
+{% set active = 'deliveries' %}
+{% set cur = company_settings.currency if company_settings else '$' %}
+{% set is_admin = current_user.role in ['admin', 'developer'] or current_user.is_super_admin %}
+
+<div class="row g-4 animate-up">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-premium rounded-4">
+            <div class="card-header card-header-elite-blue py-3">
+                <h6 class="mb-0 text-white fw-bold"><i class="fas fa-truck-loading me-2"></i>Soo-dejin Cusub</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">1. Dooro Tankiga</label>
+                    <select id="delTank" class="form-select rounded-3 form-select-lg" onchange="syncDelFuel()">
+                        {% for t in tanks %}
+                        <option value="{{ t.id }}" data-fuel="{{ t.fuel_type_id }}"
+                            data-cost="{{ t.fuel_type.buy_price }}" data-level="{{ t.current_level }}"
+                            data-cap="{{ t.capacity_liters }}">
+                            {{ t.fuel_type.name }} — {{ t.name }} ({{ "{:,.0f}".format(t.current_level) }}L)
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">2. Magaca Iibsashada</label>
+                    <input type="text" id="delPurchaseName" class="form-control rounded-3"
+                        placeholder="Tusaale: Shell, Total, NP..." list="vendorNames">
+                    <datalist id="vendorNames">
+                        {% for v in vendors %}
+                        <option value="{{ v.name }}">
+                            {% endfor %}
+                    </datalist>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Status-ka Lacagta (Payment)</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button type="button" id="delMethodCash"
+                                class="btn btn-outline-success w-100 rounded-3 py-2 fw-bold active"
+                                onclick="setDelMethod('CASH')">
+                                <i class="fas fa-check-circle me-1"></i> La bixiyay
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="button" id="delMethodCredit"
+                                class="btn btn-outline-warning w-100 rounded-3 py-2 fw-bold"
+                                onclick="setDelMethod('CREDIT')">
+                                <i class="fas fa-clock me-1"></i> Lama bixin
+                            </button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="delPaymentMethod" value="CASH">
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Waybill/Reference</label>
+                        <input type="text" id="delWaybill" class="form-control rounded-3" placeholder="Waybill #">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Taarikada Booyada</label>
+                        <input type="text" id="delPlate" class="form-control rounded-3" placeholder="Plate #">
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label fw-bold small">3. Geli Litir</label>
+                    <input type="number" id="delLiters"
+                        class="form-control rounded-3 form-control-lg fw-bold text-center" step="0.1" placeholder="0"
+                        oninput="calcDelTotal()" autofocus>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    {% for q in [1000, 5000, 10000, 20000] %}
+                    <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3"
+                        onclick="setDelLiters({{ q }})">{{ "{:,}".format(q) }}L</button>
+                    {% endfor %}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">4. Qiimo/Litr</label>
+                    <input type="number" id="delCost" class="form-control rounded-3" step="0.01" min="0"
+                        oninput="calcDelTotal()">
+                </div>
+                <div class="mb-3 p-3 bg-success bg-opacity-10 rounded-4 text-center">
+                    <small class="text-muted">Wadarta Qiimaha</small>
+                    <h2 class="fw-bold text-success mb-0"><span id="delTotalCur">{{ cur }}</span><span
+                            id="delTotal">0.00</span></h2>
+                </div>
+                <button type="button" class="btn btn-success w-100 rounded-pill py-3 fw-bold fs-5" id="delSubmitBtn"
+                    onclick="submitDelivery()">
+                    <i class="fas fa-truck-loading me-2"></i> Kaydi Soo-dejinta
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-premium rounded-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between">
+                <h6 class="mb-0 fw-bold">Liiska Soo-dejinta</h6>
+                <span class="badge bg-success rounded-pill">{{ deliveries|length }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0" id="delTable">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-4">Lambarka</th>
+                            <th>Status</th>
+                            <th>Iibsashada</th>
+                            <th>Shidaal</th>
+                            <th>Litir</th>
+                            <th>Qiimo</th>
+                            <th>Taariikh</th>
+                            {% if is_admin %}<th class="text-end pe-4">Fal</th>{% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in deliveries %}
+                        <tr>
+                            <td class="ps-4 fw-bold small">{{ d.delivery_no }}</td>
+                            <td>
+                                {% if d.payment_method == 'CASH' %}
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2"
+                                    style="font-size:0.65rem;">LA BIXIYAY</span>
+                                {% else %}
+                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2"
+                                    style="font-size:0.65rem;">LAMA BIXIN</span>
+                                {% endif %}
+                            </td>
+                            <td class="small">{{ d.purchase_name or (d.vendor.name if d.vendor else '—') }}</td>
+                            <td>{{ d.fuel_type.name }}</td>
+                            <td>{{ "{:,.1f}".format(d.liters_received) }} L</td>
+                            <td class="fw-bold">{{ cur }}{{ "{:,.2f}".format(d.total_cost) }}</td>
+                            <td class="small text-muted">{{ d.delivery_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                            {% if is_admin %}
+                            <td class="text-end pe-4 text-nowrap">
+                                {% if not d.is_locked %}
+                                <button class="btn btn-link text-primary p-0 me-2 edit-del-btn" title="Beddel"
+                                    data-id="{{ d.id }}" data-no="{{ d.delivery_no }}"
+                                    data-liters="{{ d.liters_received }}" data-cost="{{ d.unit_cost }}"
+                                    data-purchase="{{ d.purchase_name or (d.vendor.name if d.vendor else '') }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-link text-danger p-0 delete-del-btn" title="Tirtir"
+                                    data-id="{{ d.id }}" data-no="{{ d.delivery_no }}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                {% else %}<i class="fas fa-lock text-muted small"></i>{% endif %}
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="{{ 7 if is_admin else 6 }}" class="text-center text-muted py-4">Soo-dejin ma
+                                jirto</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if is_admin %}
+<div class="modal fade" id="editDelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-bold">Beddel Soo-dejinta</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small" id="editDelNo"></p>
+                <input type="hidden" id="editDelId">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Magaca Iibsashada</label>
+                    <input type="text" id="editDelPurchase" class="form-control rounded-3" list="vendorNames">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Litir</label>
+                    <input type="number" id="editDelLiters" class="form-control rounded-3" step="0.1"
+                        oninput="calcEditDelTotal()">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Qiimo/Litr</label>
+                    <input type="number" id="editDelCost" class="form-control rounded-3" step="0.01"
+                        oninput="calcEditDelTotal()">
+                </div>
+                <div class="p-3 bg-light rounded-3 text-center">
+                    <small class="text-muted">Wadarta</small>
+                    <h4 class="fw-bold text-success mb-0">{{ cur }}<span id="editDelTotal">0.00</span></h4>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Jooji</button>
+                <button type="button" class="btn btn-success rounded-pill fw-bold"
+                    onclick="saveEditDel()">Kaydi</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const DT_SO = {
+        search: '', searchPlaceholder: 'Raadi...', lengthMenu: 'Muuji _MENU_', info: '_START_–_END_ / _TOTAL_',
+        paginate: { previous: 'Hore', next: 'Xiga' }, zeroRecords: 'Wax ma jiro', emptyTable: 'Wax ma jiro'
+    };
+
+    function syncDelFuel() {
+        const opt = document.getElementById('delTank').selectedOptions[0];
+        document.getElementById('delCost').value = parseFloat(opt.dataset.cost).toFixed(2);
+        calcDelTotal();
+    }
+    function setDelMethod(m) {
+        document.getElementById('delPaymentMethod').value = m;
+        const btnCash = document.getElementById('delMethodCash');
+        const btnCredit = document.getElementById('delMethodCredit');
+        if (m === 'CASH') {
+            btnCash.classList.add('active');
+            btnCredit.classList.remove('active');
+        } else {
+            btnCash.classList.remove('active');
+            btnCredit.classList.add('active');
+        }
+    }
+    function setDelLiters(n) { document.getElementById('delLiters').value = n; calcDelTotal(); }
+    function calcDelTotal() {
+        const liters = parseFloat(document.getElementById('delLiters').value) || 0;
+        const cost = parseFloat(document.getElementById('delCost').value) || 0;
+        document.getElementById('delTotal').textContent = (liters * cost).toFixed(2);
+    }
+    function submitDelivery() {
+        const liters = parseFloat(document.getElementById('delLiters').value);
+        if (!liters || liters <= 0) { Swal.fire('Fiiro', 'Geli litirka!', 'warning'); return; }
+        const purchaseName = document.getElementById('delPurchaseName').value.trim();
+        if (!purchaseName) { Swal.fire('Fiiro', 'Geli magaca iibsashada!', 'warning'); return; }
+        const opt = document.getElementById('delTank').selectedOptions[0];
+        const btn = document.getElementById('delSubmitBtn');
+        btn.disabled = true;
+        fetch('{{ url_for("petroleum.add_delivery") }}', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tank_id: document.getElementById('delTank').value,
+                fuel_type_id: opt.dataset.fuel,
+                liters_received: liters,
+                unit_cost: document.getElementById('delCost').value,
+                purchase_name: purchaseName,
+                waybill_no: document.getElementById('delWaybill').value,
+                vehicle_no: document.getElementById('delPlate').value,
+                payment_method: document.getElementById('delPaymentMethod').value
+            })
+        }).then(r => r.json()).then(d => {
+            btn.disabled = false;
+            if (d.success) {
+                document.getElementById('delLiters').value = '';
+                document.getElementById('delPurchaseName').value = '';
+                calcDelTotal();
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: d.message, showConfirmButton: false, timer: 1500 })
+                    .then(() => location.reload());
+            } else { Swal.fire('Cillad', d.message, 'error'); }
+        }).catch(() => { btn.disabled = false; });
+    }
+    function calcEditDelTotal() {
+        const l = parseFloat(document.getElementById('editDelLiters').value) || 0;
+        const c = parseFloat(document.getElementById('editDelCost').value) || 0;
+        document.getElementById('editDelTotal').textContent = (l * c).toFixed(2);
+    }
+    function saveEditDel() {
+        const id = document.getElementById('editDelId').value;
+        const liters = parseFloat(document.getElementById('editDelLiters').value);
+        if (!liters || liters <= 0) return;
+        fetch(`/petroleum/deliveries/${id}/update`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                liters_received: liters,
+                unit_cost: document.getElementById('editDelCost').value,
+                purchase_name: document.getElementById('editDelPurchase').value.trim()
+            })
+        }).then(r => r.json()).then(d => {
+            if (d.success) location.reload();
+            else Swal.fire('Cillad', d.message, 'error');
+        });
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        syncDelFuel();
+        document.getElementById('delLiters').addEventListener('keydown', e => { if (e.key === 'Enter') submitDelivery(); });
+        if ($('#delTable tbody tr').length > 0 && !$('#delTable tbody tr td[colspan]').length) {
+            $('#delTable').DataTable({ order: [[5, 'desc']], pageLength: 10, language: DT_SO });
+        }
+        $('.edit-del-btn').on('click', function () {
+            document.getElementById('editDelId').value = $(this).data('id');
+            document.getElementById('editDelNo').textContent = $(this).data('no');
+            document.getElementById('editDelPurchase').value = $(this).data('purchase') || '';
+            document.getElementById('editDelLiters').value = $(this).data('liters');
+            document.getElementById('editDelCost').value = $(this).data('cost');
+            calcEditDelTotal();
+            new bootstrap.Modal(document.getElementById('editDelModal')).show();
+        });
+        $('.delete-del-btn').on('click', function () {
+            const id = $(this).data('id'), no = $(this).data('no');
+            Swal.fire({
+                title: 'Ma hubtaa?', text: `${no} waa la tirtirayaa`, icon: 'warning',
+                showCancelButton: true, confirmButtonText: 'Haa, tirtir', cancelButtonText: 'Jooji', confirmButtonColor: '#ef4444'
+            }).then(r => {
+                if (r.isConfirmed) fetch(`/petroleum/deliveries/${id}/delete`, { method: 'DELETE' })
+                    .then(x => x.json()).then(d => { if (d.success) location.reload(); else Swal.fire('Cillad', d.message, 'error'); });
+            });
+        });
+    });
+</script>
+{% endblock %}

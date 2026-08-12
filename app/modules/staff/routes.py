@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app import db, bcrypt
 from app.models import User
 from app.utils.decorators import roles_required
+from app.utils.module_access import module_required
 from app.utils.audit import log_audit
 
 staff = Blueprint('staff', __name__)
@@ -148,51 +149,17 @@ def manage_user_modules(id):
     if user.tenant_id != current_user.tenant_id:
         return jsonify({'success': False, 'message': 'Access denied'}), 403
         
+    from app.utils.module_access import get_user_module_permissions, toggle_user_module
+
     if request.method == 'GET':
-        return jsonify({
-            'module_pos': user.module_pos,
-            'module_inventory': user.module_inventory,
-            'module_accounting': user.module_accounting,
-            'module_share': user.module_share,
-            'module_sales': user.module_sales,
-            'module_purchases': user.module_purchases,
-            'module_customers': user.module_customers,
-            'module_staff': user.module_staff,
-            'module_settings': user.module_settings
-        })
+        perms = get_user_module_permissions(user)
+        return jsonify({f'module_{k}': v for k, v in perms.items()})
         
     # POST - Toggle module
     data = request.get_json()
     module_name = data.get('module')
-    
-    if module_name == 'pos':
-        user.module_pos = not user.module_pos
-        status = user.module_pos
-    elif module_name == 'inventory':
-        user.module_inventory = not user.module_inventory
-        status = user.module_inventory
-    elif module_name == 'accounting':
-        user.module_accounting = not user.module_accounting
-        status = user.module_accounting
-    elif module_name == 'share':
-        user.module_share = not user.module_share
-        status = user.module_share
-    elif module_name == 'sales':
-        user.module_sales = not user.module_sales
-        status = user.module_sales
-    elif module_name == 'purchases':
-        user.module_purchases = not user.module_purchases
-        status = user.module_purchases
-    elif module_name == 'customers':
-        user.module_customers = not user.module_customers
-        status = user.module_customers
-    elif module_name == 'staff':
-        user.module_staff = not user.module_staff
-        status = user.module_staff
-    elif module_name == 'settings':
-        user.module_settings = not user.module_settings
-        status = user.module_settings
-    else:
+    status = toggle_user_module(user, module_name)
+    if status is None:
         return jsonify({'success': False, 'message': 'Invalid module!'})
         
     db.session.commit()
@@ -206,6 +173,7 @@ from datetime import datetime
 
 @staff.route('/staff/payroll')
 @login_required
+@module_required('payroll')
 @roles_required('admin', 'developer', 'accountant')
 def list_payroll():
     # Get current month/year

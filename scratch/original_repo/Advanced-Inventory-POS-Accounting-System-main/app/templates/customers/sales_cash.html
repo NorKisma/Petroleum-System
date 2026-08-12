@@ -1,0 +1,751 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Sales Cash - Antigravity POS{% endblock %}
+{% block page_title %}Iibka Kaashka ah (Sales Cash){% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up mb-4">
+    <div class="header-left">
+        <h4 class="mb-0 fw-bold text-main">Sales Cash</h4>
+        <p class="text-muted small mb-0">Maamulka iibka kaashka ah ee macaamiisha.</p>
+    </div>
+    <div class="header-right">
+        <div class="header-actions">
+            <button class="btn btn-dark-elite me-2" data-bs-toggle="offcanvas" data-bs-target="#aiScanOffcanvas">
+                <i class="fas fa-magic me-2"></i> AI Scan Invoice
+            </button>
+            <button class="btn btn-primary-elite" data-bs-toggle="offcanvas" data-bs-target="#addSalesOffcanvas">
+                <i class="fas fa-plus me-2"></i> Add Sales Cash
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 mb-5">
+    <div class="card-header bg-white py-3 px-4 border-bottom border-light">
+        <div class="input-group w-25">
+            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-search"></i></span>
+            <input type="text" id="salesSearch" class="form-control border-start-0 bg-light" placeholder="Search by invoice no or customer...">
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table id="salesCashTable" class="table align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">INVOICE NO</th>
+                        <th>CUSTOMER</th>
+                        <th>QTY</th>
+                        <th>TOTAL AMOUNT</th>
+                        <th>DATE</th>
+                        <th class="text-center">INVOICE</th>
+                        <th class="text-end pe-4">ACTION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td class="ps-4 fw-bold">#{{ sale.invoice_no }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-2 text-primary d-flex justify-content-center align-items-center" style="width: 32px; height: 32px; font-size: 0.75rem; font-weight: bold;">
+                                    {{ sale.customer.name[0]|upper if sale.customer else 'W' }}
+                                </div>
+                                <div class="text-dark fw-bold">{{ sale.customer.name if sale.customer else 'Walk-in Customer' }}</div>
+                            </div>
+                        </td>
+                        <td>{{ sale.items|length }} items</td>
+                        <td class="fw-bold text-primary">${{ "{:,.2f}".format(sale.total_amount) }}</td>
+                        <td class="text-muted">{{ sale.created_at.strftime('%m/%d/%Y') }}</td>
+                        <td class="text-center">
+                            {% if sale.attachment %}
+                            <a href="{{ url_for('static', filename=sale.attachment) }}" target="_blank" class="btn btn-sm btn-light border text-primary" title="View Original Invoice">
+                                <i class="fas fa-file-invoice"></i>
+                            </a>
+                            {% else %}
+                            <span class="text-muted small">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            {% set sale_items = [] %}
+                            {% for item in sale.items %}
+                            {% set _ = sale_items.append(item.to_dict()) %}
+                            {% endfor %}
+                            <button class="btn btn-light btn-sm rounded-3 border view-sale-btn"
+                                data-invoice="{{ sale.invoice_no }}"
+                                data-customer="{{ sale.customer.name if sale.customer else 'Walk-in Customer' }}"
+                                data-phone="{{ sale.customer.phone if sale.customer else '--' }}"
+                                data-date="{{ sale.created_at.strftime('%d/%m/%Y %H:%M') }}"
+                                data-total="{{ sale.total_amount }}"
+                                data-paid="{{ sale.total_amount }}"
+                                data-method="{{ sale.payment_method }}"
+                                data-items='{{ sale_items | tojson }}'>
+                                <i class="fas fa-eye text-primary"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Sales Cash Offcanvas -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="addSalesOffcanvas" style="width: 800px;">
+    <div class="offcanvas-header border-bottom py-3">
+        <h5 class="offcanvas-title fw-bold">Add Sales Cash</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form id="addSalesForm">
+            <input type="hidden" name="attachment" id="saleAttachment">
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Payment Method *</label>
+                <select class="form-select" name="payment_method" id="paymentMethod" required>
+                    <option value="Cash">Cash Sale</option>
+                    <option value="Credit">Credit (Debt) Sale</option>
+                </select>
+            </div>
+            <div class="mb-3" id="customerDiv">
+                <label class="form-label small fw-bold" id="customerLabel">Customer *</label>
+                <select class="form-select searchable-select" name="customer_id" id="customerId">
+                    <option value="">Walk-in Customer</option>
+                    {% for c in customers %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+                <div id="customerError" class="text-danger small mt-1 d-none">Maa xulan kartid 'Walk-in' haddii ay tahay Dayn!</div>
+            </div>
+            <div class="mb-3" id="accountDiv">
+                <label class="form-label small fw-bold">Paid Into Account *</label>
+                <select class="form-select" name="account_id" id="accountId">
+                    {% for acc in accounts %}
+                    <option value="{{ acc.id }}">{{ acc.account_name }}</option>
+                    {% endfor %}
+                    {% if not accounts %}
+                    <option value="">Cash</option>
+                    {% endif %}
+                </select>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label small fw-bold mb-0">Line items</label>
+                <button type="button" class="btn btn-light btn-sm border fw-bold" id="addRow">
+                    <i class="fas fa-plus me-1"></i> Add row
+                </button>
+            </div>
+
+            <div class="table-responsive mb-3">
+                <table class="table table-sm align-middle" id="itemsTable">
+                    <thead class="text-muted small">
+                        <tr>
+                            <th style="width: 35%;">Product</th>
+                            <th style="width: 20%;">Qty</th>
+                            <th style="width: 20%;">Selling price</th>
+                            <th style="width: 20%; text-align: right;">Total</th>
+                            <th style="width: 5%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="item-row">
+                            <td>
+                                <select class="form-select form-select-sm product-select searchable-select" required>
+                                    <option value="">Select</option>
+                                    {% for p in products %}
+                                    <option value="{{ p.id }}" data-price="{{ p.sell_price }}">{{ p.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm qty-input" value="1" min="1" required>
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm price-input" step="0.01" value="0.00">
+                            </td>
+                            <td class="text-end small fw-bold row-total">0</td>
+                            <td>
+                                <button type="button" class="btn btn-link text-danger p-0 remove-row"><i class="fas fa-trash-alt"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bg-light p-3 rounded-3 mb-4">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="small text-muted">Subtotal:</span>
+                    <span class="small fw-bold" id="subtotalDisplay">0.00</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="small text-muted">Tax Amount:</span>
+                    <span class="small fw-bold text-warning" id="taxDisplay">0.00</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2 border-bottom pb-2">
+                    <span class="small text-muted">Discount:</span>
+                    <span class="small fw-bold text-danger" id="discountDisplay">0.00</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="fw-bold fs-5">Total:</span>
+                    <span class="fw-bold fs-5 text-success" id="totalDisplay">0.00</span>
+                </div>
+                <div class="d-flex justify-content-between pt-2 border-top">
+                    <span class="fw-bold small text-muted">Haraa (Balance):</span>
+                    <span class="fw-bold text-primary" id="balanceDisplay">0.00</span>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="form-label small fw-bold text-warning">VAT Rate (%)</label>
+                    <input type="number" class="form-control" id="vatRate" value="0" name="vat_rate">
+                </div>
+                <div class="col-6">
+                    <label class="form-label small fw-bold text-danger">Dhimis ($)</label>
+                    <input type="number" class="form-control" id="discountInput" value="0" name="discount_amount">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label small fw-bold text-primary">La Dhiibay (Paid Amount)</label>
+                <input type="number" step="0.01" class="form-control form-control-lg border-primary border-opacity-50 fw-bold" id="paidAmount" name="paid_amount" placeholder="0.00">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label small fw-bold">Date *</label>
+                <input type="date" class="form-control" value="{{ now_date }}" name="date" required>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 py-2 fw-bold">Save</button>
+        </form>
+    </div>
+</div>
+
+<!-- Sell Details Modal (Screenshot 5 Style) -->
+<div class="modal fade" id="viewSaleModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="modal-title fw-bold text-dark">Sell Details ( Invoice No. : <span id="viewInvoiceNo"></span> )</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm" onclick="processReturnFromModal()">
+                        <i class="fas fa-undo me-1"></i> Process Return
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Info Section -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="mb-1"><span class="fw-bold text-dark">Invoice No.:</span> <span id="vInvoice"></span></div>
+                        <div class="mb-1"><span class="fw-bold text-dark">Status:</span> Final</div>
+                        <div class="mb-1"><span class="fw-bold text-dark">Payment Status:</span> <span class="badge bg-success">Paid</span></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-1"><span class="fw-bold text-dark">Customer name:</span> <span id="vCustomer"></span></div>
+                        <div class="mb-1"><span class="fw-bold text-dark">Address:</span> <span id="vAddress"></span></div>
+                        <div class="mb-1"><span class="fw-bold text-dark">Mobile:</span> <span id="vPhone"></span></div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="mb-1"><span class="fw-bold text-dark">Date:</span> <span id="vDate"></span></div>
+                    </div>
+                </div>
+
+                <!-- Products Table -->
+                <h6 class="fw-bold text-dark mb-2">Products:</h6>
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered align-middle">
+                        <thead style="background-color: #20c997; color: white;">
+                            <tr>
+                                <th>#</th>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Discount</th>
+                                <th>Tax</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vItemsBody">
+                            <!-- Items will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-7">
+                        <h6 class="fw-bold text-dark mb-2">Payment info:</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle">
+                                <thead style="background-color: #20c997; color: white;">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Date</th>
+                                        <th>Reference No</th>
+                                        <th>Amount</th>
+                                        <th>Payment mode</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td id="vPayDate"></td>
+                                        <td id="vPayRef"></td>
+                                        <td id="vPayAmount"></td>
+                                        <td id="vPayMode"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="bg-light p-3 border rounded">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-bold text-dark">Total:</span>
+                                <span class="fw-bold text-dark" id="vTotal">0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-bold text-dark">Discount:</span>
+                                <span>(-) <span id="vDiscount">0.00</span></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-bold text-dark">Order Tax:</span>
+                                <span>(+) <span id="vTax">0.00</span></span>
+                            </div>
+                            <div class="d-flex justify-content-between pt-2 border-top">
+                                <span class="fw-bold text-dark">Total Payable:</span>
+                                <span class="fw-bold text-dark" id="vPayable">0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <span class="fw-bold text-dark">Total paid:</span>
+                                <span class="fw-bold text-dark" id="vPaid">0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <span class="fw-bold text-dark">Total remaining:</span>
+                                <span class="fw-bold text-dark" id="vRemaining">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#salesCashTable').DataTable({
+            "pageLength": 10,
+            "order": [[4, "desc"]],
+            "language": {
+                "search": "",
+                "searchPlaceholder": "Search transactions...",
+                "paginate": { "previous": "Prev", "next": "Next" }
+            },
+            "dom": 'rtip',
+            "drawCallback": function() {
+                $('.dataTables_filter input').addClass('form-control shadow-none');
+            }
+        });
+
+        $('#salesSearch').on('keyup', function() {
+            $('#salesCashTable').DataTable().search($(this).val()).draw();
+        });
+
+        // Payment Method Logic
+        $('#paymentMethod').on('change', function() {
+            const method = $(this).val();
+            if (method === 'Credit') {
+                $('#accountDiv').fadeOut();
+                $('#customerLabel').html('Customer <span class="text-danger">* (Required for Debt)</span>');
+                $('#accountId').prop('required', false);
+            } else {
+                $('#accountDiv').fadeIn();
+                $('#customerLabel').html('Customer <span class="text-muted">(Optional for Cash)</span>');
+                $('#accountId').prop('required', true);
+            }
+        });
+
+        // Dynamic Row Logic
+        function calculateTotals() {
+            let subtotal = 0;
+            $('.item-row').each(function() {
+                const qty = parseFloat($(this).find('.qty-input').val()) || 0;
+                const price = parseFloat($(this).find('.price-input').val()) || 0;
+                const total = qty * price;
+                $(this).find('.row-total').text(total.toLocaleString(undefined, {minimumFractionDigits: 2}));
+                subtotal += total;
+            });
+
+            const vatRate = parseFloat($('#vatRate').val()) || 0;
+            const discount = parseFloat($('#discountInput').val()) || 0;
+            
+            const taxAmount = (subtotal * vatRate) / 100;
+            const total = subtotal + taxAmount - discount;
+            
+            $('#subtotalDisplay').text(subtotal.toLocaleString(undefined, {minimumFractionDigits: 2}));
+            $('#taxDisplay').text(taxAmount.toLocaleString(undefined, {minimumFractionDigits: 2}));
+            $('#discountDisplay').text(discount.toLocaleString(undefined, {minimumFractionDigits: 2}));
+            $('#totalDisplay').text(total.toLocaleString(undefined, {minimumFractionDigits: 2}));
+            
+            // Calculate Balance
+            const paid = parseFloat($('#paidAmount').val()) || 0;
+            const balance = total - paid;
+            $('#balanceDisplay').text(balance.toLocaleString(undefined, {minimumFractionDigits: 2}));
+        }
+
+        $('#vatRate, #discountInput, #paidAmount').on('input', calculateTotals);
+
+        $('#addRow').click(function() {
+            const newRow = $('.item-row:first').clone();
+            
+            // Clean up Select2 before appending
+            newRow.find('.select2-container').remove();
+            newRow.find('select').removeClass('select2-hidden-accessible').removeAttr('data-select2-id').show();
+            
+            newRow.find('input').val('');
+            newRow.find('.qty-input').val('1');
+            newRow.find('.price-input').val('0.00');
+            newRow.find('.row-total').text('0.00');
+            newRow.find('.product-select').val('');
+            
+            $('#itemsTable tbody').append(newRow);
+            
+            // Re-initialize Select2 for the new row
+            newRow.find('.searchable-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                closeOnSelect: true,
+                dropdownParent: $('#addSalesOffcanvas')
+            });
+        });
+
+        $(document).on('click', '.remove-row', function() {
+            if ($('.item-row').length > 1) {
+                $(this).closest('tr').remove();
+                calculateTotals();
+            }
+        });
+
+        $(document).on('change', '.product-select', function() {
+            const price = $(this).find(':selected').data('price') || 0;
+            $(this).closest('tr').find('.price-input').val(price);
+            calculateTotals();
+        });
+
+        $(document).on('input', '.qty-input, .price-input', function() {
+            calculateTotals();
+        });
+
+        // Form Submission
+        $('#addSalesForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const method = $('#paymentMethod').val();
+            const customerId = $('#customerId').val();
+            const paidAmount = parseFloat($('#paidAmount').val()) || 0;
+            
+            // Calculate Total from JS (to be safe)
+            let subtotal = 0;
+            $('.item-row').each(function() {
+                const q = parseFloat($(this).find('.qty-input').val()) || 0;
+                const p = parseFloat($(this).find('.price-input').val()) || 0;
+                subtotal += (q * p);
+            });
+            const vat = parseFloat($('#vatRate').val()) || 0;
+            const disc = parseFloat($('#discountInput').val()) || 0;
+            const totalAmount = subtotal + (subtotal * vat / 100) - disc;
+
+            // Validate: Credit sales OR Partial payments must have a selected customer
+            if ((method === 'Credit' || paidAmount < totalAmount) && !customerId) {
+                $('#customerError').text("Maa xulan kartid 'Walk-in' haddii ay tahay Dayn ama Lacag dhiman!").removeClass('d-none');
+                $('#customerId').addClass('is-invalid');
+                return;
+            } else {
+                $('#customerError').addClass('d-none');
+                $('#customerId').removeClass('is-invalid');
+            }
+
+            const items = [];
+            $('.item-row').each(function() {
+                const productId = $(this).find('.product-select').val();
+                const qty = $(this).find('.qty-input').val();
+                const price = $(this).find('.price-input').val();
+                
+                if (productId && qty) {
+                    items.push({
+                        product_id: productId,
+                        qty: qty,
+                        price: price
+                    });
+                }
+            });
+
+            const data = {
+                customer_id: $('#customerId').val(),
+                payment_method: $('#paymentMethod').val(),
+                account_id: $('#accountId').val(),
+                paid_amount: parseFloat($('#paidAmount').val()) || 0,
+                discount_amount: parseFloat($('#discountInput').val()) || 0,
+                vat_rate: $('#vatRate').val(),
+                date: $('input[name="date"]').val(),
+                attachment: $('#saleAttachment').val(),
+                items: items
+            };
+
+            $.ajax({
+                url: "{{ url_for('customers.add_sale_cash') }}",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function(response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert("Error: " + response.message);
+                    }
+                }
+            });
+        });
+    });
+
+document.getElementById('invoiceFile')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        document.getElementById('previewImg').src = event.target.result;
+        document.getElementById('uploadArea').classList.add('d-none');
+        document.getElementById('scanningContainer').classList.remove('d-none');
+        
+        const formData = new FormData();
+        formData.append('image', file);
+
+        fetch('/api/ai/scan-invoice', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            setTimeout(() => {
+                document.getElementById('scanningContainer').classList.add('d-none');
+                document.getElementById('scanResults').classList.remove('d-none');
+                
+                document.getElementById('resInvoiceNo').innerText = data.invoice_no;
+                document.getElementById('resVendor').innerText = data.vendor_name;
+                document.getElementById('resTotal').innerText = '$' + data.total.toFixed(2);
+                
+                window.lastAiData = data;
+            }, 1500);
+        });
+    }
+    reader.readAsDataURL(file);
+});
+
+document.getElementById('applyScanBtn')?.addEventListener('click', function() {
+    if (!window.lastAiData) return;
+    
+    const addOffcanvas = new bootstrap.Offcanvas(document.getElementById('addSalesOffcanvas'));
+    const aiOffcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('aiScanOffcanvas'));
+    
+    aiOffcanvas.hide();
+    addOffcanvas.show();
+
+    // Store attachment path
+    if (window.lastAiData.attachment_path) {
+        document.getElementById('saleAttachment').value = window.lastAiData.attachment_path;
+    }
+    
+    // Clear existing items except the first one
+    $('#itemsTable tbody tr:not(:first)').remove();
+    
+    // Fill items from AI data
+    const items = window.lastAiData.items;
+    items.forEach((item, index) => {
+        let row;
+        if (index === 0) {
+            row = $('.item-row:first');
+        } else {
+            row = $('.item-row:first').clone();
+            $('#itemsTable tbody').append(row);
+        }
+        
+        // Find matching product (simplified search)
+        const productSelect = row.find('.product-select');
+        productSelect.find('option').each(function() {
+            if ($(this).text().toLowerCase().includes(item.name.toLowerCase())) {
+                $(this).prop('selected', true);
+            }
+        });
+        
+        row.find('.qty-input').val(item.qty);
+        row.find('.price-input').val(item.cost); // Use as selling price for demo
+    });
+    
+    // Trigger totals calculation
+    if (typeof calculateTotals === 'function') calculateTotals();
+    
+    Swal.fire({
+        icon: 'success',
+        title: 'AI Data Applied!',
+        text: 'Items-kii Invoice-ka waa la soo saaray.',
+        timer: 2000,
+        showConfirmButton: false
+    });
+});
+
+// View Sale Modal Logic
+$(document).on('click', '.view-sale-btn', function() {
+    $('#viewInvoiceNo, #vInvoice').text($(this).data('invoice'));
+    $('#vCustomer').text($(this).data('customer'));
+    $('#vPhone').text($(this).data('phone'));
+    $('#vDate, #vPayDate').text($(this).data('date'));
+    
+    const total = parseFloat($(this).data('total')).toFixed(2);
+    const paid = parseFloat($(this).data('paid')).toFixed(2);
+    const method = $(this).data('method');
+    
+    $('#vTotal, #vPayable').text('$' + total);
+    $('#vPaid, #vPayAmount').text('$' + paid);
+    $('#vPayMode').text(method);
+    $('#vPayRef').text('PAY-' + $(this).data('invoice'));
+    
+    const items = $(this).data('items');
+    let itemsHtml = '';
+    
+    if (items && items.length > 0) {
+        items.forEach((item, index) => {
+            itemsHtml += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${item.product_name}</td>
+                <td>${item.quantity}</td>
+                <td>$${parseFloat(item.unit_price).toFixed(2)}</td>
+                <td>$0.00</td>
+                <td>$0.00</td>
+                <td>$${parseFloat(item.subtotal).toFixed(2)}</td>
+            </tr>`;
+        });
+    } else {
+        itemsHtml = '<tr><td colspan="7" class="text-center text-muted">No items found</td></tr>';
+    }
+    
+    $('#vItemsBody').html(itemsHtml);
+    
+    new bootstrap.Modal(document.getElementById('viewSaleModal')).show();
+});
+
+function processReturnFromModal() {
+    const invoiceNo = $('#viewInvoiceNo').text();
+    if (invoiceNo) {
+        window.location.href = `/sales/returns?invoice_no=${invoiceNo}&auto_process=true`;
+    }
+}
+</script>
+
+<!-- AI Scan Offcanvas -->
+<div class="offcanvas offcanvas-end border-0 shadow-premium" tabindex="-1" id="aiScanOffcanvas" style="width: 500px;">
+    <div class="offcanvas-header border-bottom border-light py-4 px-4" style="background-color: var(--surface);">
+        <div class="d-flex align-items-center">
+            <div class="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
+                <i class="fas fa-wand-magic-sparkles text-primary fs-5"></i>
+            </div>
+            <h5 class="fw-bold mb-0 text-main">AI Invoice Scanner</h5>
+        </div>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-4" style="background-color: var(--bg-main);">
+        <div class="text-center mb-5 mt-3">
+            <div class="upload-container mb-4" id="uploadArea">
+                <div class="upload-box-premium p-5 border-2 rounded-4 d-flex flex-column align-items-center justify-content-center cursor-pointer animate-up" 
+                     onclick="document.getElementById('invoiceFile').click()">
+                    <div class="pulse-icon mb-4">
+                        <i class="fas fa-cloud-arrow-up fa-3x text-primary opacity-75"></i>
+                    </div>
+                    <h5 class="fw-bold text-main mb-2">Soo geli ama Sawir Invoice-ka</h5>
+                    <p class="text-muted small px-4">AI-da ayaa si toos ah u aqrin doonta xogta.</p>
+                    
+                    <div class="mt-3">
+                        <span class="btn btn-primary-elite px-4 py-2">
+                            <i class="fas fa-camera me-2"></i> Scan with Camera
+                        </span>
+                    </div>
+                    <input type="file" id="invoiceFile" class="d-none" accept="image/*" capture="environment">
+                </div>
+            </div>
+
+            <div id="scanningContainer" class="d-none">
+                <div class="scanner-wrap rounded-4 overflow-hidden position-relative mb-4" style="height: 300px; background-color: #000;">
+                    <img id="previewImg" src="" class="img-fluid w-100 h-100 object-fit-cover opacity-50">
+                    <div class="scan-line"></div>
+                </div>
+                <h5 class="fw-bold text-primary animate-pulse">Scanning Invoice...</h5>
+                <p class="text-muted small">AI-du waxay hadda aqrinaysaa alaabta iyo qiimaha.</p>
+            </div>
+
+            <div id="scanResults" class="d-none text-start">
+                <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4">
+                    <i class="fas fa-check-circle me-2"></i> Xogta si guul leh ayaa loo soo saaray!
+                </div>
+                <div class="card border-0 shadow-sm rounded-4 p-3 mb-4" style="background-color: var(--surface);">
+                    <div class="mb-3">
+                        <label class="small text-muted fw-bold text-uppercase">Items Detected</label>
+                        <div class="fw-bold text-main" id="resInvoiceNo">2 Items</div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="small text-muted fw-bold text-uppercase">Total Amount</label>
+                        <div class="fw-bold text-primary h4" id="resTotal">$0.00</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary-elite w-100 py-3" id="applyScanBtn">
+                    <i class="fas fa-cart-arrow-down me-2"></i> Fill Sales Items
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cursor-pointer { cursor: pointer; }
+    
+    .upload-box-premium {
+        border: 2px dashed var(--primary-elite);
+        background: linear-gradient(145deg, var(--surface), #f8faff);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .upload-box-premium:hover {
+        border-color: var(--primary-elite);
+        background: var(--surface);
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(108, 92, 231, 0.1);
+    }
+    
+    .pulse-icon {
+        animation: pulse-soft 2s infinite;
+    }
+    
+    @keyframes pulse-soft {
+        0% { transform: scale(1); opacity: 0.7; }
+        50% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(1); opacity: 0.7; }
+    }
+    
+    .scanner-wrap { border: 2px solid var(--primary-elite); box-shadow: 0 0 25px rgba(108, 92, 231, 0.2); }
+    .scan-line {
+        position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+        background: linear-gradient(to right, transparent, var(--primary-elite), transparent);
+        box-shadow: 0 0 15px var(--primary-elite);
+        animation: scanMove 2.5s infinite linear;
+    }
+    @keyframes scanMove { 0% { top: 0; } 100% { top: 100%; } }
+    .animate-pulse { animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+</style>
+{% endblock %}

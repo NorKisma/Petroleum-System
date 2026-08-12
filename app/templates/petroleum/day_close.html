@@ -1,0 +1,163 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Xiritaanka Maalinta{% endblock %}
+{% block page_title %}Xiritaanka Maalinta{% endblock %}
+{% block styles %}
+<style>
+    .day-close-container .text-muted {
+        color: #64748b !important;
+    }
+
+    .day-close-container .fw-bold {
+        color: #1e293b !important;
+    }
+
+    .day-close-container .text-primary {
+        color: #2563eb !important;
+    }
+
+    .day-close-container .text-danger {
+        color: #ef4444 !important;
+    }
+
+    .day-close-container h6.fw-bold {
+        color: #1e293b !important;
+    }
+
+    .day-close-container .bg-light {
+        background-color: #f8fafc !important;
+        border: 1px solid #e2e8f0;
+    }
+
+    .day-close-container .table thead th {
+        color: #64748b;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set active = 'dayclose' %}
+
+<div class="row g-4 animate-up day-close-container">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-premium rounded-4">
+            <div class="card-header card-header-elite-blue d-flex justify-content-between py-3">
+                <h6 class="mb-0 text-white fw-bold">Kooban: {{ target_date.strftime('%d/%m/%Y') }}</h6>
+                <input type="date" class="form-control form-control-sm rounded-pill w-auto"
+                    value="{{ target_date.isoformat() }}" onchange="location.href='?date='+this.value">
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-4 text-center">
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3"><small class="text-muted">Iib (L)</small>
+                            <h5 class="fw-bold mb-0">{{ "{:,.1f}".format(summary.total_sales_liters) }}</h5>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3"><small class="text-muted">Dakhli</small>
+                            <h5 class="fw-bold mb-0 text-primary">{{ company_settings.currency or '$' }}{{
+                                "{:,.2f}".format(summary.total_sales_amount) }}</h5>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3"><small class="text-muted">Soo-dejin (L)</small>
+                            <h5 class="fw-bold mb-0">{{ "{:,.1f}".format(summary.total_deliveries_liters) }}</h5>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3"><small class="text-muted">Faraq</small>
+                            <h5 class="fw-bold mb-0 text-danger">{{ "{:,.1f}".format(summary.total_variance) }}L</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold mb-3">Xaaladda Qiyaasta</h6>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Tankiga</th>
+                                <th>Subax</th>
+                                <th>Habeen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tank in summary.tanks_requiring_dip %}
+                            <tr>
+                                <td class="fw-bold">{{ tank.name }}</td>
+                                <td>{% if summary.opening_dips|selectattr('tank_id','equalto',tank.id)|list %}<i
+                                        class="fas fa-check text-success"></i>{% else %}<i
+                                        class="fas fa-times text-danger"></i>{% endif %}</td>
+                                <td>{% if summary.closing_dips|selectattr('tank_id','equalto',tank.id)|list %}<i
+                                        class="fas fa-check text-success"></i>{% else %}<i
+                                        class="fas fa-times text-warning"></i>{% endif %}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-muted small">Tank shidaal leh ma jiro</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if closed %}
+                <div class="alert alert-success rounded-4">
+                    <i class="fas fa-lock me-2"></i> Maalintan waa la xiray {{ closed.created_at.strftime('%d/%m/%Y
+                    %H:%M') }}
+                </div>
+                {% else %}
+                <button class="btn btn-danger rounded-pill px-5 py-3 fw-bold w-100" onclick="closeDay()" {% if
+                    tenant.petroleum_require_daily_dip and (not summary.has_opening_dip or not summary.has_closing_dip)
+                    %}disabled{% endif %}>
+                    <i class="fas fa-lock me-2"></i> Xir Maalinta
+                </button>
+                {% if tenant.petroleum_require_daily_dip and (not summary.has_opening_dip or not
+                summary.has_closing_dip) %}
+                <p class="text-danger small mt-2 text-center"><i class="fas fa-exclamation-circle me-1"></i> Qiyaasta
+                    subaxnimo & habeenkii waa lagama maarmaan.</p>
+                {% endif %}
+                {% endif %}
+
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('petroleum.daily_closing_report', date=target_date.isoformat()) }}"
+                        class="btn btn-outline-primary rounded-pill px-4">
+                        <i class="fas fa-file-alt me-1"></i> Eeg Warbixinta Maalinlaha
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-premium rounded-4">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="mb-0 fw-bold">Iibka Maalinta</h6>
+            </div>
+            <div class="list-group list-group-flush" style="max-height:400px;overflow-y:auto;">
+                {% for s in summary.sales %}
+                <div class="list-group-item d-flex justify-content-between small">
+                    <span>{{ s.invoice_no }} — {{ "{:,.0f}".format(s.liters_sold) }}L</span>
+                    <span class="fw-bold">{{ company_settings.currency or '$' }}{{ "{:,.2f}".format(s.total_amount)
+                        }}</span>
+                </div>
+                {% else %}
+                <div class="list-group-item text-muted text-center">Iib ma jiro</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    function closeDay() {
+        if (!confirm('Ma hubtaa inaad xirto maalintan?')) return;
+        fetch('{{ url_for("petroleum.execute_day_close") }}', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: '{{ target_date.isoformat() }}' })
+        }).then(r => r.json()).then(d => { alert(d.message); if (d.success) location.reload(); });
+    }
+</script>
+{% endblock %}

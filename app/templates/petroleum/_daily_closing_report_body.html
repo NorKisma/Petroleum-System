@@ -1,0 +1,219 @@
+{% set cur = company_settings.currency if company_settings else '$' %}
+
+{% if not report.has_meter_data and report.sales_count > 0 %}
+<div class="alert alert-info rounded-3 py-2 px-3 small mb-3">
+    <i class="fas fa-info-circle me-1"></i>
+    Akhriska shift-ka lama gelin — litirka waxaa laga soo qaatay <strong>iibka</strong>.
+    Geli akhriska <a href="{{ url_for('petroleum.shift_meters', date=target_date.isoformat()) }}">Shift Meters</a>.
+</div>
+{% elif report.sales_count == 0 and not report.has_meter_data %}
+<div class="alert alert-warning rounded-3 py-2 px-3 small mb-3">
+    <i class="fas fa-exclamation-triangle me-1"></i>
+    Maalintan xog iib ama akhris pombad ma jiro.
+</div>
+{% endif %}
+
+{% for shift in report.shifts %}
+<div class="mb-2 {% if not loop.last %}pb-2 border-bottom{% endif %}">
+    <div class="d-flex justify-content-between align-items-center mb-1" style="cursor:pointer;"
+        data-bs-toggle="collapse" data-bs-target="#shiftCollapse{{ shift.number }}">
+        <div>
+            <h6 class="fw-bold mb-0 text-decoration-underline">
+                <i class="fas fa-chevron-right me-2 small transition-all" id="chevronShift{{ shift.number }}"></i>
+                Shift {{ shift.number }}: {{ shift.name }}
+            </h6>
+            {% if shift.attendant %}
+            <small class="text-muted ms-4">{{ shift.attendant }} — {{ shift.time_label }}</small>
+            {% else %}
+            <small class="text-muted ms-4">{{ shift.time_label }}</small>
+            {% endif %}
+        </div>
+        <a href="{{ url_for('petroleum.shift_meters', date=target_date.isoformat(), shift=shift.number) }}"
+            class="btn btn-sm btn-outline-secondary rounded-pill">
+            <i class="fas fa-tachometer-alt me-1"></i> Geli Akhriska
+        </a>
+    </div>
+
+    <div class="collapse" id="shiftCollapse{{ shift.number }}">
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center mb-2" style="font-size:0.8rem;">
+                <thead class="table-light">
+                    <tr>
+                        <th>Pombada</th>
+                        <th>Akhriska Hore</th>
+                        <th>Akhriska Dambe</th>
+                        <th>Total Shidaal (L)</th>
+                        <th>Khidmadda</th>
+                        <th>Total Lacag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in shift.pumps %}
+                    <tr>
+                        <td class="fw-bold">{{ p.pump_number }}</td>
+                        <td>{% if p.opening_meter is not none %}{{ "{:,.2f}".format(p.opening_meter) }}{% else %}—{%
+                            endif
+                            %}</td>
+                        <td>{% if p.closing_meter is not none %}{{ "{:,.2f}".format(p.closing_meter) }}{% else %}—{%
+                            endif
+                            %}</td>
+                        <td>{{ "{:,.2f}".format(p.liters_sold) }}</td>
+                        <td>{{ cur }}{{ "{:,.2f}".format(p.unit_price) }}</td>
+                        <td class="fw-bold">{{ cur }}{{ "{:,.3f}".format(p.total_amount) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-muted">Pombad ma jiro</td>
+                    </tr>
+                    {% endfor %}
+                    {% if shift.pumps %}
+                    <tr class="table-secondary fw-bold">
+                        <td colspan="3" class="text-end">Wadarta Shift {{ shift.number }}</td>
+                        <td>{{ "{:,.2f}".format(shift.pump_totals.liters) }}</td>
+                        <td></td>
+                        <td>{{ cur }}{{ "{:,.3f}".format(shift.pump_totals.amount) }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row g-2">
+            <div class="col-md-6">
+                <div class="small fw-bold text-decoration-underline mb-1">Lacag Bixinta — Shift {{ shift.number }}</div>
+                <table class="table table-bordered table-sm mb-0" style="font-size:0.85rem;">
+                    <tbody>
+                        <tr>
+                            <td class="fw-bold">Caddaan</td>
+                            <td class="text-end">{{ cur }}{{ "{:,.3f}".format(shift.payments.cash +
+                                shift.payments.other) }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">EVC</td>
+                            <td class="text-end">{{ cur }}{{ "{:,.3f}".format(shift.payments.evc) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">E-DAHAB</td>
+                            <td class="text-end">{{ cur }}{{ "{:,.3f}".format(shift.payments.edahab) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Deyn</td>
+                            <td class="text-end text-warning fw-bold">{{ cur }}{{
+                                "{:,.3f}".format(shift.payments.credit) }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Qiimo Dhimis</td>
+                            <td class="text-end">{{ cur }}{{ "{:,.3f}".format(shift.payments.discount) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <div class="small fw-bold text-decoration-underline mb-1">Faahfaahinta Deynta — Shift {{ shift.number }}
+                </div>
+                <table class="table table-bordered table-sm mb-0" style="font-size:0.85rem;">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Macmiil</th>
+                            <th class="text-end">Litir</th>
+                            <th class="text-end">Wadarta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in shift.debts %}
+                        <tr>
+                            <td>{{ d.name }}</td>
+                            <td class="text-end">{{ "{:,.1f}".format(d.liters) }}</td>
+                            <td class="text-end fw-bold">{{ cur }}{{ "{:,.3f}".format(d.total) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-muted text-center">Deyn ma jirto</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+{% endfor %}
+
+{% if report.deliveries %}
+<div class="mb-2">
+    <h6 class="fw-bold mb-1 text-decoration-underline small" style="cursor:pointer;" data-bs-toggle="collapse"
+        data-bs-target="#deliveryCollapse">
+        <i class="fas fa-chevron-right me-2 small transition-all" id="chevronDel"></i>
+        Soo-dejinta (Purchases)
+    </h6>
+    <div class="collapse" id="deliveryCollapse">
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center mb-0" style="font-size:0.8rem;">
+                <thead class="table-light">
+                    <tr>
+                        <th>Waybill</th>
+                        <th>Iibsashada</th>
+                        <th>Nooca</th>
+                        <th>Litir</th>
+                        <th>Status</th>
+                        <th>Wadarta</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in report.deliveries %}
+                    <tr>
+                        <td>{{ d.waybill_no or '—' }}</td>
+                        <td class="text-start ps-2">{{ d.purchase_name or '—' }}</td>
+                        <td>{{ d.fuel_type.name }}</td>
+                        <td>{{ "{:,.1f}".format(d.liters_received) }} L</td>
+                        <td>
+                            {% if d.payment_method == 'CASH' %}
+                            <span class="text-success small fw-bold">PAID</span>
+                            {% else %}
+                            <span class="text-warning small fw-bold">CREDIT</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold text-end pe-2">{{ cur }}{{ "{:,.2f}".format(d.total_cost) }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="table-secondary fw-bold">
+                        <td colspan="3" class="text-end">Wadarta Soo-dejinta</td>
+                        <td>{{ "{:,.1f}".format(report.delivery_totals.liters) }} L</td>
+                        <td></td>
+                        <td class="text-end pe-2">{{ cur }}{{ "{:,.2f}".format(report.delivery_totals.paid +
+                            report.delivery_totals.credit) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>
+{% endif %}
+
+<div class="border border-1 rounded-3 p-2 mt-1 bg-light">
+    <div class="small fw-bold text-decoration-underline mb-1">Wadarta Maalinta</div>
+    <div class="row g-2">
+        <div class="col-6 col-md-3">
+            <small class="text-muted d-block">Deynta Guud</small>
+            <strong class="fs-5 text-warning">{{ cur }}{{ "{:,.3f}".format(report.totals.total_debt) }}</strong>
+        </div>
+        <div class="col-6 col-md-3">
+            <small class="text-muted d-block">Lacag La Ururiyay</small>
+            <strong class="fs-5 text-success">{{ cur }}{{ "{:,.3f}".format(report.totals.total_collected) }}</strong>
+        </div>
+        <div class="col-6 col-md-3">
+            <small class="text-muted d-block">Wadarta Shidaalka</small>
+            <strong class="fs-5">{{ "{:,.2f}".format(report.totals.total_fuel) }} L</strong>
+        </div>
+        <div class="col-6 col-md-3">
+            <small class="text-muted d-block">Wadarta Lacagta</small>
+            <strong class="fs-5 text-primary">{{ cur }}{{ "{:,.3f}".format(report.totals.total_revenue) }}</strong>
+        </div>
+    </div>
+</div>

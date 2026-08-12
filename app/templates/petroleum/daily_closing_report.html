@@ -1,0 +1,122 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Warbixin Maalinle{% endblock %}
+{% block page_title %}Shaxda Xisaab Xirka Maalinlaha{% endblock %}
+{% block styles %}
+<style>
+    .petro-report-container .text-muted {
+        color: #64748b !important;
+    }
+
+    .petro-report-container .fw-bold {
+        color: #1e293b !important;
+    }
+
+    .petro-report-container .text-primary {
+        color: #2563eb !important;
+    }
+
+    .petro-report-container .text-warning {
+        color: #d97706 !important;
+    }
+
+    .petro-report-container .text-success {
+        color: #16a34a !important;
+    }
+
+    .petro-report-container h6.fw-bold {
+        color: #1e293b !important;
+    }
+
+    .petro-report-container .table thead th {
+        color: #64748b;
+        font-weight: 700;
+        background-color: #f8fafc;
+    }
+
+    .petro-report-container .bg-light {
+        background-color: #f8fafc !important;
+        border: 1px solid #e2e8f0;
+    }
+
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    .rotate-90 {
+        transform: rotate(90deg);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set active = 'report' %}
+
+<div class="row g-4 animate-up petro-report-container">
+    <div class="col-12">
+        <div class="card border-0 shadow-premium rounded-4">
+            <div
+                class="card-header card-header-elite-blue d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+                <h6 class="mb-0 text-white fw-bold">
+                    <i class="fas fa-file-alt me-2"></i>SHAXDA XISAAB XIRKA MAALINLAHA
+                </h6>
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="date" class="form-control form-control-sm rounded-pill"
+                        value="{{ target_date.isoformat() }}" onchange="location.href='?date='+this.value">
+                    <a href="{{ url_for('petroleum.daily_closing_report_print', date=target_date.isoformat()) }}"
+                        target="_blank" class="btn btn-sm btn-light rounded-pill px-3 fw-bold">
+                        <i class="fas fa-print me-1"></i> Daabac
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-2">
+                {% include 'petroleum/_daily_closing_report_body.html' %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const collapses = document.querySelectorAll('.collapse');
+        collapses.forEach(el => {
+            el.addEventListener('show.bs.collapse', function () {
+                const id = this.getAttribute('id');
+                let chevronId = '';
+                if (id === 'deliveryCollapse') chevronId = 'chevronDel';
+                else if (id.startsWith('shiftCollapse')) chevronId = 'chevronShift' + id.replace('shiftCollapse', '');
+
+                if (chevronId) {
+                    const chevron = document.getElementById(chevronId);
+                    if (chevron) chevron.classList.add('rotate-90');
+                }
+            });
+
+            el.addEventListener('hide.bs.collapse', function () {
+                const id = this.getAttribute('id');
+                let chevronId = '';
+                if (id === 'deliveryCollapse') chevronId = 'chevronDel';
+                else if (id.startsWith('shiftCollapse')) chevronId = 'chevronShift' + id.replace('shiftCollapse', '');
+
+                if (chevronId) {
+                    const chevron = document.getElementById(chevronId);
+                    if (chevron) chevron.classList.remove('rotate-90');
+                }
+            });
+
+            // Initialize chevrons for open collapses
+            if (el.classList.contains('show')) {
+                const id = el.getAttribute('id');
+                let chevronId = '';
+                if (id === 'deliveryCollapse') chevronId = 'chevronDel';
+                else if (id.startsWith('shiftCollapse')) chevronId = 'chevronShift' + id.replace('shiftCollapse', '');
+                if (chevronId) {
+                    const chevron = document.getElementById(chevronId);
+                    if (chevron) chevron.classList.add('rotate-90');
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

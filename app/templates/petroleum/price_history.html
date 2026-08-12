@@ -1,0 +1,28 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Price History{% endblock %}
+{% block page_title %}Taariikhda Qiimaha{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-premium rounded-4 animate-up">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0" id="priceTable">
+            <thead class="thead-dark-elite">
+                <tr><th class="ps-4">Shidaal</th><th>Buy Old</th><th>Buy New</th><th>Sell Old</th><th>Sell New</th><th>Sabab</th><th>Taariikh</th><th>User</th></tr>
+            </thead>
+            <tbody>
+                {% for h in history %}
+                <tr>
+                    <td class="ps-4 fw-bold">{{ h.fuel_type.name }}</td>
+                    <td>{{ "{:,.3f}".format(h.old_buy_price) }}</td>
+                    <td class="text-success fw-bold">{{ "{:,.3f}".format(h.new_buy_price) }}</td>
+                    <td>{{ "{:,.3f}".format(h.old_sell_price) }}</td>
+                    <td class="text-primary fw-bold">{{ "{:,.3f}".format(h.new_sell_price) }}</td>
+                    <td class="small">{{ h.reason or '—' }}</td>
+                    <td class="small">{{ h.effective_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td class="small">{{ h.user.username if h.user else '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

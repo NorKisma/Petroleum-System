@@ -1,0 +1,168 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Fleet Customers{% endblock %}
+{% block page_title %}Fleet / Credit Customers{% endblock %}
+{% block content %}
+{% set active = 'fleet' %}
+{% set cur = company_settings.currency if company_settings else '$' %}
+
+<div class="row g-4 animate-up">
+    <!-- Form — toos ah, active -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-premium rounded-4">
+            <div class="card-header card-header-elite-blue py-3">
+                <h6 class="mb-0 text-white fw-bold"><i class="fas fa-truck me-2"></i>Ku dar Fleet Customer</h6>
+            </div>
+            <div class="card-body p-4" id="fleetForm">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Magaca Macmiilka</label>
+                    <input type="text" id="fleetCustomerName" class="form-control rounded-3"
+                        placeholder="Geli magaca..." autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Lambarka Taleefanka (Tell)</label>
+                    <input type="text" id="fleetPhone" class="form-control rounded-3" placeholder="Geli taleefanka..."
+                        autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Credit Limit</label>
+                    <div class="input-group">
+                        <span class="input-group-text rounded-start-3 bg-light border-end-0">{{ cur }}</span>
+                        <input type="number" id="fleetLimit" class="form-control rounded-end-3 border-start-0"
+                            value="50000" min="0" step="100">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold small">Payment Terms (days)</label>
+                    <input type="number" id="fleetTerms" class="form-control rounded-3" value="30" min="1">
+                </div>
+                <div id="fleetMsg" class="alert rounded-3 py-2 small d-none mb-3"></div>
+                <button type="button" class="btn btn-primary w-100 rounded-pill py-2 fw-bold" id="fleetSaveBtn"
+                    onclick="saveFleet()">
+                    <i class="fas fa-save me-2"></i> Kaydi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-premium rounded-4">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-list me-2 text-primary"></i>Fleet Accounts</h6>
+                <span class="badge bg-primary rounded-pill">{{ fleet|length }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-4">Macmiil / Tell</th>
+                            <th>Credit Limit</th>
+                            <th>Balance</th>
+                            <th>Available</th>
+                            <th>Terms</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in fleet %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold">{{ f.customer.name }}</div>
+                                <div class="small text-primary fw-bold">{{ f.customer.phone or '—' }}</div>
+                            </td>
+                            <td>{{ cur }}{{ "{:,.2f}".format(f.credit_limit) }}</td>
+                            <td class="fw-bold text-danger">{{ cur }}{{ "{:,.2f}".format(f.current_balance) }}</td>
+                            <td class="text-success fw-bold">{{ cur }}{{ "{:,.2f}".format(f.credit_limit -
+                                f.current_balance) }}</td>
+                            <td>{{ f.payment_terms_days }} days</td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-success rounded-pill px-3"
+                                    onclick="payFleet({{ f.id }}, {{ f.current_balance }})">
+                                    <i class="fas fa-money-bill me-1"></i> Bixi
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="fas fa-truck fs-3 d-block mb-2 opacity-25"></i>
+                                Fleet customer lama darin — isticmaal form-ka bidix
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function showFleetMsg(msg, ok) {
+        const el = document.getElementById('fleetMsg');
+        el.textContent = msg;
+        el.className = 'alert rounded-3 py-2 small mb-3 ' + (ok ? 'alert-success' : 'alert-danger');
+        el.classList.remove('d-none');
+    }
+
+    function saveFleet() {
+        const customerName = document.getElementById('fleetCustomerName').value;
+        const phone = document.getElementById('fleetPhone').value;
+
+        if (!customerName) {
+            showFleetMsg('Fadlan geli magaca macmiilka.', false);
+            return;
+        }
+        const btn = document.getElementById('fleetSaveBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Waa la kaydinayaa...';
+
+        fetch('{{ url_for("petroleum.add_fleet_customer") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                customer_name: customerName,
+                phone: phone,
+                credit_limit: document.getElementById('fleetLimit').value,
+                payment_terms_days: document.getElementById('fleetTerms').value
+            })
+        }).then(r => r.json()).then(d => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save me-2"></i> Kaydi';
+            if (d.success) {
+                showFleetMsg(d.message, true);
+                setTimeout(() => location.reload(), 800);
+            } else {
+                showFleetMsg(d.message, false);
+            }
+        }).catch(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save me-2"></i> Kaydi';
+            showFleetMsg('Cilad ayaa dhacday. Isku day mar kale.', false);
+        });
+    }
+
+    function payFleet(id, balance) {
+        const amountStr = prompt('Gali lacagta la bixinayo (Balance: ' + balance.toFixed(2) + '):');
+        if (amountStr === null) return;
+        const amount = parseFloat(amountStr) || 0;
+        
+        const discountStr = prompt('Gali qiimo dhimista (Discount), haddii ay jirto. (Ku dhaaf maran haddii aysan jirin):');
+        if (discountStr === null) return;
+        const discount = parseFloat(discountStr) || 0;
+
+        if (amount <= 0 && discount <= 0) {
+            alert('Fadlan geli lacag ama qiimo dhimis sax ah.');
+            return;
+        }
+
+        fetch('/petroleum/fleet/' + id + '/payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: amount, discount: discount })
+        }).then(r => r.json()).then(d => { alert(d.message); if (d.success) location.reload(); });
+    }
+</script>
+{% endblock %}

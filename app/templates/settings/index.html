@@ -145,6 +145,22 @@
         background: #fff;
     }
 
+    .module-card .module-toggle-wrap {
+        position: relative;
+        z-index: 3;
+        flex-shrink: 0;
+    }
+
+    .module-card .module-toggle-wrap .form-check-input {
+        cursor: pointer;
+        pointer-events: auto;
+    }
+
+    .module-card.module-enabled {
+        border-color: #3b82f6 !important;
+        background: #f0f7ff !important;
+    }
+
     .logo-upload-container {
         background: #f8fafc;
         border: 2px dashed #e2e8f0;
@@ -199,6 +215,10 @@
                 <button class="settings-nav-item border-0 w-100 text-start" data-bs-toggle="pill"
                     data-bs-target="#tab-modules" type="button">
                     <i class="fas fa-th-large"></i> Modules (Switch)
+                </button>
+                <button class="settings-nav-item border-0 w-100 text-start" data-bs-toggle="pill"
+                    data-bs-target="#tab-petroleum" type="button">
+                    <i class="fas fa-gas-pump"></i> Petroleum
                 </button>
                 <button class="settings-nav-item border-0 w-100 text-start" data-bs-toggle="pill"
                     data-bs-target="#tab-email" type="button">
@@ -571,31 +591,127 @@
                             ('module_assets', 'Asset Management', 'fa-landmark', 'Track fixed assets, locations, and
                             depreciation.'),
                             ('module_repair', 'Repair Module', 'fa-tools', 'Manage equipment repairs, service orders,
-                            and warranties.')
+                            and warranties.'),
+                            ('module_petroleum', 'Petroleum / Fuel', 'fa-gas-pump', 'Fuel distribution: tanks, pumps,
+                            sales, deliveries, dip readings & fleet credit.')
                             ] %}
 
                             {% for field, label, icon, desc in modules %}
                             <div class="col-md-4">
-                                <div class="module-card h-100 d-flex flex-column justify-content-between p-4"
-                                    style="background: #fff; border: 1px solid #eef2f6; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                                <div class="module-card h-100 d-flex flex-column justify-content-between p-4{% if company[field] %} module-enabled{% endif %}"
+                                    style="background: #fff; border: 1px solid #eef2f6; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);"
+                                    data-module-field="{{ field }}">
                                     <div class="d-flex align-items-center justify-content-between mb-3">
-                                        <div class="d-flex align-items-center">
+                                        <div class="d-flex align-items-center module-card-info" style="cursor:pointer;">
                                             <div class="icon-box me-3 d-flex align-items-center justify-content-center"
                                                 style="width: 45px; height: 45px; background: #f0f7ff; color: #4ba3e3; border-radius: 12px; font-size: 1.2rem;">
                                                 <i class="fas {{ icon }}"></i>
                                             </div>
                                             <h6 class="mb-0 fw-bold text-dark">{{ label }}</h6>
                                         </div>
-                                        <div class="form-check form-switch p-0 m-0">
-                                            <input class="form-check-input ms-0" type="checkbox" name="{{ field }}"
-                                                id="{{ field }}" style="width: 42px; height: 21px; cursor: pointer;" {%
-                                                if company[field] %}checked{% endif %}>
+                                        <div class="form-check form-switch p-0 m-0 module-toggle-wrap">
+                                            <input class="form-check-input ms-0 module-toggle" type="checkbox"
+                                                id="{{ field }}" role="switch" data-module-field="{{ field }}"
+                                                style="width: 42px; height: 21px;" {% if company[field] %}checked{% endif %}>
+                                            <label class="form-check-label visually-hidden" for="{{ field }}">{{ label }}</label>
                                         </div>
                                     </div>
-                                    <p class="text-muted small mb-0">{{ desc }}</p>
+                                    <p class="text-muted small mb-0 module-card-info" style="cursor:pointer;">{{ desc }}</p>
                                 </div>
                             </div>
                             {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Petroleum Tab -->
+                    <div class="tab-pane fade" id="tab-petroleum" role="tabpanel">
+                        <div class="section-header"><span class="section-title">Petroleum / Fuel Distribution</span></div>
+                        <p class="text-muted small">Settings for fuel distribution, dip readings, and fleet credit.</p>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="petroleum_require_daily_dip"
+                                        id="petroleum_require_daily_dip" {% if company.petroleum_require_daily_dip %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="petroleum_require_daily_dip">Require Daily Dip Readings</label>
+                                    <div class="text-muted small">Opening & closing dip required before day close.</div>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="petroleum_fleet_credit_enabled"
+                                        id="petroleum_fleet_credit_enabled" {% if company.petroleum_fleet_credit_enabled %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="petroleum_fleet_credit_enabled">Enable Fleet Credit Sales</label>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="petroleum_require_vehicle_plate"
+                                        id="petroleum_require_vehicle_plate" {% if company.petroleum_require_vehicle_plate %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="petroleum_require_vehicle_plate">Muuji taarikada gaariga iibka (ikhtiyaari)</label>
+                                    <div class="text-muted small">Haddii la shido, goobta taarikada ayaa la muujiyaa — ma aha lagama maarmaan.</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Habka Subaxnimo (Qiyaas + Xir Maalin)</label>
+                                    {% set morning_mode = company.petroleum_morning_mode or ('automatic' if company.petroleum_auto_morning_dip != False else 'manual') %}
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="petroleum_morning_mode"
+                                            id="petroleum_morning_mode_auto" value="automatic"
+                                            {% if morning_mode == 'automatic' %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="petroleum_morning_mode_auto">Toos ah (Automatic)</label>
+                                        <div class="text-muted small ms-4">Subax walba saacadda la doortay: tankiyada wax ku jiraan si toos ah ayaa loo qiyaasaa & maalintii shalay waa la xiraa (ilaa 30 daqiiqo ka dib).</div>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="petroleum_morning_mode"
+                                            id="petroleum_morning_mode_manual" value="manual"
+                                            {% if morning_mode == 'manual' %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="petroleum_morning_mode_manual">Gacanta (Manual)</label>
+                                        <div class="text-muted small ms-4">Ma jiro automation — maamulaha ayaa qiyaasta subaxnimo & xiritaanka maalinta gacanta ku sameeyaa.</div>
+                                    </div>
+                                </div>
+                                <div class="mb-3" id="petroleumMorningHourWrap">
+                                    <label class="form-label fw-bold small">Saacadda Automation</label>
+                                    <select name="petroleum_morning_auto_hour" class="form-select rounded-3 w-auto">
+                                        {% for h in range(0, 24) %}
+                                        <option value="{{ h }}" {% if (company.petroleum_morning_auto_hour or 6) == h %}selected{% endif %}>{{ "%02d"|format(h) }}:00 — {{ "%02d"|format(h) }}:30</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="text-muted small mt-1">Automation waxay ordaa daaqadda saacaddan ilaa 30 daqiiqo ka dib (nus saac).</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Variance Alert Threshold (%)</label>
+                                <input type="number" step="0.1" name="petroleum_variance_threshold" class="form-control rounded-3"
+                                    value="{{ company.petroleum_variance_threshold or 0.5 }}">
+                                <div class="text-muted small mt-1">Digniin marka farqiga dip-ka uu ka badan yahay % this.</div>
+
+                                <hr class="my-4">
+                                <label class="form-label fw-bold">Dejinta Saacadaha Shift-ka</label>
+                                <div class="row g-2">
+                                    <div class="col-12 mt-3">
+                                        <label class="form-label small fw-bold text-primary">Shift 1 (Saaka)</label>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">Saacadda Bilowga</label>
+                                        <input type="number" min="0" max="23" name="petroleum_shift1_start_hour" class="form-control rounded-3"
+                                            value="{{ company.petroleum_shift1_start_hour if company.petroleum_shift1_start_hour is not none else 7 }}">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">Saacadda Dhamaadka</label>
+                                        <input type="number" min="0" max="23" name="petroleum_shift1_end_hour" class="form-control rounded-3"
+                                            value="{{ company.petroleum_shift1_end_hour if company.petroleum_shift1_end_hour is not none else 17 }}">
+                                    </div>
+                                    
+                                    <div class="col-12 mt-3">
+                                        <label class="form-label small fw-bold text-primary">Shift 2 (Habeen)</label>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">Saacadda Bilowga</label>
+                                        <input type="number" min="0" max="23" name="petroleum_shift2_start_hour" class="form-control rounded-3"
+                                            value="{{ company.petroleum_shift2_start_hour if company.petroleum_shift2_start_hour is not none else 17 }}">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">Saacadda Dhamaadka</label>
+                                        <input type="number" min="0" max="23" name="petroleum_shift2_end_hour" class="form-control rounded-3"
+                                            value="{{ company.petroleum_shift2_end_hour if company.petroleum_shift2_end_hour is not none else 7 }}">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -879,6 +995,102 @@
 
 {% block scripts %}
 <script>
+    (function () {
+        const toggleUrl = {{ url_for("settings.toggle_module") | tojson }};
+
+        function updateModuleCardState(card, enabled) {
+            card.classList.toggle('module-enabled', enabled);
+        }
+
+        function saveModuleToggle(card, cb, field, enabled) {
+            if (cb.dataset.saving === '1') return;
+            cb.dataset.saving = '1';
+            cb.disabled = true;
+            updateModuleCardState(card, enabled);
+
+            fetch(toggleUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ module: field, enabled: enabled })
+            })
+            .then(function (r) {
+                if (!r.ok) {
+                    return r.json().catch(function () {
+                        return { success: false, message: 'Server error (' + r.status + ')' };
+                    });
+                }
+                return r.json();
+            })
+            .then(function (data) {
+                if (!data.success) {
+                    throw new Error(data.message || 'Toggle failed');
+                }
+                if (typeof showToast === 'function') {
+                    showToast('Saved', enabled ? 'Module waa la daaray' : 'Module waa la damiyay', 'success');
+                }
+            })
+            .catch(function (err) {
+                cb.checked = !enabled;
+                updateModuleCardState(card, cb.checked);
+                alert(err.message || 'Network error — isbeddelka lama kaydin');
+            })
+            .finally(function () {
+                cb.disabled = false;
+                delete cb.dataset.saving;
+            });
+        }
+
+        function initModuleToggles() {
+            document.querySelectorAll('.module-card').forEach(function (card) {
+                const cb = card.querySelector('.module-toggle');
+                if (!cb || cb.dataset.bound === '1') return;
+                cb.dataset.bound = '1';
+
+                const field = cb.dataset.moduleField || card.dataset.moduleField;
+                if (!field) return;
+
+                cb.addEventListener('change', function (e) {
+                    e.stopPropagation();
+                    saveModuleToggle(card, cb, field, cb.checked);
+                });
+
+                cb.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+
+                card.addEventListener('click', function (e) {
+                    if (e.target.closest('.module-toggle-wrap')) return;
+                    e.preventDefault();
+                    cb.checked = !cb.checked;
+                    saveModuleToggle(card, cb, field, cb.checked);
+                });
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initModuleToggles);
+        } else {
+            initModuleToggles();
+        }
+    })();
+
+    // Petroleum morning mode: show hour picker only for automatic
+    function syncPetroleumMorningHourWrap() {
+        var auto = document.getElementById('petroleum_morning_mode_auto');
+        var wrap = document.getElementById('petroleumMorningHourWrap');
+        if (!wrap || !auto) return;
+        wrap.style.display = auto.checked ? '' : 'none';
+    }
+    document.querySelectorAll('input[name="petroleum_morning_mode"]').forEach(function (el) {
+        el.addEventListener('change', syncPetroleumMorningHourWrap);
+    });
+    syncPetroleumMorningHourWrap();
+
     // Tab switching logic (Bootstrap 5)
     $(document).ready(function () {
         var triggerTabList = [].slice.call(document.querySelectorAll('#settingsTabs button'))

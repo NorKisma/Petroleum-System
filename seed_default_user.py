@@ -5,14 +5,14 @@ def seed_data():
     app = create_app()
     with app.app_context():
         # Check if tenant exists
-        tenant = Tenant.query.filter_by(name="Rays Technology Center").first()
+        tenant = Tenant.query.filter_by(name="Rays Technology Sulotions").first()
         if not tenant:
-            tenant = Tenant(
-                name="Rays Technology Center",
-                phone="0615123456",
+            tenant = Tenant(**dict(  # type: ignore[call-arg]
+                name="Rays Technology sulotions",
+                phone="061000000",
                 currency="$",
-                slogan="Quality at its best"
-            )
+                slogan="Quality at its best",
+            ))
             db.session.add(tenant)
             db.session.flush()
             print(f"Created Tenant: {tenant.name}")
@@ -21,15 +21,15 @@ def seed_data():
         user = User.query.filter_by(email="raystechcenter@gmail.com").first()
         if not user:
             hashed_pw = bcrypt.generate_password_hash("rays1234").decode('utf-8')
-            user = User(
+            user = User(**dict(  # type: ignore[call-arg]
                 username="raystech",
                 email="raystechcenter@gmail.com",
                 password=hashed_pw,
                 role='admin',
                 tenant_id=tenant.id,
                 is_active=True,
-                is_super_admin=True
-            )
+                is_super_admin=True,
+            ))
             db.session.add(user)
             print(f"Created SuperAdmin User: {user.email} (Password: rays1234)")
         
@@ -75,14 +75,14 @@ def seed_data():
         for acc in standard_accounts:
             existing_acc = ChartAccount.query.filter_by(account_code=acc['code'], tenant_id=tenant.id).first()
             if not existing_acc:
-                new_acc = ChartAccount(
+                new_acc = ChartAccount(**dict(  # type: ignore[call-arg]
                     account_code=acc['code'],
                     account_name=acc['name'],
                     category=acc['category'],
                     sub_category=acc['sub'],
                     tenant_id=tenant.id,
-                    is_active=True
-                )
+                    is_active=True,
+                ))
                 db.session.add(new_acc)
                 print(f"Added Account: {acc['name']} ({acc['code']})")
             else:

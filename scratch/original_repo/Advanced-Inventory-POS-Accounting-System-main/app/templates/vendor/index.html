@@ -1,0 +1,250 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Vendor Register - Antigravity POS{% endblock %}
+{% block page_title %}Alaab-keenayaasha (Vendor Register){% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up">
+    <h3 class="mb-0">Alaab-keenayaasha (Vendors)</h3>
+    <p class="text-white text-opacity-75 small mb-0">Maamulka iyo diwaangalinta alaab-keenayaasha nidaamka.</p>
+</div>
+
+<div class="animate-up">
+    <div class="card border-0 shadow-premium rounded-4 mb-5 bg-white overflow-hidden">
+        <div class="card-header card-header-elite-blue d-flex justify-content-between align-items-center py-3">
+            <div class="d-flex align-items-center">
+                <h5 class="mb-0 text-white fw-bold me-3">Vendor Register</h5>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-light rounded-pill px-3 fw-bold shadow-sm d-none d-md-block"
+                    data-bs-toggle="offcanvas" data-bs-target="#addVendorOffcanvas">
+                    <i class="fas fa-plus me-1 text-primary"></i> Diwaangeli
+                </button>
+                <button class="btn btn-sm btn-outline-light rounded-pill px-3 d-md-none" data-bs-toggle="offcanvas"
+                    data-bs-target="#addVendorOffcanvas">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body px-0 pb-0">
+            <div class="table-responsive">
+                <table id="vendorTable" class="table align-middle table-hover mb-0">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-4">Alaab-keene</th>
+                            <th>Telefoonka</th>
+                            <th>Email</th>
+                            <th>Address</th>
+                            <th class="pe-4 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody style="font-size: 0.9rem;">
+                        {% for v in vendors %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm me-3 bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                                        style="width: 35px; height: 35px; font-size: 0.8rem;">
+                                        {{ v.name[0]|upper }}
+                                    </div>
+                                    <div class="text-dark fw-bold">{{ v.name }}</div>
+                                </div>
+                            </td>
+                            <td class="text-dark">{{ v.phone or '-' }}</td>
+                            <td class="text-muted small">{{ v.email or '-' }}</td>
+                            <td class="text-muted x-small">{{ v.address or '-' }}</td>
+                            <td class="pe-4 text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button class="btn-action btn-edit edit-btn" data-id="{{ v.id }}"
+                                        data-name="{{ v.name }}" data-phone="{{ v.phone or '' }}"
+                                        data-email="{{ v.email or '' }}" data-address="{{ v.address or '' }}"
+                                        title="Edit Vendor">
+                                        <i class="far fa-edit"></i>
+                                    </button>
+                                    <button class="btn-action btn-delete delete-btn" data-id="{{ v.id }}"
+                                        title="Delete Vendor">
+                                        <i class="far fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offcanvas: Edit Vendor -->
+    <div class="offcanvas offcanvas-end border-0 shadow-premium" tabindex="-1" id="editVendorOffcanvas"
+        style="width: 450px;">
+        <div class="offcanvas-header border-bottom border-light py-4 px-4" style="background-color: var(--surface);">
+            <h5 class="fw-bold mb-0 text-main">Wax ka bedel Vendor</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-4" style="background-color: var(--bg-main);">
+            <input type="hidden" id="edit_v_id">
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Magaca Alaab-keenaha <span
+                        class="text-danger">*</span></label>
+                <input type="text" id="edit_v_name" class="form-control border-secondary border-opacity-25 rounded-3"
+                    required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Telefoonka</label>
+                <input type="text" id="edit_v_phone" class="form-control border-secondary border-opacity-25 rounded-3">
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Email</label>
+                <input type="email" id="edit_v_email" class="form-control border-secondary border-opacity-25 rounded-3">
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Address</label>
+                <textarea id="edit_v_address" class="form-control border-secondary border-opacity-25 rounded-3"
+                    rows="3"></textarea>
+            </div>
+
+            <div class="d-flex gap-2 mt-5">
+                <button type="button" class="btn btn-light border fw-bold px-4 rounded-3"
+                    data-bs-dismiss="offcanvas">Jooji</button>
+                <button type="button" class="btn btn-primary fw-bold px-4 rounded-3 shadow-sm"
+                    onclick="updateVendor()">Cusboonaysii</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offcanvas: Add Vendor -->
+    <div class="offcanvas offcanvas-end border-0 shadow-premium" tabindex="-1" id="addVendorOffcanvas"
+        style="width: 450px;">
+        <div class="offcanvas-header border-bottom border-light py-4 px-4" style="background-color: var(--surface);">
+            <h5 class="fw-bold mb-0 text-main">Diiwaangeli Alaab-keene Cusub</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-4" style="background-color: var(--bg-main);">
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Magaca Alaab-keenaha <span
+                        class="text-danger">*</span></label>
+                <input type="text" id="v_name" class="form-control border-secondary border-opacity-25 rounded-3"
+                    placeholder="Magaca oo buuxa" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Telefoonka</label>
+                <input type="text" id="v_phone" class="form-control border-secondary border-opacity-25 rounded-3"
+                    placeholder="e.g. 252...">
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Email</label>
+                <input type="email" id="v_email" class="form-control border-secondary border-opacity-25 rounded-3"
+                    placeholder="email@example.com">
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Address</label>
+                <textarea id="v_address" class="form-control border-secondary border-opacity-25 rounded-3" rows="3"
+                    placeholder="Address-ka vendor-ka..."></textarea>
+            </div>
+
+            <div class="d-flex gap-2 mt-5">
+                <button type="button" class="btn btn-light border fw-bold px-4 rounded-3"
+                    data-bs-dismiss="offcanvas">Jooji</button>
+                <button type="button" class="btn btn-primary fw-bold px-4 rounded-3 shadow-sm"
+                    onclick="saveVendor()">Keydi Vendor-ka</button>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+    {% block scripts %}
+    <script>
+        $(document).ready(function () {
+            $('#vendorTable').DataTable({
+                "pageLength": 10,
+                "language": {
+                    "search": "",
+                    "searchPlaceholder": "Raadi vendor...",
+                },
+                "dom": '<"d-flex justify-content-between align-items-center mb-4"f>rt<"d-flex justify-content-between align-items-center mt-4"ip>'
+            });
+
+            $('.edit-btn').on('click', function () {
+                const btn = $(this);
+                $('#edit_v_id').val(btn.data('id'));
+                $('#edit_v_name').val(btn.data('name'));
+                $('#edit_v_phone').val(btn.data('phone'));
+                $('#edit_v_email').val(btn.data('email'));
+                $('#edit_v_address').val(btn.data('address'));
+
+                var off = new bootstrap.Offcanvas(document.getElementById('editVendorOffcanvas'));
+                off.show();
+            });
+
+            $('.delete-btn').on('click', function () {
+                const id = $(this).data('id');
+                Swal.fire({
+                    title: 'Ma hubtaa?',
+                    text: "Vendor-kan iyo xogtiisa waa laga tirtirayaa nidaamka!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f94a4a',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Haa, tirtir!',
+                    cancelButtonText: 'Jooji'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: `/vendor/delete/${id}`,
+                            type: "DELETE",
+                            headers: { 'X-CSRFToken': $('meta[name="csrf-token"]').attr('content') },
+                            success: function (res) {
+                                if (res.success) {
+                                    Swal.fire('La tirtiray!', 'Vendor-ka waa laga saaray nidaamka.', 'success').then(() => location.reload());
+                                } else {
+                                    Swal.fire('Cilad!', res.message, 'error');
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        });
+
+        function saveVendor() {
+            const data = {
+                name: $('#v_name').val(),
+                phone: $('#v_phone').val(),
+                email: $('#v_email').val(),
+                address: $('#v_address').val()
+            };
+            if (!data.name) return alert('Fadlan geli magaca!');
+            $.ajax({
+                url: "{{ url_for('vendor.add_vendor') }}",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function (res) {
+                    if (res.success) location.reload();
+                    else alert(res.message);
+                }
+            });
+        }
+
+        function updateVendor() {
+            const id = $('#edit_v_id').val();
+            const data = {
+                name: $('#edit_v_name').val(),
+                phone: $('#edit_v_phone').val(),
+                email: $('#edit_v_email').val(),
+                address: $('#edit_v_address').val()
+            };
+            $.ajax({
+                url: `/vendor/edit/${id}`,
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function (res) {
+                    if (res.success) location.reload();
+                    else alert(res.message);
+                }
+            });
+        }
+    </script>
+    {% endblock %}

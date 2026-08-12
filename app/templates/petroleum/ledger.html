@@ -1,0 +1,41 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Fuel Stock Ledger{% endblock %}
+{% block page_title %}Stock Ledger{% endblock %}
+{% block content %}
+
+<div class="card border-0 shadow-premium rounded-4 animate-up">
+    <div class="table-responsive">
+        <table class="table align-middle table-hover mb-0" id="ledgerTable">
+            <thead class="thead-dark-elite">
+                <tr>
+                    <th class="ps-4">Taariikh</th>
+                    <th>Tank</th>
+                    <th>Nooca</th>
+                    <th>Reference</th>
+                    <th>In (L)</th>
+                    <th>Out (L)</th>
+                    <th>Balance</th>
+                    <th>User</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in entries %}
+                <tr>
+                    <td class="ps-4 small">{{ e.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td class="fw-bold">{{ e.tank.name }}</td>
+                    <td><span class="badge bg-light text-dark">{{ e.transaction_type }}</span></td>
+                    <td class="small">{{ e.reference_no or '—' }}</td>
+                    <td class="text-success fw-bold">{{ "{:,.1f}".format(e.liters_in) if e.liters_in else '—' }}</td>
+                    <td class="text-danger fw-bold">{{ "{:,.1f}".format(e.liters_out) if e.liters_out else '—' }}</td>
+                    <td class="fw-bold">{{ "{:,.1f}".format(e.balance_after) }} L</td>
+                    <td class="small">{{ e.user.username if e.user else '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>$(document).ready(function() { $('#ledgerTable').DataTable({ order: [[0, 'desc']] }); });</script>
+{% endblock %}

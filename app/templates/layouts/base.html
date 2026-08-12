@@ -17,7 +17,7 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.1">
     <!-- PWA Manifest -->
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#3498db">
@@ -237,24 +237,6 @@
             padding: 1rem 1.25rem !important;
         }
 
-        .nav-pos-btn {
-            background: rgba(255, 255, 255, 0.15) !important;
-            color: white !important;
-            font-weight: 700;
-            border-radius: 12px;
-            padding: 8px 16px;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.2s ease;
-        }
-
-        .nav-pos-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
         .nav-date-box {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -310,16 +292,165 @@
             color: white;
             border-color: #2563eb;
         }
-    
+
         /* Hide sidebar margin */
         #page-content-wrapper {
             width: 100% !important;
             margin-left: 0 !important;
-        }
-        .navbar-elite {
-            padding-left: 1rem !important;
+            padding-top: 0 !important;
         }
 
+        .navbar-elite {
+            padding-left: 1rem !important;
+            top: 0 !important;
+        }
+
+        /* ── Elite Petroleum Navigation ── */
+        .petro-nav {
+            background: #fff;
+            border-radius: 16px;
+            padding: 10px 14px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eef2f6;
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 1020 !important;
+            margin-top: 1rem;
+        }
+
+        .petro-nav .petro-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: #475569;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+        }
+
+        .petro-nav .petro-link:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .petro-nav .petro-link.active {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        .petro-nav .petro-divider {
+            width: 1px;
+            height: 28px;
+            background: #e2e8f0;
+            margin: 0 4px;
+        }
+
+        .petro-nav .dropdown {
+            position: relative;
+            z-index: 1025 !important;
+        }
+
+        .petro-nav .dropdown-menu {
+            position: absolute !important;
+            left: 0 !important;
+            top: 100% !important;
+            transform: none !important;
+            inset: auto !important;
+            min-width: 220px;
+            background-color: var(--surface) !important;
+            border: 1px solid var(--glass-border) !important;
+            box-shadow: var(--shadow-lg) !important;
+            z-index: 1025 !important;
+        }
+
+        .petro-nav .dropdown-item {
+            font-weight: 600;
+            color: var(--text-main) !important;
+            transition: all 0.15s ease;
+        }
+
+        .petro-nav .dropdown-item:hover {
+            background-color: var(--bg-main) !important;
+            color: var(--text-main) !important;
+        }
+
+        .petro-nav .dropdown-item.active {
+            background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+            color: #fff !important;
+        }
+
+        .petro-mobile-toggle {
+            background: #fff;
+            border-radius: 16px;
+            padding: 12px 20px;
+            font-weight: 600;
+            color: #1e293b;
+            border: 1px solid #eef2f6;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05) !important;
+            transition: all 0.15s ease;
+        }
+
+        .petro-mobile-toggle:hover,
+        .petro-mobile-toggle:focus {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .petro-mobile-menu {
+            border-radius: 16px !important;
+            border: 1px solid #eef2f6 !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+            padding: 10px 0 !important;
+        }
+
+        .petro-mobile-menu .dropdown-item {
+            font-weight: 600;
+            color: #475569;
+            transition: all 0.15s ease;
+        }
+
+        .petro-mobile-menu .dropdown-item:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .petro-mobile-menu .dropdown-item.active {
+            background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+            color: #fff !important;
+        }
+
+        [data-theme='dark'] .petro-nav,
+        [data-theme='dark'] .petro-mobile-toggle,
+        [data-theme='dark'] .petro-mobile-menu {
+            background: #0f172a !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+        }
+
+        [data-theme='dark'] .petro-nav .petro-link,
+        [data-theme='dark'] .petro-mobile-menu .dropdown-item {
+            color: #94a3b8;
+        }
+
+        [data-theme='dark'] .petro-nav .petro-link:hover,
+        [data-theme='dark'] .petro-mobile-menu .dropdown-item:hover,
+        [data-theme='dark'] .petro-mobile-toggle:hover {
+            background: #1e293b;
+            color: #f8fafc;
+        }
+
+        [data-theme='dark'] .petro-mobile-toggle {
+            color: #f8fafc !important;
+        }
+
+        [data-theme='dark'] .petro-nav .petro-divider {
+            background: rgba(255, 255, 255, 0.08);
+        }
     </style>
     {% block styles %}{% endblock %}
     <!-- SweetAlert2 -->
@@ -330,153 +461,72 @@
 
     <div class="d-flex" id="wrapper">
         <!-- Mobile Toggle Button (Hidden, using integrated navbar hamburger instead) -->
-        
+
 
         <!-- Page Content -->
         <div id="page-content-wrapper">
             <nav class="navbar navbar-expand-lg navbar-elite no-print sticky-top border-0">
                 <div class="container-fluid">
                     <div class="d-flex align-items-center">
-                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-link p-0 me-4 border-0 text-white" title="Apps Menu">
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-link p-0 me-4 border-0 text-white"
+                            title="Apps Menu">
                             <i class="fas fa-th fs-4"></i>
                         </a>
 
                         <div class="d-flex align-items-center me-2 me-md-4 pe-0 pe-md-4">
-                            <h5 class="mb-0 fw-bold" style="font-size: clamp(0.75rem, 3vw, 1rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw;">
+                            <h5 class="mb-0 fw-bold"
+                                style="font-size: clamp(0.75rem, 3vw, 1rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw;">
                                 {{ company_settings.name if company_settings else 'Rays POS' }}
                             </h5>
                             <span class="status-dot ms-2"></span>
                         </div>
 
-                        <!-- App Menus (Desktop/Tablet only - mobile uses bottom nav) -->
-                        <div class="d-none d-md-flex ms-3 gap-2">
-                            {% set ep = request.endpoint or '' %}
-                            
-                            {% if 'inventory' in ep %}
-                            <div class="dropdown">
-                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Inventory</button>
-                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
-                                    <li><a class="dropdown-item" href="{{ url_for('inventory.list_products') }}">All Products</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('inventory.list_categories') }}">Categories</a></li>
-                                    {% if company_settings.module_stock_transfer %}
-                                    <li><a class="dropdown-item" href="{{ url_for('inventory.list_transfers') }}">Stock Transfers</a></li>
-                                    {% endif %}
-                                    {% if company_settings.module_stock_adjustment %}
-                                    <li><a class="dropdown-item" href="{{ url_for('inventory.stock_adjustment') }}">Stock Adjustment</a></li>
-                                    {% endif %}
-                                    <li><a class="dropdown-item" href="{{ url_for('inventory.import_opening_stock') }}">Import Stock</a></li>
-                                </ul>
-                            </div>
-                            {% endif %}
+                        <!-- App Menus (Desktop/Tablet only) -->
+<div class="d-none d-md-flex ms-3 gap-2">
+    {% set ep = request.endpoint or '' %}
+    {% if 'customer' in ep %}
+    <div class="dropdown">
+        <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Contacts</button>
+        <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+            <li><a class="dropdown-item" href="{{ url_for('customers.list_customers') }}">Customers</a></li>
+        </ul>
+    </div>
+    {% endif %}
+    {% if 'vendor' in ep %}
+    <div class="dropdown">
+        <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Purchases</button>
+        <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+            <li><a class="dropdown-item" href="{{ url_for('vendor.list_vendors') }}">Suppliers</a></li>
+        </ul>
+    </div>
+    {% endif %}
+    {% if 'settings' in ep %}
+    <div class="dropdown">
+        <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Settings</button>
+        <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+            <li><a class="dropdown-item" href="{{ url_for('settings.index') }}">Business Settings</a></li>
+        </ul>
+    </div>
+    {% endif %}
+    {% if 'staff' in ep and 'payroll' not in ep %}
+    <div class="dropdown">
+        <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Employees</button>
+        <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+            <li><a class="dropdown-item" href="{{ url_for('staff.list_staff') }}">Staff List</a></li>
+        </ul>
+    </div>
+    {% endif %}
+    {% if 'payroll' in ep %}
+    <div class="dropdown">
+        <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Payroll</button>
+        <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+            <li><a class="dropdown-item" href="{{ url_for('staff.list_payroll') }}">All Payrolls</a></li>
+        </ul>
+    </div>
+    {% endif %}
+</div>
 
-                            {% if 'pos' in ep %}
-                            <div class="dropdown">
-                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Point of Sale</button>
-                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
-                                    <li><a class="dropdown-item" href="{{ url_for('sales.pos') }}">Terminal</a></li>
-                                </ul>
-                            </div>
-                            {% endif %}
-
-                            {% if 'sale' in ep and 'pos' not in ep %}
-                            <div class="dropdown">
-                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Sales</button>
-                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
-                                    <li><a class="dropdown-item" href="{{ url_for('sales.list_sales') }}">All Sales</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('sales.list_returns') }}">Sales Returns</a></li>
-                                </ul>
-                            </div>
-                            {% endif %}
-
-                            {% if 'customer' in ep %}
-                            <div class="dropdown">
-                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Contacts</button>
-                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
-                                    <li><a class="dropdown-item" href="{{ url_for('customers.list_customers') }}">Customers</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('customers.receipts') }}">Receipts</a></li>
-                                </ul>
-                            </div>
-                            {% endif %}
-                            
-                            {% if 'vendor' in ep %}
-                            <div class="dropdown">
-                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Purchases</button>
-                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
-                                    <li><a class="dropdown-item" href="{{ url_for('vendor.purchases', view='list') }}">All Purchases</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('vendor.purchases', view='add') }}">Add Purchase</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('vendor.returns', view='list') }}">Purchase Returns</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('vendor.list_vendors') }}">Suppliers</a></li>
-                                </ul>
-                            </div>
-                            {% endif %}
-                            
-                            {% if 'accounting' in ep and 'expenses' not in ep and 'report' not in ep %}
-                            <div class="dropdown">
-                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Accounting</button>
-                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
-                                    <li><a class="dropdown-item" href="{{ url_for('accounting.general_ledger') }}">General Ledger</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('accounting.chart_of_accounts') }}">Chart of Accounts</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('accounting.bank_accounts') }}">Bank Accounts</a></li>
-                                </ul>
-                            </div>
-                            {% endif %}
-
-                            {% if 'expenses' in ep %}
-                            <div class="dropdown">
-                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Expenses</button>
-                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
-                                    <li><a class="dropdown-item" href="{{ url_for('accounting.expenses') }}">All Expenses</a></li>
-                                </ul>
-                            </div>
-                            {% endif %}
-
-                            {% if 'report' in ep %}
-                            <div class="dropdown">
-                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Reports</button>
-                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
-                                    <li><a class="dropdown-item" href="{{ url_for('accounting.reports_hub') }}">All Reports</a></li>
-                                </ul>
-                            </div>
-                            {% endif %}
-                            
-                            {% if 'settings' in ep %}
-                            <div class="dropdown">
-                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Settings</button>
-                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
-                                    <li><a class="dropdown-item" href="{{ url_for('settings.index') }}">Business Settings</a></li>
-                                </ul>
-                            </div>
-                            {% endif %}
-
-                            {% if 'staff' in ep and 'payroll' not in ep %}
-                            <div class="dropdown">
-                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Employees</button>
-                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
-                                    <li><a class="dropdown-item" href="{{ url_for('staff.list_staff') }}">Staff List</a></li>
-                                </ul>
-                            </div>
-                            {% endif %}
-
-                            {% if 'payroll' in ep %}
-                            <div class="dropdown">
-                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Payroll</button>
-                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
-                                    <li><a class="dropdown-item" href="{{ url_for('staff.list_payroll') }}">All Payrolls</a></li>
-                                </ul>
-                            </div>
-                            {% endif %}
-                        </div>
-
-
-                        <div class="navbar-divider d-none d-lg-block"></div>
-
-                        <div class="d-none d-lg-flex align-items-center text-white text-opacity-50">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <span class="small fw-medium">System Active</span>
-                        </div>
-
-                        <!-- Streamlined Header: Removed Expansion icon -->
+<!-- Streamlined Header: Removed Expansion icon -->
                     </div>
 
                     <div class="ms-auto d-flex align-items-center gap-2 gap-md-3">
@@ -486,12 +536,6 @@
                         <a href="#" class="nav-btn-elite d-none d-md-flex" data-bs-toggle="modal"
                             data-bs-target="#calculatorModal">
                             <i class="fas fa-calculator"></i>
-                        </a>
-
-                        <!-- POS Shortcut -->
-                        <a href="{{ url_for('sales.pos') }}" class="nav-pos-btn d-none d-sm-flex">
-                            <i class="fas fa-cash-register"></i>
-                            <span class="d-none d-md-inline">POS</span>
                         </a>
 
                         <!-- Theme Toggle -->
@@ -537,6 +581,7 @@
                                 <li><a class="dropdown-item py-2 px-3 small fw-bold"
                                         href="{{ url_for('settings.index') }}"><i
                                             class="fas fa-cog me-3 text-primary"></i> Settings</a></li>
+                                
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
@@ -548,6 +593,142 @@
                     </div>
                 </div>
             </nav>
+
+            {% set ep = request.endpoint or '' %}
+            {% if 'petroleum' in ep and can_access_module('petroleum') %}
+            <!-- Petroleum Sub Navigation Bar (Best Style) -->
+            <div class="container-fluid no-print">
+                <nav class="petro-nav mb-4 p-2 d-none d-md-flex align-items-center gap-2">
+                    <a href="{{ url_for('petroleum.dashboard') }}"
+                        class="petro-link {{ 'active' if ep == 'petroleum.dashboard' else '' }}"><i
+                            class="fas fa-home"></i> Dashboard</a>
+                    <a href="{{ url_for('petroleum.sales') }}"
+                        class="petro-link {{ 'active' if ep == 'petroleum.sales' else '' }}"><i
+                            class="fas fa-gas-pump"></i> Iibka (Sales)</a>
+                    <a href="{{ url_for('petroleum.deliveries') }}"
+                        class="petro-link {{ 'active' if ep == 'petroleum.deliveries' else '' }}"><i
+                            class="fas fa-truck-loading"></i> Soo-dejin (Deliveries)</a>
+                    <a href="{{ url_for('petroleum.dip_readings') }}"
+                        class="petro-link {{ 'active' if ep == 'petroleum.dip_readings' else '' }}"><i
+                            class="fas fa-ruler-vertical"></i> Qiyaas (Dip)</a>
+                    <a href="{{ url_for('petroleum.day_close') }}"
+                        class="petro-link {{ 'active' if ep == 'petroleum.day_close' else '' }}"><i
+                            class="fas fa-lock"></i> Xir Maalin (Close Day)</a>
+                    <a href="{{ url_for('petroleum.daily_closing_report') }}"
+                        class="petro-link {{ 'active' if ep == 'petroleum.daily_closing_report' else '' }}"><i
+                            class="fas fa-file-alt"></i> Warbixin (Report)</a>
+                    <a href="{{ url_for('petroleum.shift_meters') }}"
+                        class="petro-link {{ 'active' if ep == 'petroleum.shift_meters' else '' }}"><i
+                            class="fas fa-tachometer-alt"></i> Akhriska (Meters)</a>
+
+                    <div class="petro-divider"></div>
+
+                    <!-- Maamul Dropdown -->
+                    <div class="dropdown">
+                        <button
+                            class="petro-link {{ 'active' if ep in ['petroleum.tanks','petroleum.pumps','petroleum.fleet_customers','petroleum.fuel_types','petroleum.history_hub','petroleum.setup_wizard'] else '' }} border-0 bg-transparent dropdown-toggle"
+                            type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-cog"></i> Maamul
+                        </button>
+                        <ul class="dropdown-menu shadow border-0 rounded-4 mt-2 py-2"
+                            style="min-width:220px; z-index:1025;">
+                            <li><a class="dropdown-item py-2 px-3 fw-semibold {% if ep == 'petroleum.profit_reports' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.profit_reports') }}"><i
+                                        class="fas fa-chart-line me-2 text-primary"></i> Faa'idada (Profit)</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item py-2 px-3 fw-semibold {% if ep == 'petroleum.tanks' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.tanks') }}"><i
+                                        class="fas fa-database me-2 text-primary"></i> Tankiyada & Pombada
+                                    (Tanks/Pumps)</a></li>
+                            <li><a class="dropdown-item py-2 px-3 fw-semibold {% if ep == 'petroleum.fleet_customers' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.fleet_customers') }}"><i
+                                        class="fas fa-credit-card me-2 text-primary"></i> Fleet (Deynta)</a></li>
+                            <li><a class="dropdown-item py-2 px-3 fw-semibold {% if ep == 'petroleum.fuel_types' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.fuel_types') }}"><i
+                                        class="fas fa-cog me-2 text-primary"></i> Noocyada (Prices)</a></li>
+                            <li><a class="dropdown-item py-2 px-3 fw-semibold {% if ep == 'petroleum.history_hub' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.history_hub') }}"><i
+                                        class="fas fa-history me-2 text-primary"></i> Taariikhda (History)</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item py-2 px-3 fw-semibold {% if ep == 'petroleum.setup_wizard' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.setup_wizard') }}"><i
+                                        class="fas fa-magic me-2 text-primary"></i> Dejinta (Setup Wizard)</a></li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <div class="d-block d-md-none mb-4 pt-3" style="position: relative; z-index: 1020 !important;">
+                    <div class="dropdown w-100">
+                        <button class="btn w-100 d-flex justify-content-between align-items-center petro-mobile-toggle"
+                            type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="d-flex align-items-center gap-2">
+                                {% if ep == 'petroleum.dashboard' %}<i class="fas fa-home"></i> dashboard
+                                {% elif ep == 'petroleum.sales' %}<i class="fas fa-gas-pump"></i> Iibka
+                                {% elif ep == 'petroleum.deliveries' %}<i class="fas fa-truck-loading"></i> Soo-dejin
+                                {% elif ep == 'petroleum.dip_readings' %}<i class="fas fa-ruler-vertical"></i> Qiyaas
+                                {% elif ep == 'petroleum.day_close' %}<i class="fas fa-lock"></i> Xir Maalin
+                                {% elif ep == 'petroleum.daily_closing_report' %}<i class="fas fa-file-alt"></i>
+                                Warbixin
+                                {% elif ep == 'petroleum.shift_meters' %}<i class="fas fa-tachometer-alt"></i> Akhriska
+                                {% elif ep in
+                                ['petroleum.tanks','petroleum.pumps','petroleum.fleet_customers','petroleum.fuel_types','petroleum.history_hub','petroleum.setup_wizard']
+                                %}
+                                <i class="fas fa-cog"></i> Maamul
+                                {% else %}<i class="fas fa-bars"></i> Menu{% endif %}
+                            </span>
+                            <i class="fas fa-chevron-down small"></i>
+                        </button>
+                        <ul class="dropdown-menu w-100 shadow border-0 petro-mobile-menu py-2 mt-2"
+                            style="z-index: 10000;">
+                            <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.dashboard' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.dashboard') }}"><i class="fas fa-home me-2"></i>
+                                    dashboard</a></li>
+                            <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.sales' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.sales') }}"><i class="fas fa-gas-pump me-2"></i>
+                                    Iibka</a></li>
+                            <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.deliveries' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.deliveries') }}"><i
+                                        class="fas fa-truck-loading me-2"></i> Soo-dejin</a></li>
+                            <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.dip_readings' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.dip_readings') }}"><i
+                                        class="fas fa-ruler-vertical me-2"></i> Qiyaas</a></li>
+                            <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.day_close' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.day_close') }}"><i class="fas fa-lock me-2"></i> Xir
+                                    Maalin</a></li>
+                            <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.daily_closing_report' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.daily_closing_report') }}"><i
+                                        class="fas fa-file-alt me-2"></i> Warbixin</a></li>
+                            <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.shift_meters' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.shift_meters') }}"><i
+                                        class="fas fa-tachometer-alt me-2"></i> Akhriska</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li class="dropdown-header text-uppercase fw-bold text-muted small px-3">Maamulka</li>
+                            <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.tanks' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.tanks') }}"><i class="fas fa-database me-2"></i>
+                                    Tankiyada & Pombada</a></li>
+                            <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.fleet_customers' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.fleet_customers') }}"><i class="fas fa-truck me-2"></i>
+                                    Macaamiisha Deynta</a></li>
+                            <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.fuel_types' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.fuel_types') }}"><i class="fas fa-fill-drip me-2"></i>
+                                    Noocyada & Qiimaha</a></li>
+                            <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.history_hub' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.history_hub') }}"><i class="fas fa-history me-2"></i>
+                                    Taariikhda</a></li>
+                            <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.setup_wizard' %}active{% endif %}"
+                                    href="{{ url_for('petroleum.setup_wizard') }}"><i class="fas fa-magic me-2"></i>
+                                    Dejinta Bilowga</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
             <div class="container-fluid animate-up">
                 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -579,27 +760,10 @@
             <i class="fas fa-th-large"></i>
             <span>Apps</span>
         </a>
-        <a href="{{ url_for('sales.list_sales') }}"
-            class="bottom-nav-item {% if 'sale' in (request.endpoint or '') %}active{% endif %}">
-            <i class="fas fa-file-invoice-dollar"></i>
-            <span>Sales</span>
-        </a>
-        <div class="bottom-nav-item">
-            <a href="{{ url_for('sales.pos') }}" class="fab-main">
-                <i class="fas fa-plus"></i>
-            </a>
-            <span style="margin-top: 5px;">POS</span>
-        </div>
-        <a href="{{ url_for('inventory.list_products') }}"
-            class="bottom-nav-item {% if 'inventory' in (request.endpoint or '') %}active{% endif %}">
-            <i class="fas fa-cubes"></i>
-            <span>Inventory</span>
-        </a>
-        <a href="{{ url_for('accounting.reports_hub') }}"
-            class="bottom-nav-item {% if 'report' in (request.endpoint or '') %}active{% endif %}">
-            <i class="fas fa-chart-line"></i>
-            <span>Reports</span>
-        </a>
+
+
+
+
     </div>
 
     <!-- Scripts -->

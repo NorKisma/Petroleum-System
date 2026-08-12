@@ -1,0 +1,470 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Maaraynta Shift-ka{% endblock %}
+{% block page_title %}Maaraynta Shift-ka{% endblock %}
+{% block content %}
+{% set active = 'shiftmeters' %}
+
+<style>
+    .shift-badge {
+        padding: 4px 14px;
+        border-radius: 999px;
+        font-size: .8rem;
+        font-weight: 700;
+    }
+
+    .badge-shift1 {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: #fff;
+    }
+
+    .badge-shift2 {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
+    }
+
+    .badge-shift3 {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        color: #fff;
+    }
+
+    .stat-mini {
+        border-radius: 14px;
+        padding: 14px 18px;
+        background: #fff;
+        border: 1px solid #eef2f6;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+    }
+
+    .stat-mini-val {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #1e293b;
+    }
+
+    .stat-mini-lbl {
+        font-size: .72rem;
+        text-transform: uppercase;
+        color: #94a3b8;
+        font-weight: 700;
+        letter-spacing: .04em;
+    }
+
+    .pump-row-card {
+        border-radius: 12px;
+        border: 1px solid #eef2f6;
+        background: #fff;
+        margin-bottom: 10px;
+        padding: 14px 18px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .04);
+    }
+
+    .pump-row-card:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 16px rgba(59, 130, 246, .12);
+    }
+
+    .liters-badge {
+        background: #dcfce7;
+        color: #16a34a;
+        border-radius: 999px;
+        padding: 3px 12px;
+        font-weight: 700;
+        font-size: .85rem;
+    }
+
+    .meter-input {
+        width: 130px !important;
+        font-weight: 700;
+        font-size: 1rem;
+        text-align: center;
+    }
+
+    [data-theme='dark'] .pump-row-card {
+        background: #1e293b;
+        border-color: #334155;
+    }
+
+    [data-theme='dark'] .stat-mini {
+        background: #1e293b;
+        border-color: #334155;
+    }
+
+    [data-theme='dark'] .stat-mini-val {
+        color: #f1f5f9;
+    }
+
+    .clickable-header {
+        transition: all 0.2s ease;
+    }
+
+    .clickable-header:hover {
+        background: rgba(59, 130, 246, 0.04) !important;
+    }
+
+    .clickable-header:active {
+        background: rgba(59, 130, 246, 0.08) !important;
+    }
+
+    #operatorChevron {
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+</style>
+
+
+<!-- Shift / Date Controls -->
+
+<div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+    <div class="d-flex gap-2 align-items-center">
+        <label class="fw-bold small text-muted mb-0">Shift:</label>
+        <select class="form-select form-select-sm rounded-pill" style="width:130px;"
+            onchange="location.href='?date={{ target_date.isoformat() }}&shift='+this.value">
+            <option value="1" {% if shift_number==1 %}selected{% endif %}>🌅 Shift 1 (Subax)</option>
+            <option value="2" {% if shift_number==2 %}selected{% endif %}>☀️ Shift 2 (Galabnimo/Habeenimo)</option>
+        </select>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        <label class="fw-bold small text-muted mb-0">Taariikhda:</label>
+        <input type="date" class="form-control form-control-sm rounded-pill" style="width:160px;"
+            value="{{ target_date.isoformat() }}"
+            onchange="location.href='?date='+this.value+'&shift={{ shift_number }}'">
+    </div>
+    <span class="shift-badge badge-shift{{ shift_number }} ms-auto">
+        <i class="fas fa-clock me-1"></i>{{ shift_cfg.name }}
+        {% if shift_cfg.start_hour is defined %} · {{ shift_cfg.start_hour }}:00 – {{ shift_cfg.end_hour }}:00{% endif
+        %}
+    </span>
+</div>
+
+<!-- Summary Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-mini">
+            <div class="stat-mini-val" id="totalLiters">
+                {{ "{:,.1f}".format(shift_totals.total_liters) if shift_totals else "0.0" }}
+            </div>
+            <div class="stat-mini-lbl"><i class="fas fa-tint me-1 text-primary"></i>Wadarta Litirka</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-mini">
+            <div class="stat-mini-val" id="totalAmount">
+                ${{ "{:,.2f}".format(shift_totals.total_amount) if shift_totals else "0.00" }}
+            </div>
+            <div class="stat-mini-lbl"><i class="fas fa-dollar-sign me-1 text-success"></i>Wadarta Iibka</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-mini">
+            <div class="stat-mini-val text-success" id="totalProfit">
+                ${{ "{:,.2f}".format(shift_totals.total_profit) if shift_totals else "0.00" }}
+            </div>
+            <div class="stat-mini-lbl"><i class="fas fa-chart-line me-1 text-success"></i>Faa'idada Shift-ka</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-mini">
+            <div class="stat-mini-val text-warning" id="meterTotal">
+                {{ "{:,.1f}".format(shift_totals.meter_total) if shift_totals else "0.0" }}
+            </div>
+            <div class="stat-mini-lbl"><i class="fas fa-tachometer-alt me-1 text-warning"></i>Meter Liters (Pumps)</div>
+        </div>
+    </div>
+</div>
+
+<!-- Operator Assignment Card (Sticky + Collapsible) -->
+<div class="card border-0 shadow-sm rounded-4 mb-4"
+    style="position: sticky; top: 70px; z-index: 1000; backdrop-filter: blur(15px); background: rgba(255,255,255,0.92); border: 1px solid rgba(59, 130, 246, 0.1) !important;">
+    <div class="card-header border-0 bg-transparent py-3 px-4 d-flex justify-content-between align-items-center clickable-header"
+        style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#operatorCollapse" aria-expanded="false">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-primary bg-opacity-10 p-2 rounded-3 text-primary">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <div>
+                <h6 class="mb-0 fw-bold">Shaqaalaha Shift-ka (Operator)</h6>
+                <small class="text-muted" id="headerOperatorName">
+                    {% if shift_record and shift_record.attendant %}<i
+                        class="fas fa-check-circle text-success me-1"></i>{{ shift_record.attendant.username }}{% else
+                    %}Qofna lama meelayn{% endif %}
+                </small>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-light text-dark border rounded-pill px-3 py-2 fw-normal d-none d-md-inline-block">
+                <i class="far fa-clock me-1 text-primary"></i> {{ shift_cfg.name }}
+            </span>
+            <i class="fas fa-chevron-down text-muted transition-all" id="operatorChevron"></i>
+        </div>
+    </div>
+    <div class="collapse" id="operatorCollapse">
+        <div class="card-body py-2 px-4 pb-3">
+            <div class="col-md-12">
+                <label class="form-label small fw-bold">Magaca Shaqaalaha</label>
+                <select id="operatorId" class="form-select rounded-3">
+                    <option value="">-- Dooro Shaqaalaha --</option>
+                    {% for s in staff %}
+                    <option value="{{ s.id }}" {% if shift_record and shift_record.attendant_id==s.id %}selected{% endif
+                        %}>{{ s.username }} ({{ s.role }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+
+
+<!-- Pump Meter Readings Card -->
+<div class="card border-0 shadow-premium rounded-4 animate-up">
+    <div class="card-header card-header-elite-blue d-flex justify-content-between align-items-center py-3">
+        <h6 class="mb-0 text-white fw-bold">
+            <i class="fas fa-tachometer-alt me-2"></i>Akhriska Pombada — {{ shift_cfg.name }}
+        </h6>
+        <button class="btn btn-sm btn-light rounded-pill px-3 fw-bold" onclick="saveEverything(this)">
+            <i class="fas fa-save me-1"></i>Kaydi Dhammaan
+        </button>
+    </div>
+    <div class="card-body p-3">
+        {% for pump in pumps %}
+        {% set log = logs[pump.id] %}
+        {% set liters = ((log.closing - log.opening) if (log.closing is not none and log.opening is not none and
+        log.closing >= log.opening) else 0) %}
+        {% set pump_price = pump.selling_price if pump.selling_price > 0 else pump.fuel_type.sell_price %}
+        {% set pump_revenue = liters * pump_price %}
+        {% set pump_cost = liters * pump.fuel_type.buy_price %}
+        {% set pump_profit = pump_revenue - pump_cost %}
+        <div class="pump-row-card" id="pumpCard_{{ pump.id }}">
+            <div class="row align-items-center g-2">
+                <div class="col-md-3">
+                    <div class="fw-bold fs-6"><i class="fas fa-gas-pump me-2 text-warning"></i>{{ pump.pump_number }}
+                    </div>
+                    <small class="text-muted">{{ pump.fuel_type.name }} · Tank: {{ pump.tank.name }}</small><br>
+                    <small class="text-muted">SHP/L: <strong>${{ "{:,.2f}".format(pump_price) }}</strong></small>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1">Akhriska Hore</label>
+                    <input type="number" step="0.01" class="form-control meter-input rounded-3" id="open-{{ pump.id }}"
+                        value="{{ " {:.2f}".format(log.opening) if log.opening is not none else '' }}"
+                        placeholder="0.00" oninput="calcPump({{ pump.id }})">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold mb-1">Akhriska Dambe</label>
+                    <input type="number" step="0.01" class="form-control meter-input rounded-3" id="close-{{ pump.id }}"
+                        value="{{ " {:.2f}".format(log.closing) if log.closing is not none else '' }}"
+                        placeholder="0.00" oninput="calcPump({{ pump.id }})">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-1">Xisaabta</label>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <span class="liters-badge" id="litBadge_{{ pump.id }}">
+                            {{ "{:,.1f}".format(liters) }}L
+                        </span>
+                        <span class="badge bg-success bg-opacity-10 text-success fw-bold" id="revBadge_{{ pump.id }}">
+                            ${{ "{:,.2f}".format(pump_revenue) }}
+                        </span>
+                        <span class="badge bg-primary bg-opacity-10 text-primary fw-bold" id="profBadge_{{ pump.id }}">
+                            +${{ "{:,.2f}".format(pump_profit) }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-2 d-flex gap-2 justify-content-end">
+                    <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" onclick="saveMeter({{ pump.id }})">
+                        <i class="fas fa-save"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-gas-pump fa-2x mb-3 opacity-25"></i>
+            <p>Pump lama dejin. <a href="{{ url_for('petroleum.tanks') }}">Ku dar Pump</a></p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if shift_number == 2 %}
+    <div class="card-footer bg-light small text-muted rounded-bottom-4">
+        <i class="fas fa-info-circle me-1 text-primary"></i>
+        Akhriska hore ee Shift 2 waxaa si toos ah looga qaadaa dhamaadka Shift 1 haddii la geliyay.
+    </div>
+    {% endif %}
+</div>
+
+<!-- Shift Summary Table -->
+{% if pumps %}
+<div class="card border-0 shadow-sm rounded-4 mt-4">
+    <div class="card-header border-0 bg-white py-3 px-4">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-chart-bar me-2 text-primary"></i>Koobaabka Shift-ka</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="thead-dark-elite">
+                    <tr>
+                        <th class="ps-4">Pump</th>
+                        <th>Shidaalka</th>
+                        <th>Meter Hore</th>
+                        <th>Meter Dambe</th>
+                        <th>Litir Iibay</th>
+                        <th>Qiimaha</th>
+                        <th>Revenue</th>
+                        <th class="text-end pe-4">Faa'idada</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set ns = namespace(total_l=0, total_rev=0, total_prof=0) %}
+                    {% for pump in pumps %}
+                    {% set log = logs[pump.id] %}
+                    {% set liters = ((log.closing - log.opening) if (log.closing is not none and log.opening is not none
+                    and log.closing >= log.opening) else 0) %}
+                    {% set price = pump.selling_price if pump.selling_price > 0 else pump.fuel_type.sell_price %}
+                    {% set rev = liters * price %}
+                    {% set prof = rev - (liters * pump.fuel_type.buy_price) %}
+                    {% set ns.total_l = ns.total_l + liters %}
+                    {% set ns.total_rev = ns.total_rev + rev %}
+                    {% set ns.total_prof = ns.total_prof + prof %}
+                    <tr>
+                        <td class="ps-4 fw-bold">{{ pump.pump_number }}</td>
+                        <td>{{ pump.fuel_type.name }}</td>
+                        <td class="text-muted">{{ "{:,.2f}".format(log.opening) if log.opening is not none else '—' }}
+                        </td>
+                        <td class="text-muted">{{ "{:,.2f}".format(log.closing) if log.closing is not none else '—' }}
+                        </td>
+                        <td><span class="liters-badge">{{ "{:,.1f}".format(liters) }}L</span></td>
+                        <td>${{ "{:,.2f}".format(price) }}</td>
+                        <td class="fw-bold text-success">${{ "{:,.2f}".format(rev) }}</td>
+                        <td class="text-end pe-4 fw-bold text-primary">+${{ "{:,.2f}".format(prof) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-dark">
+                    <tr>
+                        <th class="ps-4" colspan="4">Wadarta</th>
+                        <th><span class="liters-badge">{{ "{:,.1f}".format(ns.total_l) }}L</span></th>
+                        <th></th>
+                        <th class="text-success">${{ "{:,.2f}".format(ns.total_rev) }}</th>
+                        <th class="text-end pe-4 text-info">+${{ "{:,.2f}".format(ns.total_prof) }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+{% block scripts %}
+<script>
+    const LOG_DATE = '{{ target_date.isoformat() }}';
+    const SHIFT = {{ shift_number }};
+    const PRICES = {
+    {% for pump in pumps %}
+    {{ pump.id }}: {
+        sell: {{ pump.selling_price if pump.selling_price > 0 else pump.fuel_type.sell_price }},
+        buy: {{ pump.fuel_type.buy_price }}
+    },
+    {% endfor %}
+    };
+
+    function calcPump(pumpId) {
+        const open = parseFloat(document.getElementById('open-' + pumpId).value) || 0;
+        const close = parseFloat(document.getElementById('close-' + pumpId).value) || 0;
+        const liters = close > open ? close - open : 0;
+        const p = PRICES[pumpId] || { sell: 0, buy: 0 };
+        const rev = liters * p.sell;
+        const prof = rev - (liters * p.buy);
+        document.getElementById('litBadge_' + pumpId).textContent = liters.toFixed(1) + 'L';
+        document.getElementById('revBadge_' + pumpId).textContent = '$' + rev.toFixed(2);
+        document.getElementById('profBadge_' + pumpId).textContent = '+$' + prof.toFixed(2);
+    }
+
+    function saveMeter(pumpId) {
+        const opening = document.getElementById('open-' + pumpId).value;
+        const closing = document.getElementById('close-' + pumpId).value;
+        fetch(`/petroleum/pumps/${pumpId}/shift-meter`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                log_date: LOG_DATE,
+                shift_number: SHIFT,
+                opening_meter: opening || null,
+                closing_meter: closing || null
+            })
+        }).then(r => r.json()).then(d => {
+            if (d.success) {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: d.message, showConfirmButton: false, timer: 1500 });
+            } else {
+                Swal.fire('Cillad', d.message, 'error');
+            }
+        });
+    }
+
+    function saveEverything(btn) {
+        const attendantId = document.getElementById('operatorId').value;
+        const operatorName = document.getElementById('operatorId').options[document.getElementById('operatorId').selectedIndex].text;
+        const headerName = document.getElementById('headerOperatorName');
+
+        const pumpIds = [{% for pump in pumps %}{{ pump.id }},{% endfor %}];
+    const meters = [];
+    pumpIds.forEach(id => {
+        const opening = document.getElementById('open-' + id)?.value;
+        const closing = document.getElementById('close-' + id)?.value;
+        if (opening || closing) {
+            meters.push({
+                pump_id: id,
+                opening: opening || null,
+                closing: closing || null
+            });
+        }
+    });
+
+    if (!btn) return;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Kaydinaya...';
+
+    fetch('/petroleum/shift/bulk-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            log_date: LOG_DATE,
+            shift_number: SHIFT,
+            attendant_id: attendantId,
+            meters: meters
+        })
+    }).then(r => r.json()).then(d => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        if (d.success) {
+            if (attendantId) {
+                headerName.innerHTML = `<i class="fas fa-check-circle text-success me-1"></i>${operatorName}`;
+            } else {
+                headerName.textContent = 'Qofna lama meelayn';
+            }
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Dhammaan xogta waa la kaydiyay!', showConfirmButton: false, timer: 2000 });
+
+            // Hide operator collapse if open
+            const collapseEl = document.getElementById('operatorCollapse');
+            if (collapseEl.classList.contains('show')) {
+                bootstrap.Collapse.getInstance(collapseEl).hide();
+            }
+        } else {
+            Swal.fire('Cillad', d.message, 'error');
+        }
+    }).catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        Swal.fire('Cillad', "Xiriirka server-ka ayaa g'ay", 'error');
+    });
+    }
+
+    // Handle Chevron rotation
+    const opCollapse = document.getElementById('operatorCollapse');
+    const opChevron = document.getElementById('operatorChevron');
+    if (opCollapse && opChevron) {
+        opCollapse.addEventListener('show.bs.collapse', () => opChevron.style.transform = 'rotate(180deg)');
+        opCollapse.addEventListener('hide.bs.collapse', () => opChevron.style.transform = 'rotate(0deg)');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,191 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Petroleum History{% endblock %}
+{% block page_title %}Istooriga Shidaalka{% endblock %}
+{% block styles %}
+<style>
+    .petro-history-container .text-muted {
+        color: #64748b !important;
+    }
+
+    .petro-history-container .fw-bold {
+        color: #1e293b !important;
+    }
+
+    .petro-history-container .text-primary {
+        color: #2563eb !important;
+    }
+
+    .petro-history-container .table thead th {
+        color: #64748b;
+        font-weight: 700;
+        background-color: #f8fafc;
+    }
+
+    .petro-history-container .nav-tabs .nav-link {
+        color: #64748b;
+    }
+
+    .petro-history-container .nav-tabs .nav-link.active {
+        color: #2563eb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set active = 'history' %}
+
+<div class="card border-0 shadow-premium rounded-4 animate-up petro-history-container">
+    <div class="card-header bg-white border-bottom pt-3 px-4">
+        <ul class="nav nav-tabs border-0" role="tablist">
+            <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="tab"
+                    data-bs-target="#tabSales">Iibka</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab"
+                    data-bs-target="#tabDeliveries">Soo-dejin</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab"
+                    data-bs-target="#tabDips">Dip</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab"
+                    data-bs-target="#tabPrices">Qiimaha</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="tab"
+                    data-bs-target="#tabDayClose">Xiritaanka</button></li>
+        </ul>
+    </div>
+    <div class="card-body tab-content p-0">
+        <div class="tab-pane fade show active" id="tabSales">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-4">Invoice</th>
+                            <th>Shidaal</th>
+                            <th>Litir</th>
+                            <th>Wadarta</th>
+                            <th>Gaari</th>
+                            <th>Taariikh</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in sales %}
+                        <tr>
+                            <td class="ps-4 fw-bold small">{{ s.invoice_no }}{% if s.is_locked %} <i
+                                    class="fas fa-lock text-muted" title="Locked"></i>{% endif %}</td>
+                            <td>{{ s.fuel_type.name }}</td>
+                            <td>{{ "{:,.1f}".format(s.liters_sold) }}L</td>
+                            <td>{{ "{:,.2f}".format(s.total_amount) }}</td>
+                            <td>{{ s.vehicle_plate or '—' }}</td>
+                            <td class="small text-muted">{{ s.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="tabDeliveries">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-4">Delivery #</th>
+                            <th>Litir</th>
+                            <th>Waybill</th>
+                            <th>Taariikh</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in deliveries %}
+                        <tr>
+                            <td class="ps-4 fw-bold small">{{ d.delivery_no }}</td>
+                            <td>{{ "{:,.1f}".format(d.liters_received) }}L</td>
+                            <td>{{ d.waybill_no or '—' }}</td>
+                            <td class="small">{{ d.created_at.strftime('%d/%m/%Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="tabDips">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-4">Tank</th>
+                            <th>Nooca</th>
+                            <th>Akhrin</th>
+                            <th>Variance</th>
+                            <th>Taariikh</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in dips %}
+                        <tr>
+                            <td class="ps-4">{{ r.tank.name }}</td>
+                            <td>{{ r.reading_type }}</td>
+                            <td>{{ "{:,.1f}".format(r.reading_liters) }}L</td>
+                            <td class="{{ 'text-danger' if r.variance < 0 else '' }}">{{ "{:+,.1f}".format(r.variance)
+                                }}L</td>
+                            <td class="small">{{ r.created_at.strftime('%d/%m/%Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="tabPrices">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-4">Shidaal</th>
+                            <th>Buy Old→New</th>
+                            <th>Sell Old→New</th>
+                            <th>Taariikh</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in prices %}
+                        <tr>
+                            <td class="ps-4">{{ p.fuel_type.name }}</td>
+                            <td>{{ p.old_buy_price }} → {{ p.new_buy_price }}</td>
+                            <td>{{ p.old_sell_price }} → {{ p.new_sell_price }}</td>
+                            <td class="small">{{ p.effective_date.strftime('%d/%m/%Y') if p.effective_date else
+                                p.created_at.strftime('%d/%m/%Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="tabDayClose">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-4">Maalin</th>
+                            <th>Iib (L)</th>
+                            <th>Dakhli</th>
+                            <th>Soo-dejin (L)</th>
+                            <th>Variance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dc in day_closes %}
+                        <tr>
+                            <td class="ps-4 fw-bold">{{ dc.close_date.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ "{:,.1f}".format(dc.total_sales_liters) }}L</td>
+                            <td>{{ "{:,.2f}".format(dc.total_sales_amount) }}</td>
+                            <td>{{ "{:,.1f}".format(dc.total_deliveries_liters) }}L</td>
+                            <td>{{ "{:,.1f}".format(dc.total_variance) }}L</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="text-end mt-3">
+    <a href="{{ url_for('petroleum.stock_ledger') }}" class="btn btn-outline-primary rounded-pill px-4">
+        <i class="fas fa-book me-1"></i> Stock Ledger
+    </a>
+</div>
+{% endblock %}

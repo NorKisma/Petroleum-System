@@ -1,0 +1,390 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Profit Reports{% endblock %}
+{% block page_title %}Xisaabaadka Faa'idada (Profit Reports){% endblock %}
+{% block content %}
+{% set active = 'profit' %}
+
+<style>
+    .kpi-card {
+        border-radius: 18px;
+        padding: 20px 24px;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: -30px;
+        right: -30px;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, .1);
+    }
+
+    .kpi-card .val {
+        font-size: 1.8rem;
+        font-weight: 900;
+    }
+
+    .kpi-card .lbl {
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        opacity: .85;
+    }
+
+    .kpi-revenue {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    }
+
+    .kpi-gross {
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    .kpi-net {
+        background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    }
+
+    .kpi-cost {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .kpi-liters {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+    }
+
+    .kpi-expense {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+
+    .period-btn {
+        border: 2px solid #e2e8f0;
+        border-radius: 999px;
+        padding: 6px 18px;
+        font-weight: 700;
+        font-size: .82rem;
+        color: #64748b;
+        background: #fff;
+        cursor: pointer;
+        transition: all .15s;
+    }
+
+    .period-btn.active,
+    .period-btn:hover {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: #fff;
+        border-color: transparent;
+    }
+
+    .profit-bar {
+        height: 8px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        overflow: hidden;
+    }
+
+    .profit-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #10b981, #059669);
+    }
+
+    [data-theme='dark'] .period-btn {
+        background: #1e293b;
+        border-color: #334155;
+        color: #94a3b8;
+    }
+
+    [data-theme='dark'] .period-btn.active,
+    [data-theme='dark'] .period-btn:hover {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: #fff;
+    }
+</style>
+
+
+<!-- Period Selector -->
+
+<div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+    <div class="d-flex gap-2 flex-wrap">
+        {% for p_key, p_label in [('daily','Maalin'), ('weekly','Isbuuc'), ('monthly','Bil'), ('yearly','Sanad')] %}
+        <a href="?period={{ p_key }}&date={{ target_date.isoformat() }}"
+            class="period-btn {{ 'active' if period == p_key else '' }}">
+            {{ p_label }}
+        </a>
+        {% endfor %}
+    </div>
+    <div class="ms-auto d-flex align-items-center gap-2">
+        <label class="fw-bold small text-muted mb-0">Taariikhda:</label>
+        <input type="date" class="form-control form-control-sm rounded-pill" style="width:160px;"
+            value="{{ target_date.isoformat() }}" onchange="location.href='?period={{ period }}&date='+this.value">
+    </div>
+    <span class="badge bg-primary bg-opacity-10 text-primary fw-bold px-3 py-2">
+        {{ start_date.strftime('%d %b') }} — {{ end_date.strftime('%d %b %Y') }}
+    </span>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-2">
+        <div class="kpi-card kpi-revenue">
+            <div class="val">${{ "{:,.0f}".format(total_revenue) }}</div>
+            <div class="lbl"><i class="fas fa-dollar-sign me-1"></i>Revenue</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="kpi-card kpi-gross">
+            <div class="val">${{ "{:,.0f}".format(gross_profit) }}</div>
+            <div class="lbl"><i class="fas fa-chart-line me-1"></i>Gross Profit</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="kpi-card kpi-net">
+            <div class="val">${{ "{:,.0f}".format(net_profit) }}</div>
+            <div class="lbl"><i class="fas fa-money-bill-wave me-1"></i>Net Profit</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="kpi-card kpi-cost">
+            <div class="val">${{ "{:,.0f}".format(total_cost_goods) }}</div>
+            <div class="lbl"><i class="fas fa-shopping-cart me-1"></i>Cost of Goods</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="kpi-card kpi-expense">
+            <div class="val">${{ "{:,.0f}".format(total_expenses) }}</div>
+            <div class="lbl"><i class="fas fa-receipt me-1"></i>Kharashaadka</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="kpi-card kpi-liters">
+            <div class="val">{{ "{:,.0f}".format(total_liters) }}L</div>
+            <div class="lbl"><i class="fas fa-tint me-1"></i>Litir Iibay</div>
+        </div>
+    </div>
+</div>
+
+<!-- P&L Summary -->
+<div class="row g-4 mb-4">
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header border-0 bg-white py-3 px-4">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-balance-scale me-2 text-primary"></i>P&L Kooban</h6>
+            </div>
+            <div class="card-body px-4">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted">Iib Guud (Revenue)</td>
+                            <td class="fw-bold text-end text-success">${{ "{:,.2f}".format(total_revenue) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted ps-3">— Qiimaha Badeecada (COGS)</td>
+                            <td class="fw-bold text-end text-danger">-${{ "{:,.2f}".format(total_cost_goods) }}</td>
+                        </tr>
+                        <tr class="table-primary">
+                            <td class="fw-bold">Gross Profit</td>
+                            <td class="fw-bold text-end">${{ "{:,.2f}".format(gross_profit) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted ps-3">— Kharashka Iibsiga (Purchase Cost)</td>
+                            <td class="fw-bold text-end text-warning">-${{ "{:,.2f}".format(total_purchase_cost) }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted ps-3">— Kharashaadka Kale (Expenses)</td>
+                            <td class="fw-bold text-end text-danger">-${{ "{:,.2f}".format(total_expenses) }}</td>
+                        </tr>
+                        <tr class="table-success">
+                            <td class="fw-bold fs-6">Net Profit</td>
+                            <td
+                                class="fw-bold text-end fs-6 {{ 'text-success' if net_profit >= 0 else 'text-danger' }}">
+                                ${{ "{:,.2f}".format(net_profit) }}
+                            </td>
+                        </tr>
+                        {% if total_revenue > 0 %}
+                        <tr>
+                            <td class="text-muted small">Margin %</td>
+                            <td class="fw-bold text-end small">{{ "{:.1f}".format(net_profit / total_revenue * 100) }}%
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Per Fuel Type -->
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header border-0 bg-white py-3 px-4">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-layer-group me-2 text-warning"></i>Faa'idada Nooca Shidaalka
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="thead-dark-elite">
+                            <tr>
+                                <th class="ps-4">Nooca</th>
+                                <th>Litir</th>
+                                <th>Revenue</th>
+                                <th>COGS</th>
+                                <th class="text-end pe-4">Faa'idada</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in fuel_data %}
+                            <tr>
+                                <td class="ps-4 fw-bold">{{ f.label }}</td>
+                                <td>{{ "{:,.1f}".format(f.liters) }}L</td>
+                                <td class="text-success fw-bold">${{ "{:,.2f}".format(f.revenue) }}</td>
+                                <td class="text-danger">${{ "{:,.2f}".format(f.cost) }}</td>
+                                <td class="text-end pe-4">
+                                    <span
+                                        class="badge {{ 'bg-success' if f.profit >= 0 else 'bg-danger' }} bg-opacity-10 {{ 'text-success' if f.profit >= 0 else 'text-danger' }} fw-bold">
+                                        +${{ "{:,.2f}".format(f.profit) }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">Xogta lama helin</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Per Pump Performance -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header border-0 bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-gas-pump me-2 text-primary"></i>Waxqabadka Kasta oo Pump</h6>
+        <span class="badge bg-primary bg-opacity-10 text-primary">{{ pump_data|length }} Pumps</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="thead-dark-elite">
+                    <tr>
+                        <th class="ps-4">Pump</th>
+                        <th>Iib Tirso</th>
+                        <th>Litir</th>
+                        <th>Revenue</th>
+                        <th>COGS</th>
+                        <th>Faa'idada</th>
+                        <th class="text-end pe-4">Qiimaha/L</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in pump_data | sort(attribute='profit', reverse=True) %}
+                    {% set margin = (p.profit / p.revenue * 100) if p.revenue > 0 else 0 %}
+                    <tr>
+                        <td class="ps-4 fw-bold"><i class="fas fa-gas-pump me-2 text-warning"></i>{{ p.label }}</td>
+                        <td><span class="badge bg-secondary bg-opacity-10 text-secondary">{{ p.count }} txn</span></td>
+                        <td>{{ "{:,.1f}".format(p.liters) }}L</td>
+                        <td class="fw-bold text-success">${{ "{:,.2f}".format(p.revenue) }}</td>
+                        <td class="text-danger">${{ "{:,.2f}".format(p.cost) }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold {{ 'text-success' if p.profit >= 0 else 'text-danger' }}">
+                                    ${{ "{:,.2f}".format(p.profit) }}
+                                </span>
+                                <small class="text-muted">({{ "{:.1f}".format(margin) }}%)</small>
+                            </div>
+                            <div class="profit-bar mt-1">
+                                <div class="profit-bar-fill" style="width:{{ [margin, 100]|min }}%"></div>
+                            </div>
+                        </td>
+                        <td class="text-end pe-4 text-muted small">
+                            ${{ "{:,.4f}".format(p.profit / p.liters) if p.liters > 0 else "—" }}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Pump xogta lama helin</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Tank Stock Overview -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header border-0 bg-white py-3 px-4">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-database me-2 text-info"></i>Xaaladda Taangiyadda Hadda</h6>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            {% for tank in tanks %}
+            {% set pct = (tank.current_level / tank.capacity_liters * 100) if tank.capacity_liters else 0 %}
+            {% set is_low = tank.current_level <= tank.min_alert_level %} <div class="col-md-4">
+                <div class="p-3 rounded-3 border {{ 'border-danger' if is_low else 'border-0' }} bg-white shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold">{{ tank.name }}</span>
+                        {% if is_low %}<span class="badge bg-danger">⚠ Hooseeya</span>{% endif %}
+                    </div>
+                    <div class="progress rounded-pill mb-1" style="height:10px;">
+                        <div class="progress-bar {{ 'bg-danger' if pct < 20 else 'bg-warning' if pct < 40 else 'bg-success' }}"
+                            style="width:{{ pct }}%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span>{{ "{:,.0f}".format(tank.current_level) }}L</span>
+                        <span>{{ "{:,.0f}".format(tank.capacity_liters) }}L max · {{ "{:.0f}".format(pct) }}%</span>
+                    </div>
+                </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-muted">Tank lama dejin.</div>
+        {% endfor %}
+    </div>
+</div>
+</div>
+
+<!-- Expenses Breakdown -->
+{% if expenses %}
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header border-0 bg-white py-3 px-4">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-receipt me-2 text-danger"></i>Kharashaadka (Expenses)</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="thead-dark-elite">
+                    <tr>
+                        <th class="ps-4">Faahfaahin</th>
+                        <th>Nooca</th>
+                        <th class="text-end pe-4">Qiimaha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in expenses %}
+                    <tr>
+                        <td class="ps-4">{{ e.description }}</td>
+                        <td><span class="badge bg-secondary bg-opacity-10 text-secondary">{{ e.category }}</span></td>
+                        <td class="text-end pe-4 fw-bold text-danger">${{ "{:,.2f}".format(e.amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th class="ps-4" colspan="2">Wadarta Kharashaadka</th>
+                        <th class="text-end pe-4 text-danger">${{ "{:,.2f}".format(total_expenses) }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

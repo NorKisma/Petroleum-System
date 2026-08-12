@@ -1,0 +1,241 @@
+file_path = 'app/templates/main/apps.html'
+
+content = """{% extends "layouts/base.html" %}
+
+{% block title %}Apps - POS System{% endblock %}
+{% block page_title %}Apps{% endblock %}
+
+{% block styles %}
+<style>
+    /* Odoo-style Full-screen apps grid styling */
+    body {
+        background-color: #f3f4f6 !important; /* Soft light grey background */
+    }
+    .apps-container {
+        padding: 50px 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 40px 20px;
+        max-width: 1000px;
+        margin: 0 auto;
+        justify-items: center;
+    }
+    
+    .app-icon-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        width: 100%;
+        transition: transform 0.2s;
+    }
+    .app-icon-wrapper:hover {
+        transform: translateY(-3px);
+    }
+    
+    .app-icon {
+        width: 85px;
+        height: 85px;
+        background: #ffffff;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        margin-bottom: 12px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.03);
+    }
+    
+    .app-label {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-weight: 500;
+        color: #1f2937;
+        font-size: 0.95rem;
+        text-align: center;
+        line-height: 1.2;
+    }
+
+    /* Colorful gradient icons using text clipping */
+    .icon-gradient {
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: inline-block;
+    }
+
+    /* Specific Module Colors */
+    .color-dashboards { background-image: linear-gradient(135deg, #7c3aed, #ec4899); }
+    .color-pos { background-image: linear-gradient(135deg, #f59e0b, #d97706); }
+    .color-sales { background-image: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .color-purchases { background-image: linear-gradient(135deg, #10b981, #047857); }
+    .color-inventory { background-image: linear-gradient(135deg, #f43f5e, #be123c); }
+    .color-expenses { background-image: linear-gradient(135deg, #0ea5e9, #0369a1); }
+    .color-payroll { background-image: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+    .color-contacts { background-image: linear-gradient(135deg, #14b8a6, #0f766e); }
+    .color-accounting { background-image: linear-gradient(135deg, #eab308, #a16207); }
+    .color-reports { background-image: linear-gradient(135deg, #6366f1, #4338ca); }
+    .color-employees { background-image: linear-gradient(135deg, #64748b, #475569); }
+    .color-settings { background-image: linear-gradient(135deg, #334155, #0f172a); }
+    .color-share { background-image: linear-gradient(135deg, #2dd4bf, #0f766e); }
+    .color-retail { background-image: linear-gradient(135deg, #f472b6, #db2777); }
+    .color-erp { background-image: linear-gradient(135deg, #818cf8, #4f46e5); }
+    
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="apps-container animate-up">
+    
+    <!-- Dashboards -->
+    <a href="{{ url_for('main.analytics') }}" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-chart-pie icon-gradient color-dashboards"></i>
+        </div>
+        <div class="app-label">Dashboards</div>
+    </a>
+
+    <!-- Point of Sale -->
+    {% if company_settings.module_pos %}
+    <a href="{{ url_for('sales.pos') }}" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-store icon-gradient color-pos"></i>
+        </div>
+        <div class="app-label">Point of Sale</div>
+    </a>
+    {% endif %}
+
+    <!-- Sales -->
+    {% if company_settings.module_add_sale or company_settings.module_pos %}
+    <a href="{{ url_for('sales.list_sales') }}" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-file-invoice-dollar icon-gradient color-sales"></i>
+        </div>
+        <div class="app-label">Sales</div>
+    </a>
+    {% endif %}
+
+    <!-- Purchases -->
+    {% if company_settings.module_purchases %}
+    <a href="{{ url_for('vendor.purchases', view='list') }}" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-shopping-cart icon-gradient color-purchases"></i>
+        </div>
+        <div class="app-label">Purchases</div>
+    </a>
+    {% endif %}
+
+    <!-- Inventory -->
+    {% if company_settings.module_inventory %}
+    <a href="{{ url_for('inventory.list_products') }}" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-cubes icon-gradient color-inventory"></i>
+        </div>
+        <div class="app-label">Inventory</div>
+    </a>
+    {% endif %}
+
+    <!-- Expenses -->
+    {% if company_settings.module_expenses %}
+    <a href="{{ url_for('accounting.expenses') }}" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-money-bill-wave icon-gradient color-expenses"></i>
+        </div>
+        <div class="app-label">Expenses</div>
+    </a>
+    {% endif %}
+
+    <!-- Payroll -->
+    <!-- Payroll is usually under staff, let's link to staff payroll -->
+    <a href="{{ url_for('staff.list_payroll') }}" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-hand-holding-usd icon-gradient color-payroll"></i>
+        </div>
+        <div class="app-label">Payroll</div>
+    </a>
+
+    <!-- Contacts -->
+    <a href="{{ url_for('customers.list_customers') }}" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-address-book icon-gradient color-contacts"></i>
+        </div>
+        <div class="app-label">Contacts</div>
+    </a>
+
+    <!-- Accounting -->
+    {% if company_settings.module_accounting %}
+    <a href="{{ url_for('accounting.general_ledger') }}" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-university icon-gradient color-accounting"></i>
+        </div>
+        <div class="app-label">Accounting</div>
+    </a>
+    {% endif %}
+
+    <!-- Reports -->
+    <a href="{{ url_for('accounting.reports_hub') }}" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-chart-line icon-gradient color-reports"></i>
+        </div>
+        <div class="app-label">Reports</div>
+    </a>
+
+    <!-- Employees -->
+    {% if current_user.role in ['admin', 'developer'] or current_user.is_super_admin %}
+    <a href="{{ url_for('staff.list_staff') }}" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-users icon-gradient color-employees"></i>
+        </div>
+        <div class="app-label">Employees</div>
+    </a>
+    {% endif %}
+
+    <!-- Retail & Service -->
+    {% if company_settings.module_bookings or company_settings.module_tables or company_settings.module_kitchen or company_settings.module_subscription %}
+    <a href="#" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-concierge-bell icon-gradient color-retail"></i>
+        </div>
+        <div class="app-label">Retail Services</div>
+    </a>
+    {% endif %}
+
+    <!-- Enterprise ERP -->
+    {% if company_settings.module_crm or company_settings.module_manufacturing or company_settings.module_project or company_settings.module_assets or company_settings.module_repair %}
+    <a href="#" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-industry icon-gradient color-erp"></i>
+        </div>
+        <div class="app-label">ERP</div>
+    </a>
+    {% endif %}
+
+    <!-- Share -->
+    {% if company_settings.module_share %}
+    <a href="{{ url_for('share.register') }}" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-share-alt icon-gradient color-share"></i>
+        </div>
+        <div class="app-label">Share</div>
+    </a>
+    {% endif %}
+
+    <!-- Settings -->
+    {% if current_user.role in ['admin', 'developer'] or current_user.is_super_admin %}
+    <a href="{{ url_for('settings.index') }}" class="app-icon-wrapper">
+        <div class="app-icon">
+            <i class="fas fa-cog icon-gradient color-settings"></i>
+        </div>
+        <div class="app-label">Settings</div>
+    </a>
+    {% endif %}
+
+</div>
+{% endblock %}
+"""
+with open(file_path, 'w') as f:
+    f.write(content)
+
+print("Updated apps.html successfully.")

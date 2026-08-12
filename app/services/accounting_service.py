@@ -297,6 +297,124 @@ class AccountingService:
                 lines=lines
             )
 
+
+    @staticmethod
+    def record_fuel_sale(sale, fuel_type):
+        payment_method_raw = sale.payment_method if sale.payment_method else 'Cash'
+        
+        if payment_method_raw == 'Credit' or sale.fleet_profile_id:
+            payment_acc = '1100'
+        elif payment_method_raw == 'Cash' or payment_method_raw == 'Caddaan':
+            payment_acc = '1000'
+        else:
+            payment_acc = payment_method_raw
+
+        # Cost of goods sold based on current average buy price
+        cogs_amount = sale.liters_sold * (fuel_type.buy_price or 0)
+
+        cust_name = sale.customer.name if sale.customer else (sale.fleet_profile.customer.name if sale.fleet_profile else "Walk-in")
+        
+        lines = [
+            {'account_code': payment_acc, 'debit': sale.total_amount, 'credit': 0, 'description': f"Revenue from Fuel {sale.invoice_no} ({cust_name})"},
+            {'account_code': '4000', 'debit': 0, 'credit': sale.total_amount, 'description': f"Fuel Sales Revenue: {sale.invoice_no}"},
+            {'account_code': '5000', 'debit': cogs_amount, 'credit': 0, 'description': f"COGS for Fuel {sale.invoice_no}"},
+            {'account_code': '1200', 'debit': 0, 'credit': cogs_amount, 'description': f"Fuel Inventory deduction for {sale.invoice_no}"}
+        ]
+        
+        AccountingService.log_transaction(
+            reference=sale.invoice_no,
+            description=f"Fuel Sale: {sale.invoice_no}",
+            tenant_id=sale.tenant_id,
+            lines=lines
+        )
+
+    @staticmethod
+    def record_fuel_delivery(delivery, payment_method='CREDIT'):
+        credit_account = '2000' # Default Accounts Payable
+        if delivery.payment_method == 'CASH':
+            credit_account = '1000'
+        
+        lines = [
+            {'account_code': '1200', 'debit': delivery.total_cost, 'credit': 0, 'description': f"Fuel Inventory increase from {delivery.delivery_no}"},
+            {'account_code': credit_account, 'debit': 0, 'credit': delivery.total_cost, 'description': f"Fuel Delivery Payment/Liability: {delivery.delivery_no}"}
+        ]
+        AccountingService.log_transaction(
+            reference=delivery.delivery_no,
+            description=f"Fuel Delivery: {delivery.delivery_no}",
+            tenant_id=delivery.tenant_id,
+            lines=lines
+        )
+
+    @staticmethod
+    def record_fuel_dip_variance(dip, tank, fuel_type, variance):
+        # Variance is reading - book_stock
+        # If variance < 0, it means loss (shrinkage)
+        # If variance > 0, it means gain (excess)
+        amount = abs(variance * (fuel_type.buy_price or 0))
+        if amount <= 0:
+            return
+
+        if variance < 0:
+            lines = [
+                {'account_code': '5100', 'debit': amount, 'credit': 0, 'description': f"Fuel Shrinkage/Loss on Tank {tank.name}"},
+                {'account_code': '1200', 'debit': 0, 'credit': amount, 'description': f"Inventory Reduction for Dip {dip.id}"}
+            ]
+        else:
+            lines = [
+                {'account_code': '1200', 'debit': amount, 'credit': 0, 'description': f"Inventory Gain for Dip {dip.id}"},
+                {'account_code': '4000', 'debit': 0, 'credit': amount, 'description': f"Fuel Excess Gain on Tank {tank.name}"}
+            ]
+
+        AccountingService.log_transaction(
+            reference=f"DIP-{dip.id}",
+            description=f"Fuel Dip Variance: Tank {tank.name}",
+            tenant_id=dip.tenant_id,
+            lines=lines
+        )
+
+    @staticmethod
+    def record_fleet_payment(profile, amount, payment_method='Cash', discount=0.0):
+        debit_account = payment_method if payment_method else '1000'
+        if debit_account.lower() == 'cash':
+            debit_account = '1000'
+
+        lines = []
+        if amount > 0:
+            lines.append({'account_code': debit_account, 'debit': amount, 'credit': 0, 'description': f"Fleet Payment Received: {profile.customer.name}"})
+        
+        if discount > 0:
+            lines.append({'account_code': '4000', 'debit': discount, 'credit': 0, 'description': f"Fleet Discount Given: {profile.customer.name}"})
+            
+        lines.append({'account_code': '1100', 'debit': 0, 'credit': amount + discount, 'description': f"AR Reduction for {profile.customer.name}"})
+
+        AccountingService.log_transaction(
+            reference=f"FLTPAY-{profile.id}-{int(datetime.utcnow().timestamp())}",
+            description=f"Fleet Payment: {profile.customer.name}",
+            tenant_id=profile.tenant_id,
+            lines=lines
+        )
+
+    @staticmethod
+    def record_fuel_opening_stock(tenant_id, tank_name, liters, unit_cost):
+        amount = liters * unit_cost
+        if amount <= 0: return
+        
+        lines = [
+            {'account_code': '1200', 'debit': amount, 'credit': 0, 'description': f"Opening Fuel Stock: {tank_name}"},
+            {'account_code': '3000', 'debit': 0, 'credit': amount, 'description': f"Owner Equity for {tank_name} stock"}
+        ]
+        AccountingService.log_transaction(
+            reference=f"OPEN-{tank_name.replace(' ', '')}",
+            description=f"Initial Fuel Setup: {tank_name}",
+            tenant_id=tenant_id,
+            lines=lines
+        )
+
+    @staticmethod
+    def ensure_petroleum_accounts(tenant_id):
+        # A utility just to prevent crashes if it is called somewhere.
+        pass
+
     @staticmethod
     def delete_entries(reference, tenant_id):
         entries = JournalEntry.query.filter_by(reference=reference, tenant_id=tenant_id).all()
@@ -313,22 +431,28 @@ class AccountingService:
             
         # --- Direct Query Overrides for Critical Accounts ---
         if account.account_code == '1200' or account.sub_category == 'Inventory':
-            from app.models import Product
-            return db.session.query(db.func.sum(Product.stock_quantity * Product.buy_price))\
-                .filter_by(tenant_id=tenant_id).scalar() or 0
+            from app.models import Product, FuelTank
+            pos_inv = db.session.query(db.func.sum(Product.stock_quantity * Product.buy_price)).filter_by(tenant_id=tenant_id).scalar() or 0
+            fuel_inv = db.session.query(db.func.sum(FuelTank.current_level * 1.0)).filter_by(tenant_id=tenant_id).scalar() or 0
+            # Note: We need a quick way to get average price for fuel tanks. For simplicity in GL, we will just use the fuel type buy_price.
+            from app.models import FuelType
+            tanks = FuelTank.query.filter_by(tenant_id=tenant_id).all()
+            fuel_val = 0
+            for t in tanks:
+                if t.current_level and t.fuel_type:
+                    fuel_val += t.current_level * (t.fuel_type.buy_price or 0)
+            return pos_inv + fuel_val
 
         if account.account_code == '1100' or account.sub_category in ['Accounts Receivable', 'Receivables']:
-            from app.models import Sale, CustomerPayment, SaleReturn
-            _credit_sales = db.session.query(db.func.sum(Sale.total_amount))\
-                .filter_by(tenant_id=tenant_id, payment_method='Credit').scalar() or 0
-            _cust_paid = db.session.query(db.func.sum(CustomerPayment.amount))\
-                .filter_by(tenant_id=tenant_id).scalar() or 0
+            from app.models import Sale, CustomerPayment, SaleReturn, FuelSale
+            _credit_sales = db.session.query(db.func.sum(Sale.total_amount)).filter_by(tenant_id=tenant_id, payment_method='Credit').scalar() or 0
+            _fuel_credit_sales = db.session.query(db.func.sum(FuelSale.total_amount)).filter_by(tenant_id=tenant_id, payment_method='Credit').scalar() or 0
+            _cust_paid = db.session.query(db.func.sum(CustomerPayment.amount)).filter_by(tenant_id=tenant_id).scalar() or 0
             
-            # Only subtract returns where the parent sale was 'Credit'
-            _returns = db.session.query(db.func.sum(SaleReturn.total_amount))\
-                .join(Sale).filter(Sale.tenant_id == tenant_id, Sale.payment_method == 'Credit').scalar() or 0
+            # Returns only apply to POS sales, not Fuel sales
+            _returns = db.session.query(db.func.sum(SaleReturn.total_amount)).join(Sale).filter(Sale.tenant_id == tenant_id, Sale.payment_method == 'Credit').scalar() or 0
             
-            return max(_credit_sales - _cust_paid - _returns, 0)
+            return max((_credit_sales + _fuel_credit_sales) - _cust_paid - _returns, 0)
             
         if account.account_code == '2000' or account.sub_category == 'Accounts Payable':
             from app.models import Purchase, VendorPayment, PurchaseReturn

@@ -1,0 +1,587 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Product By AP - Elite POS{% endblock %}
+{% block page_title %}Vendor - Product By AP{% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up">
+    <h3 class="mb-0">Product By AP</h3>
+    <p class="text-white text-opacity-75 small mb-0">Track all product purchases and procurement history.</p>
+</div>
+
+<div class="animate-up">
+
+    {% if request.args.get('view') == 'add' %}
+
+    <!-- Add Purchase Form Inline -->
+    <div class="card border-0 shadow-premium rounded-4 animate-up mb-4 overflow-hidden">
+        <div class="card-header card-header-elite-dark d-flex justify-content-between align-items-center py-3">
+            <h5 class="fw-bold mb-0 text-white"><i class="fas fa-plus-circle me-2"></i> Add New Purchase</h5>
+            <a href="{{ url_for('vendor.purchases') }}" class="btn btn-sm btn-light rounded-pill px-3 fw-bold">
+                <i class="fas fa-arrow-left me-1"></i> Back to List
+            </a>
+        </div>
+        <div class="card-body p-4" style="background-color: #fafafa;">
+            <form id="purchaseForm">
+                <input type="hidden" name="attachment" id="purchaseAttachment">
+                <div class="row">
+                    <!-- Left Side: Basic Info -->
+                    <div class="col-lg-3 border-end border-light pe-lg-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark small">Payment Method <span
+                                    class="text-danger">*</span></label>
+                            <select name="payment_method" id="paymentMethod"
+                                class="form-select rounded-3 border-secondary border-opacity-25 shadow-sm" required>
+                                <option value="cash">Cash Payment</option>
+                                <option value="credit">On Credit (Accounts Payable)</option>
+                                <option value="bank">Bank Transfer</option>
+                            </select>
+                        </div>
+
+                        <div id="bankAccountGroup" class="mb-3" style="display: none;">
+                            <label class="form-label fw-bold text-dark small">Select Bank Account</label>
+                            <select name="bank_account_id" id="bankAccount"
+                                class="form-select rounded-3 border-secondary border-opacity-25 shadow-sm">
+                                <option value="">Select Account</option>
+                                {% for acc in accounts %}
+                                <option value="{{ acc.id }}">{{ acc.account_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark small">Supplier <span
+                                    class="text-danger">*</span></label>
+                            <select name="vendor_id" class="form-select rounded-3 border-secondary border-opacity-25 shadow-sm" required>
+                                <option value="">Select Supplier</option>
+                                {% for v in vendors %}
+                                <option value="{{ v.id }}">{{ v.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark small">Purchase Date <span
+                                    class="text-danger">*</span></label>
+                            <input type="date" name="date" class="form-control rounded-3 border-secondary border-opacity-25 shadow-sm" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark small">Reference No</label>
+                            <input type="text" name="invoice_no" class="form-control rounded-3 border-secondary border-opacity-25 shadow-sm" placeholder="e.g. PUR-2026-001">
+                        </div>
+                    </div>
+
+                    <!-- Right Side: Items and Totals -->
+                    <div class="col-lg-9 ps-lg-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold text-dark mb-0"><i class="fas fa-shopping-cart me-2 text-primary"></i>
+                                Purchase Items</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold"
+                                data-bs-toggle="offcanvas" data-bs-target="#quickAddProductOffcanvas">
+                                <i class="fas fa-plus me-1"></i> Quick Add Product
+                            </button>
+                        </div>
+
+                        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 align-middle" id="purchaseItemsTable"
+                                    style="font-size: 0.85rem;">
+                                    <thead class="bg-dark text-white fw-bold">
+                                        <tr>
+                                            <th class="py-3 ps-4" style="width: 30%; background: #0f172a;">PRODUCT</th>
+                                            <th class="py-3 text-center" style="width: 10%; background: #0f172a;">QTY</th>
+                                            <th class="py-3 text-center" style="width: 15%; background: #0f172a;">COST PRICE</th>
+                                            <th class="py-3 text-center" style="width: 15%; background: #0f172a;">SELLING PRICE</th>
+                                            <th class="py-3 text-center" style="width: 20%; background: #0f172a;">SUBTOTAL</th>
+                                            <th class="py-3 text-center" style="width: 10%; background: #0f172a;"><i class="fas fa-trash-alt"></i></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="purchaseItemsBody">
+                                        <!-- Dynamic Rows -->
+                                    </tbody>
+                                    <tfoot class="bg-white border-top">
+                                        <tr>
+                                            <td colspan="4" class="text-end fw-bold py-3 pe-5" style="color: #64748b;">Grand Total:</td>
+                                            <td class="text-center fw-bold py-3 text-dark h5 mb-0" style="background: #f8fafc;">$<span id="grandTotal">0.00</span></td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark small">Add Product to List</label>
+                            <select id="productSelector" class="form-select border-light shadow-sm rounded-3 py-2">
+                                <option value="">Search and select product...</option>
+                                {% for p in products %}
+                                <option value="{{ p.id }}" data-cost="{{ p.buy_price }}" data-sell="{{ p.sell_price }}">
+                                    {{ p.name }} ({{ p.barcode or 'No Barcode' }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small">Remarks / Notes</label>
+                            <textarea name="remarks" class="form-control rounded-3 border-light shadow-sm" rows="2" placeholder="Any additional information..."></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-3 mt-4 mb-3">
+                            <button type="button" class="btn btn-light rounded-pill px-5 fw-bold border shadow-sm py-2" onclick="window.location.reload()">Cancel</button>
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-lg py-2" id="submitPurchaseBtn" style="background: #3498db; border: none; min-width: 220px;">
+                                <i class="fas fa-check-circle me-2"></i> Save Purchase
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% else %}
+
+    <!-- List View -->
+    <div class="row g-4 mb-4 animate-up">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                <div class="card-body p-4">
+                    <h6 class="text-muted opacity-75 mb-2 fw-bold small text-uppercase" style="letter-spacing: 1px;">Total Purchases</h6>
+                    <h2 class="text-dark fw-bold mb-0">${{ "{:,.2f}".format(summary.total_cost) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                <div class="card-body p-4">
+                    <h6 class="text-muted opacity-75 mb-2 fw-bold small text-uppercase" style="letter-spacing: 1px;">Est. Selling Value</h6>
+                    <h2 class="text-primary fw-bold mb-0">${{ "{:,.2f}".format(summary.total_sales) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                <div class="card-body p-4">
+                    <h6 class="text-muted opacity-75 mb-2 fw-bold small text-uppercase" style="letter-spacing: 1px;">Est. Profit</h6>
+                    <h2 class="text-success fw-bold mb-0">${{ "{:,.2f}".format(summary.profit) }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-premium rounded-4 mb-5 bg-white overflow-hidden">
+        <div class="card-header card-header-elite-blue d-flex justify-content-between align-items-center py-3">
+            <div class="d-flex align-items-center">
+                <h5 class="mb-0 text-white fw-bold me-3">Purchase Register</h5>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('vendor.purchases', view='add') }}" class="btn btn-sm btn-light rounded-pill px-4 fw-bold shadow-sm d-none d-md-block">
+                    <i class="fas fa-plus me-1 text-primary"></i> Add Purchase
+                </a>
+                <a href="{{ url_for('vendor.purchases', view='add') }}" class="btn btn-sm btn-outline-light rounded-pill px-3 d-md-none">
+                    <i class="fas fa-plus"></i>
+                </a>
+            </div>
+        </div>
+        <div class="card-body px-0 pb-0">
+            <div class="table-responsive">
+                <table id="apTable" class="table align-middle table-hover mb-0">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-4">Action</th>
+                            <th>Date</th>
+                            <th>Reference No</th>
+                            <th>Supplier</th>
+                            <th>Status</th>
+                            <th class="text-end">Total Cost</th>
+                            <th class="text-end">Selling Price</th>
+                            <th class="pe-4 text-end">Profit</th>
+                        </tr>
+                    </thead>
+                    <tbody style="font-size: 0.9rem;">
+                        {% for p in purchases %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex gap-2">
+                                    <button class="btn-action btn-view view-btn" 
+                                            data-invoice="{{ p.invoice_no }}"
+                                            data-vendor="{{ p.vendor_name }}"
+                                            data-date="{{ p.date }}"
+                                            data-tcost="{{ p.total_cost }}"
+                                            data-tsell="{{ p.total_sales }}"
+                                            data-profit="{{ p.profit }}"
+                                            data-items='{{ p.serialized_items | tojson | safe }}'
+                                            title="View Details">
+                                        <i class="far fa-eye"></i>
+                                    </button>
+                                    <button class="btn-action btn-return" title="Return Items"><i class="fas fa-undo-alt"></i></button>
+                                    <button class="btn-action btn-delete" 
+                                            onclick="if(confirm('Ma hubtaa inaad tirtirto?')) { 
+                                                fetch('/vendor/purchase/delete/{{ p.obj.id }}', { method: 'DELETE' })
+                                                .then(res => res.json())
+                                                .then(data => { if(data.success) location.reload(); else alert(data.message); }); 
+                                            }" 
+                                            title="Delete">
+                                        <i class="far fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="text-dark small">{{ p.date }}</td>
+                            <td class="fw-bold text-dark">{{ p.invoice_no }}</td>
+                            <td class="text-dark">{{ p.vendor_name }}</td>
+                            <td>
+                                <span class="badge {{ 'bg-success' if p.obj.payment_method|upper != 'CREDIT' else 'bg-warning text-dark' }} bg-opacity-10 {{ 'text-success' if p.obj.payment_method|upper != 'CREDIT' else '' }} rounded-pill px-3 py-1">
+                                    {{ 'Paid' if p.obj.payment_method|upper != 'CREDIT' else 'Unpaid' }}
+                                </span>
+                            </td>
+                            <td class="text-dark fw-bold text-end">$ {{ "{:,.2f}".format(p.total_cost) }}</td>
+                            <td class="text-primary fw-bold text-end">$ {{ "{:,.2f}".format(p.total_sales) }}</td>
+                            <td class="pe-4 text-end">
+                                <span class="badge bg-info bg-opacity-10 text-info rounded-pill px-3 py-1">$ {{ "{:,.2f}".format(p.profit) }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Offcanvas: View Purchase Details -->
+<div class="offcanvas offcanvas-end shadow-premium border-0" id="viewPurchaseOffcanvas" style="width: 700px;">
+    <div class="offcanvas-header border-bottom border-light py-4 px-4" style="background-color: var(--surface);">
+        <h5 class="offcanvas-title fw-bold text-main"><i class="fas fa-file-invoice-dollar me-2 text-primary"></i>
+            Purchase Details</h5>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0" style="background-color: var(--bg-main);">
+        <div class="p-4 bg-white border-bottom">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Reference No</label>
+                    <div id="viewInvoiceNo" class="h6 fw-bold text-dark mb-0">-</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Supplier</label>
+                    <div id="viewVendorName" class="h6 fw-bold text-dark mb-0">-</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Date</label>
+                    <div id="viewDate" class="h6 fw-bold text-dark mb-0">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+                <table class="table table-sm align-middle mb-0" style="font-size: 0.85rem;">
+                    <thead class="bg-light text-muted">
+                        <tr>
+                            <th class="ps-4 py-3">Product</th>
+                            <th class="text-center py-3">Qty</th>
+                            <th class="text-end py-3">Cost</th>
+                            <th class="text-end pe-4 py-3">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="viewItemsBody"></tbody>
+                </table>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-3 p-3 text-center">
+                        <label class="text-muted small fw-bold mb-1 d-block">Total Cost</label>
+                        <div class="h5 fw-bold text-dark mb-0">$<span id="viewTotalCost">0.00</span></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-3 p-3 text-center">
+                        <label class="text-muted small fw-bold mb-1 d-block">Selling Value</label>
+                        <div class="h5 fw-bold text-primary mb-0">$<span id="viewTotalSelling">0.00</span></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-3 p-3 text-center">
+                        <label class="text-muted small fw-bold mb-1 d-block">Est. Profit</label>
+                        <div class="h5 fw-bold text-success mb-0">$<span id="viewProfit">0.00</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 border-top mt-auto bg-white d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-light border fw-bold px-4 rounded-3"><i class="fas fa-print me-2"></i>
+                Print</button>
+            <button type="button" class="btn btn-success fw-bold px-4 rounded-3" data-bs-dismiss="offcanvas"><i
+                    class="fas fa-times me-2"></i> Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas: Quick Add Product -->
+<div class="offcanvas offcanvas-end shadow-premium border-0" id="quickAddProductOffcanvas" style="width: 400px;">
+    <div class="offcanvas-header border-bottom border-light py-4 px-4">
+        <h5 class="offcanvas-title fw-bold text-main"><i class="fas fa-plus-circle me-2 text-primary"></i> Quick Add
+            Product</h5>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-4" style="background-color: var(--bg-main);">
+        <form id="quickProductForm">
+            <div class="mb-3">
+                <label class="form-label fw-bold small text-dark">Product Name <span
+                        class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-control rounded-3 border-secondary border-opacity-25"
+                    placeholder="Geli magaca alaabta" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold small text-dark">Category</label>
+                <select name="category_id" class="form-select rounded-3 border-secondary border-opacity-25">
+                    <option value="">No Category (Midna)</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary-elite fw-bold py-2 rounded-3 shadow-sm" id="quickSaveBtn">
+                    <i class="fas fa-save me-2"></i> Save Product
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#apTable').DataTable({
+            "pageLength": 10,
+            "order": [[1, 'desc']],
+            "dom": '<"d-flex justify-content-between align-items-center mb-3"Bf>rt<"d-flex justify-content-between align-items-center mt-3"ip>',
+            "buttons": [
+                { extend: 'csv', text: '<i class="fas fa-file-csv me-1"></i> CSV', className: 'btn btn-sm btn-outline-secondary' },
+                { extend: 'excel', text: '<i class="fas fa-file-excel me-1"></i> Excel', className: 'btn btn-sm btn-outline-secondary' },
+                { extend: 'print', text: '<i class="fas fa-print me-1"></i> Print', className: 'btn btn-sm btn-outline-secondary' }
+            ],
+            "language": {
+                "search": "",
+                "searchPlaceholder": "Raadi...",
+                "paginate": {
+                    "previous": "Dib",
+                    "next": "Hore"
+                }
+            }
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Current date logic
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.querySelector('input[name="date"]');
+        if (dateInput) dateInput.value = today;
+
+        // --- PRODUCT AUTO-ADD LOGIC ---
+        const productSelector = document.getElementById('productSelector');
+        const purchaseItemsBody = document.getElementById('purchaseItemsBody');
+        const grandTotalSpan = document.getElementById('grandTotal');
+
+        if (productSelector) {
+            $(productSelector).select2({ theme: 'bootstrap-5', width: '100%' });
+            
+            $(productSelector).on('change', function() {
+                const productId = $(this).val();
+                if (!productId) return;
+
+                const option = $(this).find(':selected');
+                const name = option.text().trim();
+                const cost = option.data('cost') || 0;
+                const sell = option.data('sell') || 0;
+
+                // Add row to table
+                const rowId = `item-${productId}`;
+                if (document.getElementById(rowId)) {
+                    const qtyInput = document.querySelector(`#${rowId} .item-qty`);
+                    qtyInput.value = parseInt(qtyInput.value) + 1;
+                    updateRowTotal(qtyInput);
+                } else {
+                    const rowHtml = `
+                        <tr id="${rowId}" class="animate-fade">
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark">${name}</div>
+                                <input type="hidden" name="product_id[]" value="${productId}">
+                            </td>
+                            <td><input type="number" name="qty[]" class="form-control form-control-sm text-center item-qty" value="1" min="1" oninput="updateRowTotal(this)"></td>
+                            <td><input type="number" step="0.01" name="cost[]" class="form-control form-control-sm text-center item-cost" value="${cost}" oninput="updateRowTotal(this)"></td>
+                            <td><input type="number" step="0.01" name="sell[]" class="form-control form-control-sm text-center item-sell" value="${sell}"></td>
+                            <td class="text-center fw-bold text-dark">$<span class="item-subtotal">${parseFloat(cost).toFixed(2)}</span></td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger border-0 rounded-3" onclick="this.closest('tr').remove(); calculateGrandTotal();">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    purchaseItemsBody.insertAdjacentHTML('beforeend', rowHtml);
+                }
+
+                // Reset selector
+                $(this).val('').trigger('change.select2');
+                calculateGrandTotal();
+            });
+        }
+
+        window.updateRowTotal = function(input) {
+            const row = input.closest('tr');
+            const qty = row.querySelector('.item-qty').value || 0;
+            const cost = row.querySelector('.item-cost').value || 0;
+            const subtotal = row.querySelector('.item-subtotal');
+            subtotal.textContent = (qty * cost).toFixed(2);
+            calculateGrandTotal();
+        };
+
+        window.calculateGrandTotal = function() {
+            let total = 0;
+            document.querySelectorAll('.item-subtotal').forEach(span => {
+                total += parseFloat(span.textContent);
+            });
+            grandTotalSpan.textContent = total.toFixed(2);
+        };
+
+        // --- SUBMIT FORM ---
+        $('#purchaseForm').on('submit', function(e) {
+            e.preventDefault();
+            const btn = $('#submitPurchaseBtn');
+            
+            // Collect items into an array of objects
+            const items = [];
+            document.querySelectorAll('input[name="product_id[]"]').forEach((input, index) => {
+                items.push({
+                    product_id: input.value,
+                    qty: document.querySelectorAll('input[name="qty[]"]')[index].value,
+                    unit_cost: document.querySelectorAll('input[name="cost[]"]')[index].value,
+                    selling_price: document.querySelectorAll('input[name="sell[]"]')[index].value
+                });
+            });
+
+            if(items.length === 0) {
+                return Swal.fire('Error', 'Fadlan ku dar ugu yaraan hal alaab!', 'error');
+            }
+
+            const data = {
+                vendor_id: document.querySelector('select[name="vendor_id"]').value,
+                payment_method: document.getElementById('paymentMethod').value,
+                bank_account_id: document.getElementById('bankAccount').value,
+                date: document.querySelector('input[name="date"]').value,
+                invoice_no: document.querySelector('input[name="invoice_no"]').value,
+                remarks: document.querySelector('textarea[name="remarks"]').value,
+                items: items
+            };
+
+            btn.html('<i class="fas fa-spinner fa-spin me-2"></i> Saving...').prop('disabled', true);
+            
+            fetch("{{ url_for('vendor.purchases') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if(res.success) {
+                    Swal.fire({ icon: 'success', title: 'Guul!', text: 'Iibka waa lagu guulaystay!', timer: 2000, showConfirmButton: false })
+                    .then(() => window.location.href = "{{ url_for('vendor.purchases') }}");
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                    btn.html('<i class="fas fa-check-circle me-2"></i> Save Purchase').prop('disabled', false);
+                }
+            })
+            .catch(err => {
+                Swal.fire('Error', 'System error occurred!', 'error');
+                btn.html('<i class="fas fa-check-circle me-2"></i> Save Purchase').prop('disabled', false);
+            });
+        });
+
+        // View Purchase Logic
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.getElementById('viewInvoiceNo').textContent = this.getAttribute('data-invoice');
+                document.getElementById('viewVendorName').textContent = this.getAttribute('data-vendor');
+                document.getElementById('viewDate').textContent = this.getAttribute('data-date');
+
+                document.getElementById('viewTotalCost').textContent = parseFloat(this.getAttribute('data-tcost')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                document.getElementById('viewTotalSelling').textContent = parseFloat(this.getAttribute('data-tsell')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                document.getElementById('viewProfit').textContent = parseFloat(this.getAttribute('data-profit')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                const itemsBody = document.getElementById('viewItemsBody');
+                itemsBody.innerHTML = '';
+
+                try {
+                    const itemsStr = this.getAttribute('data-items');
+                    if (itemsStr) {
+                        const items = JSON.parse(itemsStr);
+                        items.forEach(item => {
+                            const row = `
+                                <tr>
+                                    <td class="ps-4 py-2 fw-bold text-dark">${item.name}</td>
+                                    <td class="text-center py-2">${item.qty}</td>
+                                    <td class="text-end py-2">$${parseFloat(item.cost).toFixed(2)}</td>
+                                    <td class="text-end pe-4 py-2 fw-bold text-dark">$${(item.qty * item.cost).toFixed(2)}</td>
+                                </tr>`;
+                            itemsBody.innerHTML += row;
+                        });
+                    }
+                } catch (e) { console.error("Error parsing items JSON", e); }
+
+                new bootstrap.Offcanvas(document.getElementById('viewPurchaseOffcanvas')).show();
+            });
+        });
+
+        // Payment Method Logic
+        const paymentMethod = document.getElementById('paymentMethod');
+        if (paymentMethod) {
+            paymentMethod.addEventListener('change', function () {
+                document.getElementById('bankAccountGroup').style.display = (this.value === 'bank') ? 'block' : 'none';
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        transition: all 0.2s;
+        background: #f8fafc;
+        color: #64748b;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn-view:hover {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .btn-return:hover {
+        background: #fef2f2;
+        color: #f94a4a;
+    }
+
+    .btn-delete:hover {
+        background: #fff1f2;
+        color: #e11d48;
+    }
+</style>
+{% endblock %}

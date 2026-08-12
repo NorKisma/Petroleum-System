@@ -1,0 +1,120 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Other Assets - Antigravity POS{% endblock %}
+{% block page_title %}Hantida Kale (Other Assets){% endblock %}
+
+{% block content %}
+<div class="card border border-light shadow-sm rounded-4 mb-5">
+    <div class="card-header bg-white py-3 px-4 border-bottom border-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-building me-2 text-primary"></i> Liiska Hantida Guurtada & Ma-guurtada</h5>
+        <button class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="offcanvas" data-bs-target="#addAssetOffcanvas">
+            <i class="fas fa-plus me-2"></i> Diwaangeli Hanti
+        </button>
+    </div>
+    <div class="card-body p-4">
+        <div class="table-responsive">
+            <table id="assetsTable" class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Magaca Hantida</th>
+                        <th>Qiimaha (Original)</th>
+                        <th>Nolosha (Years)</th>
+                        <th>Qaybinta (Depr.)</th>
+                        <th>Qiimaha Haatan (Net)</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for asset in assets %}
+                    {% set now = namespace(date=asset.created_at) %}
+                    {% set diff = (current_time - asset.purchase_date).days / 365.25 %}
+                    {% set depr = 0 %}
+                    {% if asset.depreciation_method == 'Straight Line' and asset.useful_life_years > 0 %}
+                        {% set annual_depr = (asset.value - asset.salvage_value) / asset.useful_life_years %}
+                        {% set depr = annual_depr * diff %}
+                        {% if depr > (asset.value - asset.salvage_value) %}{% set depr = asset.value - asset.salvage_value %}{% endif %}
+                        {% if depr < 0 %}{% set depr = 0 %}{% endif %}
+                    {% endif %}
+                    {% set current_value = asset.value - depr %}
+                    <tr>
+                        <td class="fw-bold text-dark">
+                            {{ asset.name }}<br>
+                            <small class="text-muted fw-normal">{{ asset.description or '-' }} | {{ asset.purchase_date.strftime('%d/%m/%Y') }}</small>
+                        </td>
+                        <td class="fw-bold text-primary">${{ "{:,.2f}".format(asset.value) }}</td>
+                        <td>{{ asset.useful_life_years }} years</td>
+                        <td class="text-danger">-${{ "{:,.2f}".format(depr) }}</td>
+                        <td class="fw-bold text-success">${{ "{:,.2f}".format(current_value) }}</td>
+                        <td class="text-end">
+                            <button class="btn btn-link text-primary p-0 me-3"><i class="fas fa-edit fs-6"></i></button>
+                            <button class="btn btn-link text-danger p-0"><i class="fas fa-trash fs-6"></i></button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas: Add Asset -->
+<div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="addAssetOffcanvas" style="width: 450px;">
+    <div class="offcanvas-header border-bottom py-3">
+        <h5 class="fw-bold mb-0 text-dark">Diiwaangeli Hanti Cusub</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body" style="background-color: #fafafa;">
+        <form action="{{ url_for('accounting.assets') }}" method="POST">
+            <div class="mb-3">
+                <label class="form-label fw-bold text-dark small">Magaca Hantida <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-control border-secondary border-opacity-25 rounded-3" placeholder="e.g. Laptop, Furniture, Gaari" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold text-dark small">Qiimaha (Original Value $) <span class="text-danger">*</span></label>
+                <input type="number" step="0.01" name="value" class="form-control border-secondary border-opacity-25 rounded-3" placeholder="0.00" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold text-dark small">Habka Qaybinta (Depreciation Method)</label>
+                <select name="depreciation_method" class="form-select border-secondary border-opacity-25 rounded-3">
+                    <option value="None">None (Ma dhamaato)</option>
+                    <option value="Straight Line">Straight Line (Qayb siman)</option>
+                </select>
+            </div>
+            <div class="row mb-3">
+                <div class="col-6">
+                    <label class="form-label fw-bold text-dark small">Nolosha (Years)</label>
+                    <input type="number" step="1" name="useful_life_years" class="form-control border-secondary border-opacity-25 rounded-3" placeholder="e.g. 5" value="0">
+                </div>
+                <div class="col-6">
+                    <label class="form-label fw-bold text-dark small">Haraaga (Salvage $)</label>
+                    <input type="number" step="0.01" name="salvage_value" class="form-control border-secondary border-opacity-25 rounded-3" placeholder="0.00" value="0">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Faahfaahin (Description)</label>
+                <textarea name="description" class="form-control border-secondary border-opacity-25 rounded-3" rows="2" placeholder="Description-ka hantida..."></textarea>
+            </div>
+
+            <div class="d-flex gap-2 mt-5">
+                <button type="button" class="btn btn-light border fw-bold px-4 rounded-3" data-bs-dismiss="offcanvas">Jooji</button>
+                <button type="submit" class="btn btn-primary fw-bold px-4 rounded-3 shadow-sm">Keydi Hantida</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#assetsTable').DataTable({
+            "pageLength": 10,
+            "language": {
+                "search": "",
+                "searchPlaceholder": "Raadi hanti...",
+                "dom": '<"d-flex justify-content-between align-items-center mb-4"f>rt<"d-flex justify-content-between align-items-center mt-4"ip>'
+            }
+        });
+    });
+</script>
+{% endblock %}
