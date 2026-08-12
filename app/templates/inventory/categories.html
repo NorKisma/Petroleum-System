@@ -1,0 +1,193 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Categories - Antigravity POS{% endblock %}
+{% block page_title %}Inventory - Categories{% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up">
+    <h3 class="mb-0">Product Categories</h3>
+    <p class="text-white text-opacity-75 small mb-0">Organize your inventory with high-level classifications.</p>
+</div>
+
+<div class="animate-up">
+    <div class="card border-0 shadow-premium rounded-4 mb-5 bg-white overflow-hidden">
+        <div class="card-header card-header-elite-blue d-flex justify-content-between align-items-center py-3">
+            <div class="d-flex align-items-center">
+                <h5 class="mb-0 text-white fw-bold me-3">Categories List</h5>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-light rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="offcanvas" data-bs-target="#addCategoryOffcanvas">
+                    <i class="fas fa-plus me-1 text-primary"></i> Add Category
+                </button>
+            </div>
+        </div>
+        <div class="card-body px-0 pb-0">
+            <div class="table-responsive">
+                <table id="categoriesTable" class="table align-middle table-hover mb-0 w-100">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-5" style="width: 80%;">Category Name</th>
+                            <th class="text-end pe-5">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody style="font-size: 1rem;">
+                        {% for cat in categories %}
+                        <tr>
+                            <td class="ps-5">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar-sm bg-primary bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                        <i class="fas fa-tags"></i>
+                                    </div>
+                                    <div class="fw-bold text-dark">{{ cat.name }}</div>
+                                </div>
+                            </td>
+                            <td class="text-end pe-5">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button class="btn btn-xs btn-light edit-btn" 
+                                            data-id="{{ cat.id }}" 
+                                            data-name="{{ cat.name }}">
+                                        <i class="fas fa-edit text-primary"></i>
+                                    </button>
+                                    <button class="btn btn-xs btn-light delete-btn" 
+                                            data-id="{{ cat.id }}" 
+                                            data-name="{{ cat.name }}">
+                                        <i class="fas fa-trash-alt text-danger"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas: Add Category -->
+<div class="offcanvas offcanvas-end border-0 shadow-premium" tabindex="-1" id="addCategoryOffcanvas" style="width: 450px;">
+    <div class="offcanvas-header border-bottom border-light py-4 px-4">
+        <h5 class="fw-bold mb-0 text-main"><i class="fas fa-plus-circle me-2 text-primary"></i> Add New Category</h5>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-4" style="background-color: var(--bg-main);">
+        <form method="POST" action="{{ url_for('inventory.list_categories') }}">
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Category Name <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-control border-light shadow-sm rounded-3 py-2" placeholder="e.g. Beverages" required>
+            </div>
+            <div class="d-grid mt-5">
+                <button type="submit" class="btn btn-primary-elite btn-lg rounded-pill fw-bold shadow-lg py-3">
+                    <i class="fas fa-check-circle me-2"></i> Save Category
+                </button>
+                <button type="button" class="btn btn-link text-muted mt-2 text-decoration-none" data-bs-dismiss="offcanvas">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Offcanvas: Edit Category -->
+<div class="offcanvas offcanvas-end border-0 shadow-premium" tabindex="-1" id="editCategoryOffcanvas" style="width: 450px;">
+    <div class="offcanvas-header border-bottom border-light py-4 px-4">
+        <h5 class="fw-bold mb-0 text-main"><i class="fas fa-edit me-2 text-primary"></i> Edit Category</h5>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-4" style="background-color: var(--bg-main);">
+        <form id="editCategoryForm">
+            <input type="hidden" id="editCatId">
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Category Name <span class="text-danger">*</span></label>
+                <input type="text" id="editCatName" class="form-control border-light shadow-sm rounded-3 py-2" required>
+            </div>
+            <div class="d-grid mt-5">
+                <button type="submit" class="btn btn-primary-elite btn-lg rounded-pill fw-bold shadow-lg py-3">
+                    <i class="fas fa-sync-alt me-2"></i> Update Category
+                </button>
+                <button type="button" class="btn btn-link text-muted mt-2 text-decoration-none" data-bs-dismiss="offcanvas">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    var table = $('#categoriesTable').DataTable({
+        "pageLength": 10,
+        "dom": '<"d-flex justify-content-between align-items-center mb-3"Bf>rt<"d-flex justify-content-between align-items-center mt-3"ip>',
+        "buttons": [
+            { extend: 'csv', text: '<i class="fas fa-file-csv me-1"></i> CSV', className: 'btn btn-sm btn-outline-secondary' },
+            { extend: 'excel', text: '<i class="fas fa-file-excel me-1"></i> Excel', className: 'btn btn-sm btn-outline-secondary' },
+            { extend: 'print', text: '<i class="fas fa-print me-1"></i> Print', className: 'btn btn-sm btn-outline-secondary' }
+        ],
+        "language": {
+            "search": "",
+            "searchPlaceholder": "Raadi...",
+            "paginate": {
+                "previous": "Dib",
+                "next": "Hore"
+            }
+        }
+    });
+
+    // Populate Edit Offcanvas
+    $('.edit-btn').on('click', function() {
+        $('#editCatId').val($(this).data('id'));
+        $('#editCatName').val($(this).data('name'));
+        new bootstrap.Offcanvas(document.getElementById('editCategoryOffcanvas')).show();
+    });
+
+    // Handle Edit Submit
+    $('#editCategoryForm').on('submit', function(e) {
+        e.preventDefault();
+        const id = $('#editCatId').val();
+        const name = $('#editCatName').val();
+        
+        fetch(`/inventory/category/edit/${id}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ name: name })
+        })
+        .then(res => res.json())
+        .then(result => {
+            if(result.success) {
+                Swal.fire('Guul!', 'Qaybta waa la cusboonaysiiyey.', 'success').then(() => location.reload());
+            } else {
+                Swal.fire('Cilad!', result.message, 'error');
+            }
+        });
+    });
+
+    // Delete Category
+    $('.delete-btn').on('click', function() {
+        const id = $(this).data('id');
+        const name = $(this).data('name');
+        Swal.fire({
+            title: 'Ma hubtaa?',
+            text: `Qaybta "${name}" waa laga tirtirayaa nidaamka!`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f94a4a',
+            confirmButtonText: 'Haa, tirtir!',
+            cancelButtonText: 'Iska daa'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/inventory/category/delete/${id}`, {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'}
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if(result.success) {
+                        Swal.fire('La tirtiray!', 'Qaybtii waa la tirtiray.', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Cilad!', result.message, 'error');
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

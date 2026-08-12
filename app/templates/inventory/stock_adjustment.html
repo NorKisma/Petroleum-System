@@ -1,0 +1,101 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Stock Adjustment - Antigravity POS{% endblock %}
+{% block page_title %}Inventory - Stock Adjustment{% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up">
+    <h3 class="mb-0">Stock Adjustment</h3>
+    <p class="text-white text-opacity-75 small mb-0">Manually adjust stock levels for damages, audits, or losses.</p>
+</div>
+
+<div class="row g-4 animate-up">
+    <div class="col-md-5">
+        <div class="card border-0 shadow-premium rounded-4 mb-5 bg-white overflow-hidden">
+            <div class="card-header card-header-elite-blue d-flex align-items-center py-3">
+                <h5 class="mb-0 text-white fw-bold"><i class="fas fa-adjust me-2"></i> Adjust Stock</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('inventory.stock_adjustment') }}">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small">Select Product *</label>
+                        <select name="product_id" class="form-select border-light shadow-sm rounded-3 py-2 searchable-select" required>
+                            <option value="">Select a product...</option>
+                            {% for p in products %}
+                            <option value="{{ p.id }}"> {{ p.name }} (Current: {{ p.stock_quantity }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small">New Total Quantity *</label>
+                        <input type="number" name="new_quantity" class="form-control border-light shadow-sm rounded-3 py-2 fw-bold" placeholder="Enter new total count" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small">Reason for Adjustment</label>
+                        <textarea name="reason" class="form-control border-light shadow-sm rounded-3" rows="3" placeholder="e.g. Damage, Manual count mismatch"></textarea>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary-elite btn-lg rounded-pill fw-bold shadow-lg py-3">
+                            <i class="fas fa-check-circle me-2"></i> Confirm Adjustment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-7">
+        <div class="card border-0 shadow-premium rounded-4 h-100 bg-white overflow-hidden">
+            <div class="card-header card-header-elite-dark d-flex align-items-center py-3">
+                <h6 class="mb-0 text-white fw-bold"><i class="fas fa-history me-2"></i> Recent Adjustments</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="thead-dark-elite">
+                            <tr>
+                                <th class="ps-4">Product / Action</th>
+                                <th>Details</th>
+                                <th class="text-end pe-4">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody style="font-size: 0.9rem;">
+                            {% for log in logs %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold text-dark">{{ log.action }}</div>
+                                    <div class="text-muted small">User: {{ log.user.username if log.user else 'System' }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-muted px-3 py-1 rounded-pill small border">{{ log.description }}</span>
+                                </td>
+                                <td class="text-end pe-4 text-muted small">
+                                    {{ log.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center py-5 text-muted small">
+                                    <i class="fas fa-info-circle me-1 opacity-50"></i> Wax xog ah laguma hayo halkan.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('.searchable-select').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    });
+});
+</script>
+{% endblock %}

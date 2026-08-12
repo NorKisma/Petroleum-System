@@ -1,0 +1,219 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Share Register - Antigravity POS{% endblock %}
+{% block page_title %}Muraabaaqiinta (Share Register){% endblock %}
+
+{% block content %}
+<div class="card border border-light shadow-sm rounded-4 mb-5">
+    <div class="card-header bg-white py-3 px-4 border-bottom border-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-handshake me-2 text-primary"></i> Liiska Saamilayda</h5>
+        <button class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="offcanvas" data-bs-target="#addShareholderOffcanvas">
+            <i class="fas fa-plus me-2"></i> Diwaangeli Saamilay
+        </button>
+    </div>
+    <div class="card-body p-4">
+        <div class="table-responsive">
+            <table id="shareTable" class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Magaca</th>
+                        <th>Invested</th>
+                        <th>Withdrawn</th>
+                        <th>Balance (Equity)</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in shareholders %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3 text-primary d-flex justify-content-center align-items-center" style="width: 35px; height: 35px; font-weight: bold;">
+                                    {{ s.obj.name[0]|upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">{{ s.obj.name }}</div>
+                                    <div class="text-muted small">{{ s.obj.phone or 'No Phone' }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-success fw-bold">${{ "{:,.2f}".format(s.total_invested) }}</td>
+                        <td class="text-danger fw-bold">${{ "{:,.2f}".format(s.total_withdrawn) }}</td>
+                        <td class="fw-bold text-dark bg-light px-3 rounded-pill d-inline-block mt-2">${{ "{:,.2f}".format(s.balance) }}</td>
+                        <td class="text-end">
+                            <button class="btn btn-link text-primary p-0 me-3 edit-shareholder-btn" 
+                                    data-id="{{ s.obj.id }}"
+                                    data-name="{{ s.obj.name }}"
+                                    data-phone="{{ s.obj.phone or '' }}"
+                                    data-email="{{ s.obj.email or '' }}">
+                                <i class="fas fa-edit fs-6"></i>
+                            </button>
+                            <a href="{{ url_for('share.investment') }}" class="btn btn-link text-success p-0 me-3" title="Add Investment"><i class="fas fa-plus-circle fs-6"></i></a>
+                            <a href="{{ url_for('share.withdrawal') }}" class="btn btn-link text-danger p-0 me-3" title="Withdraw"><i class="fas fa-minus-circle fs-6"></i></a>
+                            <button class="btn btn-link text-danger p-0 delete-shareholder-btn" data-id="{{ s.obj.id }}" title="Delete"><i class="far fa-trash-alt fs-6"></i></button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas: Add Shareholder -->
+<div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="addShareholderOffcanvas" style="width: 450px;">
+    <div class="offcanvas-header border-bottom py-3">
+        <h5 class="fw-bold mb-0 text-dark">Diiwaangeli Saamilay Cusub</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body" style="background-color: #fafafa;">
+        <div class="mb-4">
+            <label class="form-label fw-bold text-dark small">Magaca Saamilayda <span class="text-danger">*</span></label>
+            <input type="text" id="s_name" class="form-control border-secondary border-opacity-25 rounded-3" placeholder="Magaca oo buuxa" required>
+        </div>
+        <div class="mb-4">
+            <label class="form-label fw-bold text-dark small">Telefoonka</label>
+            <input type="text" id="s_phone" class="form-control border-secondary border-opacity-25 rounded-3" placeholder="e.g. 252...">
+        </div>
+        <div class="mb-4">
+            <label class="form-label fw-bold text-dark small">Email</label>
+            <input type="email" id="s_email" class="form-control border-secondary border-opacity-25 rounded-3" placeholder="email@example.com">
+        </div>
+
+        <div class="d-flex gap-2 mt-5">
+            <button type="button" class="btn btn-light border fw-bold px-4 rounded-3" data-bs-dismiss="offcanvas">Jooji</button>
+            <button type="button" class="btn btn-primary fw-bold px-4 rounded-3 shadow-sm" onclick="saveShareholder()">Keydi Saamilayda</button>
+        </div>
+    </div>
+</div>
+<!-- Offcanvas: Edit Shareholder -->
+<div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="editShareholderOffcanvas" style="width: 450px;">
+    <div class="offcanvas-header border-bottom py-3">
+        <h5 class="fw-bold mb-0 text-dark">Bedel Xogta Saamilayda</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body" style="background-color: #fafafa;">
+        <input type="hidden" id="edit_s_id">
+        <div class="mb-4">
+            <label class="form-label fw-bold text-dark small">Magaca Saamilayda <span class="text-danger">*</span></label>
+            <input type="text" id="edit_s_name" class="form-control border-secondary border-opacity-25 rounded-3" required>
+        </div>
+        <div class="mb-4">
+            <label class="form-label fw-bold text-dark small">Telefoonka</label>
+            <input type="text" id="edit_s_phone" class="form-control border-secondary border-opacity-25 rounded-3">
+        </div>
+        <div class="mb-4">
+            <label class="form-label fw-bold text-dark small">Email</label>
+            <input type="email" id="edit_s_email" class="form-control border-secondary border-opacity-25 rounded-3">
+        </div>
+
+        <div class="d-flex gap-2 mt-5">
+            <button type="button" class="btn btn-light border fw-bold px-4 rounded-3" data-bs-dismiss="offcanvas">Jooji</button>
+            <button type="button" class="btn btn-primary fw-bold px-4 rounded-3 shadow-sm" onclick="updateShareholder()">Cusbooneysii</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#shareTable').DataTable({
+            "pageLength": 10,
+            "language": {
+                "search": "",
+                "searchPlaceholder": "Raadi saamilay...",
+                "paginate": {
+                    "previous": "Dib",
+                    "next": "Xiga"
+                },
+                "info": "Waxaa la muujiyay _START_ ilaa _END_ oo ka mid ah _TOTAL_ saamilay"
+            },
+            "dom": '<"d-flex justify-content-between align-items-center mb-4"f>rt<"d-flex justify-content-between align-items-center mt-4"ip>'
+        });
+
+        // Edit Button Logic
+        $('.edit-shareholder-btn').on('click', function() {
+            $('#edit_s_id').val($(this).data('id'));
+            $('#edit_s_name').val($(this).data('name'));
+            $('#edit_s_phone').val($(this).data('phone'));
+            $('#edit_s_email').val($(this).data('email'));
+            
+            var editOffcanvas = new bootstrap.Offcanvas(document.getElementById('editShareholderOffcanvas'));
+            editOffcanvas.show();
+        });
+
+        // Delete Button Logic
+        $(document).on('click', '.delete-shareholder-btn', function() {
+            deleteShareholder($(this).data('id'));
+        });
+    });
+
+    function saveShareholder() {
+        const data = {
+            name: $('#s_name').val(),
+            phone: $('#s_phone').val(),
+            email: $('#s_email').val()
+        };
+
+        if(!data.name) return alert('Fadlan geli magaca!');
+
+        $.ajax({
+            url: "{{ url_for('share.add_shareholder') }}",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function(res) {
+                if(res.success) {
+                    location.reload();
+                } else {
+                    alert(res.message);
+                }
+            }
+        });
+    }
+
+    function updateShareholder() {
+        const id = $('#edit_s_id').val();
+        const data = {
+            name: $('#edit_s_name').val(),
+            phone: $('#edit_s_phone').val(),
+            email: $('#edit_s_email').val()
+        };
+
+        if(!data.name) return alert('Fadlan geli magaca!');
+
+        $.ajax({
+            url: `/share/shareholder/edit/${id}`,
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function(res) {
+                if(res.success) {
+                    location.reload();
+                } else {
+                    alert(res.message);
+                }
+            }
+        });
+    }
+
+    function deleteShareholder(id) {
+        if(confirm("Ma hubtaa inaad tirtid saamilaydan? (Tani waxay sidoo kale tirtiri doontaa dhamaan taariikhda maalgelinta iyo la bixitaanka)")) {
+            fetch(`/share/shareholder/delete/${id}`, {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result.success) {
+                    location.reload();
+                } else {
+                    alert("Cilad: " + result.message);
+                }
+            }).catch(err => alert("Cilad dhinaca serverka ah ayaa dhacday!"));
+        }
+    }
+</script>
+{% endblock %}

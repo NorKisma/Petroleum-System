@@ -1,0 +1,267 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Profit & Loss – Income Statement{% endblock %}
+
+{% block styles %}
+<style>
+/* ── Container ───────────────────────────────────────────── */
+.pl-container { max-width: 960px; margin: 0 auto; }
+
+/* ── Metric Cards ────────────────────────────────────────── */
+.pl-metric {
+    border-radius: 20px;
+    padding: 1.4rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s;
+}
+.pl-metric:hover { transform: translateY(-4px); }
+.pl-metric::after {
+    content: '';
+    position: absolute;
+    bottom: -24px; right: -24px;
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+}
+.pl-metric .lbl { font-size: 0.68rem; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; opacity: 0.75; margin-bottom: 4px; }
+.pl-metric .val { font-size: 1.7rem; font-weight: 900; line-height: 1; }
+.pl-metric .sub { font-size: 0.75rem; opacity: 0.6; margin-top: 6px; }
+
+/* ── P&L Card ────────────────────────────────────────────── */
+.pl-card {
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+[data-theme='dark'] .pl-card {
+    background: rgba(15,23,42,0.8);
+    border-color: rgba(255,255,255,0.06);
+}
+
+/* ── Section rows ────────────────────────────────────────── */
+.pl-section-title td {
+    font-size: 0.7rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #50a5e6 !important;
+    background: rgba(99,102,241,0.04) !important;
+    padding: 0.9rem 1.5rem !important;
+    border: none !important;
+}
+[data-theme='dark'] .pl-section-title td { background: rgba(99,102,241,0.1) !important; }
+
+.pl-item td {
+    padding: 0.85rem 1.5rem !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(0,0,0,0.04) !important;
+    font-size: 0.88rem;
+    vertical-align: middle;
+}
+[data-theme='dark'] .pl-item td { border-bottom-color: rgba(255,255,255,0.04) !important; }
+.pl-item td:first-child { padding-left: 2.5rem !important; color: #64748b; }
+[data-theme='dark'] .pl-item td:first-child { color: #94a3b8; }
+
+.pl-subtotal td {
+    font-weight: 800 !important;
+    background: rgba(99,102,241,0.05) !important;
+    border-top: 1px solid rgba(99,102,241,0.1) !important;
+    border-bottom: none !important;
+    padding: 0.9rem 1.5rem !important;
+    font-size: 0.92rem;
+}
+
+.pl-grand td {
+    font-weight: 900 !important;
+    font-size: 1.05rem !important;
+    padding: 1.1rem 1.5rem !important;
+    border: none !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.pl-grand.profit td { background: rgba(16,185,129,0.08) !important; color: #059669 !important; border-top: 2px solid rgba(16,185,129,0.2) !important; }
+.pl-grand.loss   td { background: rgba(239,68,68,0.08) !important;   color: #dc2626 !important; border-top: 2px solid rgba(239,68,68,0.2) !important; }
+
+/* ── Progress gauge ──────────────────────────────────────── */
+.gauge-bar { height: 8px; border-radius: 20px; background: #f1f5f9; overflow: hidden; }
+.gauge-fill { height: 100%; border-radius: 20px; transition: width 1s ease; }
+
+@media print {
+    .page-header-elite, .no-print { display: none !important; }
+    .pl-card { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+    .pl-container { max-width: 100% !important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="page-header-elite animate-up mb-4 no-print">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h4 class="mb-0 fw-bold text-white">
+                <i class="fas fa-file-invoice-dollar me-2 text-primary"></i> Profit & Loss
+            </h4>
+            <p class="text-white text-opacity-50 small mb-0">Statement of Comprehensive Income — all periods.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('accounting.reports_hub') }}" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-th-large me-2 text-primary"></i> Reports
+            </a>
+            <a href="{{ url_for('accounting.export_financial_pdf') }}" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-file-pdf me-2 text-danger"></i> Export PDF
+            </a>
+            <button onclick="window.print()" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-print me-2"></i> Print
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="pl-container pb-5">
+
+    <!-- Metric Cards -->
+    {% set gross_margin = (gross_profit / total_revenue * 100) if total_revenue > 0 else 0 %}
+    {% set net_margin   = (net_profit   / total_revenue * 100) if total_revenue > 0 else 0 %}
+
+    <div class="row g-4 mb-4 animate-up no-print">
+        <div class="col-6 col-md-3">
+            <div class="pl-metric" style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.15); color:#4ba3e3;">
+                <div class="lbl">Total Revenue</div>
+                <div class="val">${{ "{:,.2f}".format(total_revenue) }}</div>
+                <div class="sub">All sales income</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="pl-metric" style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.15); color:#f59e0b;">
+                <div class="lbl">Gross Profit</div>
+                <div class="val">${{ "{:,.2f}".format(gross_profit) }}</div>
+                <div class="sub">Margin: {{ "%.1f"|format(gross_margin) }}%</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="pl-metric" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.15); color:#f94a4a;">
+                <div class="lbl">Total Expenses</div>
+                <div class="val">${{ "{:,.2f}".format(total_expenses) }}</div>
+                <div class="sub">Operating costs</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            {% if net_profit >= 0 %}
+            <div class="pl-metric" style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.15); color:#10b981;">
+            {% else %}
+            <div class="pl-metric" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.15); color:#f94a4a;">
+            {% endif %}
+                <div class="lbl">Net {{ 'Profit' if net_profit >= 0 else 'Loss' }}</div>
+                <div class="val">${{ "{:,.2f}".format(net_profit|abs) }}</div>
+                <div class="sub">Net margin: {{ "%.1f"|format(net_margin) }}%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Margin Gauges -->
+    <div class="row g-3 mb-4 animate-up no-print">
+        <div class="col-md-6">
+            <div class="pl-card p-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small fw-bold text-main">Gross Margin</span>
+                    <span class="small fw-bold text-warning">{{ "%.1f"|format(gross_margin) }}%</span>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill bg-warning" style="width:{{ [gross_margin, 100]|min }}%;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="pl-card p-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small fw-bold text-main">Net Margin</span>
+                    <span class="small fw-bold {{ 'text-success' if net_profit >= 0 else 'text-danger' }}">{{ "%.1f"|format(net_margin) }}%</span>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill {{ 'bg-success' if net_profit >= 0 else 'bg-danger' }}" style="width:{{ [net_margin|abs, 100]|min }}%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- P&L Statement Table -->
+    <div class="pl-card animate-up">
+        <div class="p-4 border-bottom border-light d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="fw-bold mb-0 text-main"><i class="fas fa-chart-line me-2 text-primary"></i> Statement of Comprehensive Income</h6>
+                <div class="text-muted small mt-1">Accumulated totals for all periods</div>
+            </div>
+            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-bold small">All Periods</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <tbody>
+                    <!-- REVENUE -->
+                    <tr class="pl-section-title">
+                        <td colspan="2"><i class="fas fa-arrow-up me-2 opacity-50"></i>Revenue (Dakhliga)</td>
+                    </tr>
+                    <tr class="pl-item">
+                        <td>Sales Revenue</td>
+                        <td class="text-end fw-bold text-success">${{ "{:,.2f}".format(total_revenue) }}</td>
+                    </tr>
+                    <tr class="pl-subtotal">
+                        <td class="text-muted">Total Revenue</td>
+                        <td class="text-end text-success">${{ "{:,.2f}".format(total_revenue) }}</td>
+                    </tr>
+
+                    <!-- COGS -->
+                    <tr class="pl-section-title">
+                        <td colspan="2"><i class="fas fa-shopping-cart me-2 opacity-50"></i>Cost of Sales (Kharashka Alaabta)</td>
+                    </tr>
+                    <tr class="pl-item">
+                        <td>Cost of Goods Sold (COGS)</td>
+                        <td class="text-end fw-bold text-danger">${{ "{:,.2f}".format(total_cogs) }}</td>
+                    </tr>
+                    <tr class="pl-subtotal">
+                        <td>Gross Profit (Faa'iidada Guud)</td>
+                        <td class="text-end text-primary">${{ "{:,.2f}".format(gross_profit) }}</td>
+                    </tr>
+
+                    <!-- OPERATING EXPENSES -->
+                    <tr class="pl-section-title">
+                        <td colspan="2"><i class="fas fa-receipt me-2 opacity-50"></i>Operating Expenses (Kharashka Maalinlaha ah)</td>
+                    </tr>
+                    <tr class="pl-item">
+                        <td>Total Operating Expenses</td>
+                        <td class="text-end fw-bold text-danger">${{ "{:,.2f}".format(total_expenses) }}</td>
+                    </tr>
+
+                    <!-- OTHER INCOME -->
+                    {% if total_other_income > 0 %}
+                    <tr class="pl-section-title">
+                        <td colspan="2"><i class="fas fa-plus-circle me-2 opacity-50"></i>Other Income (Dakhli Kale)</td>
+                    </tr>
+                    <tr class="pl-item">
+                        <td>Total Other Income</td>
+                        <td class="text-end fw-bold text-success">${{ "{:,.2f}".format(total_other_income) }}</td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- NET PROFIT / LOSS -->
+                    <tr class="pl-grand {{ 'profit' if net_profit >= 0 else 'loss' }}">
+                        <td>
+                            <i class="fas {{ 'fa-trophy me-2' if net_profit >= 0 else 'fa-exclamation-triangle me-2' }}"></i>
+                            Net {{ 'Profit' if net_profit >= 0 else 'Loss' }} (Faa'iidada Saafiga ah)
+                        </td>
+                        <td class="text-end">${{ "{:,.2f}".format(net_profit) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

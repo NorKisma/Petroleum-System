@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="so">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rays Technology Center | Nidaamka POS iyo Xisaabaadka</title>
+
+    <!-- Premium Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- AOS Animation CSS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Rays Technologies Logo Colors */
+            /* Logo Blue */
+            --primary: #4A9CDB;
+            --primary-dark: #2e82c5;
+            --primary-light: #e0f0fc;
+
+            /* Logo Red */
+            --accent: #FF4040;
+            --accent-dark: #e53232;
+
+            /* Slate */
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-100: #f1f5f9;
+            --slate-50: #f8fafc;
+
+            --text-font: 'Plus Jakarta Sans', sans-serif;
+            --heading-font: 'Outfit', sans-serif;
+        }
+
+        body {
+            font-family: var(--text-font);
+            color: var(--slate-800);
+            background-color: var(--slate-50);
+            overflow-x: hidden;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: var(--heading-font);
+            font-weight: 700;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .navbar-brand {
+            font-family: var(--heading-font);
+            font-weight: 800;
+            color: var(--slate-900) !important;
+        }
+
+        .navbar-brand span {
+            color: var(--primary);
+        }
+
+        .btn-custom-outline {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+            border-radius: 50px;
+            padding: 8px 24px;
+            transition: all 0.3s;
+        }
+
+        .btn-custom-outline:hover {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(74, 156, 219, 0.3);
+        }
+
+        .btn-custom-solid {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            border-radius: 50px;
+            padding: 12px 32px;
+            border: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-custom-solid:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(74, 156, 219, 0.4);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 160px 0 100px;
+            background: linear-gradient(135deg, var(--slate-50) 0%, var(--slate-100) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--primary-light) 0%, transparent 70%);
+            opacity: 0.6;
+            z-index: 0;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            line-height: 1.2;
+            color: var(--slate-900);
+            margin-bottom: 24px;
+        }
+
+        .hero-title span {
+            color: var(--accent);
+            /* Red text span */
+            position: relative;
+        }
+
+        /* Story Section - Before / After */
+        .story-section {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .comparison-cards {
+            margin-top: 40px;
+        }
+
+        .card-story {
+            flex: 1;
+            border-radius: 24px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .card-story.before {
+            background: #fff1f2;
+            /* Light red */
+        }
+
+        .card-story.after {
+            background: var(--primary-light);
+        }
+
+        .card-story:hover {
+            transform: translateY(-10px);
+        }
+
+        .story-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 24px;
+        }
+
+        .before .story-icon {
+            background: #ffe4e6;
+            color: var(--accent);
+        }
+
+        .after .story-icon {
+            background: var(--primary);
+            color: white;
+        }
+
+        .dialogue-box {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 16px;
+            border-bottom-left-radius: 4px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            font-size: 0.95rem;
+            position: relative;
+        }
+
+        .dialogue-box.axmed {
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 4px;
+            background: var(--slate-800);
+            color: white;
+            text-align: right;
+        }
+
+        .character-name {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            color: var(--slate-700);
+        }
+
+        .axmed .character-name {
+            color: var(--slate-400);
+        }
+
+        /* Features Section */
+        .features-section {
+            padding: 100px 0;
+            background: var(--slate-900);
+            color: white;
+        }
+
+        .feature-box {
+            background: var(--slate-800);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            height: 100%;
+        }
+
+        .feature-box:hover {
+            transform: translateY(-5px);
+            background: var(--slate-700);
+            border-color: var(--primary);
+        }
+
+        .feat-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(74, 156, 219, 0.1);
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 24px;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 100px 0;
+            /* Using the Brand Red for CTA */
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .whatsapp-btn {
+            background: white;
+            color: #25D366;
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 15px 40px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            transition: all 0.3s;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .whatsapp-btn:hover {
+            transform: scale(1.05);
+            color: #128C7E;
+            background: #f8fafc;
+        }
+
+        footer {
+            background: var(--slate-900);
+            color: var(--slate-400);
+            padding: 40px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg fixed-top py-3">
+        <div class="container">
+            <a class="navbar-brand fs-4 d-flex align-items-center gap-2" href="#">
+                <!-- Replace src with your local logo path if hosted, e.g. url_for('static', filename='logo.png') -->
+                <img src="{{ url_for('static', filename='img/rays_logo.png') }}" alt="Logo" height="65"
+                    onerror="this.style.display='none';">
+                <span class="fw-bolder fs-3">Rays<span style="color: var(--accent);">Technology</span>Center</span>
+            </a>
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0 fw-semibold">
+                    <li class="nav-item"><a class="nav-link text-dark px-3" href="#story">Dhibaatada</a></li>
+                    <li class="nav-item"><a class="nav-link text-dark px-3" href="#features">Adeegyada</a></li>
+                    <li class="nav-item"><a class="nav-link text-dark px-3" href="#contact">Nala Xiriir</a></li>
+                </ul>
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('auth.login') }}" class="btn-custom-outline text-decoration-none">Soo Gal</a>
+                    <a href="#contact" class="btn-custom-solid text-decoration-none">Bilaab Ganacsigaaga</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero d-flex align-items-center">
+        <div class="container hero-content">
+            <div class="row align-items-center">
+                <div class="col-lg-6" data-aos="fade-right" data-aos-duration="1000">
+                    <div class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold mb-4">
+                        <i class="fas fa-rocket me-2"></i> Kismayo & Somalia
+                    </div>
+                    <h1 class="hero-title">Ganacsiga ma kaa <span>Qasan Yahay?</span> Xalka waa halkan.</h1>
+                    <p class="lead text-muted mb-5 pe-lg-5" style="font-size: 1.15rem; line-height: 1.6;">
+                        Ha ku dhibtoon buugaagta gacanta iyo xisaab la'aanta. Ku casriyee ganacsigaaga Nidaamka POS,
+                        Maareynta Kaydka iyo Xisaabaadka ee Rays Technology Center.
+                    </p>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <a href="#story" class="btn-custom-solid text-decoration-none px-4 py-3">
+                            Khibrada Daawo <i class="fas fa-play-circle fs-5"></i>
+                        </a>
+                        <a href="https://wa.me/252627220603" target="_blank"
+                            class="btn btn-light rounded-pill px-4 py-3 fw-bold shadow-sm d-flex align-items-center gap-2"
+                            style="color: #25D366; border: 1px solid #e2e8f0;">
+                            <i class="fab fa-whatsapp fs-5"></i> +252 627 220603
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 mt-5 mt-lg-0" data-aos="fade-left" data-aos-duration="1000" data-aos-delay="200">
+                    <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80"
+                        alt="Modern POS System" class="img-fluid rounded-4 shadow-lg"
+                        style="border: 10px solid white; transform: rotate(2deg);">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Storytelling Section (Cabdiraxmaan vs Axmed) -->
+    <section id="story" class="story-section">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h6 class="text-primary fw-bold text-uppercase tracking-wider mb-2">Qisada Ganacsatada</h6>
+                <h2 class="fw-bold" style="font-size: 2.5rem; color: var(--slate-900);">Ka Bixida Jahwareerka</h2>
+                <p class="text-muted w-lg-50 mx-auto mt-3">Sheekada Cabdiraxmaan iyo saaxiibkiis Axmed oo muujinaysa
+                    xaqiiqda ganacsiyada u baahan isbedelka weyn.</p>
+            </div>
+
+            <div class="row comparison-cards">
+                <!-- BEFORE: Chaos -->
+                <div class="col-md-6 mb-4 mb-md-0" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card-story before h-100 shadow-sm">
+                        <div class="story-icon">
+                            <i class="fas fa-book-dead"></i>
+                        </div>
+                        <h4 class="fw-bold text-danger mb-4">Dhibaatada (Buugaagta)</h4>
+
+                        <div class="dialogue-box">
+                            <div class="character-name">Cabdiraxmaan</div>
+                            "War Axmed… ganacsiga wuu i wareeriyay. Ma garanayo inta alaab ii hartay, dayntana gacanta
+                            ayay iga baxday."
+                        </div>
+
+                        <div class="dialogue-box axmed">
+                            <div class="character-name">Axmed</div>
+                            "Anigana sidaas oo kale… maalin walba buug ayaan qorayaa, haddana khaladaad ayaan sameynaa.
+                            Macmiil dayn leh iyo kan aan ku leeyahay si sax ah uma hayo."
+                        </div>
+
+                        <div
+                            class="mt-4 pt-3 border-top border-danger border-opacity-10 text-danger fw-semibold d-flex align-items-center gap-2">
+                            <i class="fas fa-times-circle"></i> Waqti lumis, Khibrad xumo iyo Khasaare un baa ka dhasha
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AFTER: Solution -->
+                <div class="col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="card-story after h-100 shadow-sm border-0" style="border: 1px solid var(--primary);">
+                        <div class="story-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h4 class="fw-bold text-success mb-4" style="color: var(--primary-dark) !important;">Xalka
+                            (Nidaamka Rays)</h4>
+
+                        <div class="dialogue-box bg-white" style="border-left: 4px solid var(--primary);">
+                            <div class="character-name text-primary">Bashiir (Tech Consultant)</div>
+                            "Waxaad u baahan tihiin Nidaam casri ah—POS & Inventory system—oo toos u maareeya Iibka,
+                            Alaabta, Daynta iyo Xisaabaadka. Xalka waa Rays Technology Center!"
+                        </div>
+
+                        <div class="dialogue-box axmed" style="background: var(--primary-dark);">
+                            <div class="character-name text-white-50">Cabdiraxmaan & Axmed</div>
+                            "Wow! Hadda hal click ayaan ku arkaa alaabteyda. Ganacsigeena hadda waa nidaamsan yahay
+                            waqtigiina waan badbaadinay!"
+                        </div>
+
+                        <div class="mt-4 pt-3 border-top border-success border-opacity-25"
+                            style="color: var(--primary-dark); font-weight: 600;">
+                            <i class="fas fa-star me-2 pe-1 text-warning"></i> Koboc Dhakhso ah iyo Xakameyn sahal ah!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features-section">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h6 class="text-primary fw-bold text-uppercase tracking-wider mb-2">Waxa Aan Bixino (Solutions)</h6>
+                <h2 class="fw-bold">Smart Business Solutions</h2>
+                <p class="text-slate-400 w-lg-50 mx-auto mt-3">Qalab isku-dhafan oo u habaysan si xeel dheer si loo
+                    daboolo baahiyaha ganacsiyada waaweyn iyo kuwa yaryarba.</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="feature-box">
+                        <div class="feat-icon"><i class="fas fa-desktop"></i></div>
+                        <h5 class="fw-bold mb-3">POS System</h5>
+                        <p class="text-slate-400 small mb-0">Nidaamka Iibka (Point of Sale) oo xawaare sare leh, fudud
+                            in la isticmaalo, islana xisaabinaya dalabka daqiiqado gudahood.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="feature-box">
+                        <div class="feat-icon"><i class="fas fa-boxes"></i></div>
+                        <h5 class="fw-bold mb-3">Inventory Management</h5>
+                        <p class="text-slate-400 small mb-0">Maareynta kaydka iyo xisaabinta alaabaha bakhaarkaaga si
+                            buuxda oo toos ah (Real-time tracking).</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="feature-box">
+                        <div class="feat-icon"><i class="fas fa-hand-holding-usd"></i></div>
+                        <h5 class="fw-bold mb-3">Daynta & Macaamiisha</h5>
+                        <p class="text-slate-400 small mb-0">La soco xisaabaadka daymaha lagu leeyahay iyo kuwa aad ku
+                            leedahay macaamiisha adoo adeegsanaya hal meel.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="feature-box">
+                        <div class="feat-icon"><i class="fas fa-chart-pie"></i></div>
+                        <h5 class="fw-bold mb-3">Xisaabaadka & Warbixinada</h5>
+                        <p class="text-slate-400 small mb-0">Xisaabi dakhligaaga, kharashka, iyo macaashka oo raad raac
+                            warbixino rasmi ah, tafaasiil badana wata.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section id="contact" class="cta-section">
+        <div class="container" data-aos="zoom-in">
+            <h1 class="fw-bold mb-4">Hadda Casriyeyso Ganacsigaaga!</h1>
+            <p class="lead mb-5 opacity-75">Ha sugin in ganacsiga isku dhex-yaaco. La xiriir Rays Technology Center
+                maanta si aan kuugu tababarno Nidaamka cusub!</p>
+
+            <a href="https://wa.me/252627220603" target="_blank" class="whatsapp-btn">
+                <i class="fab fa-whatsapp fs-3"></i> Ka Bilow WhatsApp-ka
+            </a>
+            <div class="mt-4">
+                <a href="https://raystechcenter.online" target="_blank"
+                    class="text-white text-decoration-none fw-semibold">
+                    <i class="fas fa-globe me-2"></i> www.raystechcenter.online
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container text-center">
+            <h5 class="text-white fw-bold font-heading mb-3">Rays Technology Center</h5>
+            <p class="small mb-0 opacity-75">Somalia, Kismayo - Kordhi Gancasigaaga Xalka Teknolojiyadda</p>
+            <p class="small mt-4 opacity-50">&copy; 2026 Rays Technology Center. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- AOS Animation script -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            once: true,
+            offset: 50,
+            duration: 800,
+        });
+
+        // Sticky Navbar effect
+        window.addEventListener('scroll', function () {
+            var navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('shadow-sm');
+                navbar.style.padding = '10px 0';
+            } else {
+                navbar.classList.remove('shadow-sm');
+                navbar.style.padding = '16px 0';
+            }
+        });
+    </script>
+</body>
+
+</html>

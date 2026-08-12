@@ -1,0 +1,397 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Expenses Tracking - Rays Technology{% endblock %}
+{% block page_title %}Operational Expenses{% endblock %}
+
+{% block styles %}
+<style>
+    @media print {
+        #sidebar, .navbar, .btn, .dataTables_filter, .dataTables_length, .dataTables_info, .dataTables_paginate, .no-print {
+            display: none !important;
+        }
+        #content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+        .card { border: none !important; box-shadow: none !important; }
+        .print-header { display: block !important; margin-bottom: 30px; border-bottom: 3px solid var(--primary); padding-bottom: 20px; }
+        .card, table, tr {
+            page-break-inside: avoid !important;
+        }
+        .print-only-section {
+            display: block !important;
+            margin-bottom: 30px;
+        }
+    }
+    .print-header, .print-only-section { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Professional Print Header -->
+<div class="print-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            {% if current_user.tenant.logo %}
+                <img src="{{ url_for('static', filename=current_user.tenant.logo) }}" height="70" class="me-4">
+            {% else %}
+                <div class="bg-primary text-white p-3 rounded-4 me-4 fw-bold" style="width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    {{ current_user.tenant.name[0] }}
+                </div>
+            {% endif %}
+            <div>
+                <h2 class="fw-bold mb-0 text-dark">{{ current_user.tenant.name }}</h2>
+                <p class="mb-0 text-muted fw-bold small">{{ current_user.tenant.slogan or 'Enterprise Solutions' }}</p>
+                <small class="text-muted">{{ current_user.tenant.address or '' }} | {{ current_user.tenant.phone or '' }}</small>
+            </div>
+        </div>
+        <div class="text-end">
+            <h4 class="fw-bold text-primary mb-1">EXPENSES REPORT</h4>
+            <div class="text-muted fw-bold small">Taariikhda: <span id="currentDateHeader"></span></div>
+        </div>
+    </div>
+</div>
+
+<div class="page-header-elite animate-up mb-4">
+    <div class="header-left">
+        <h4 class="mb-0 fw-bold text-main">Expenses Tracking</h4>
+        <p class="text-muted small mb-0">Maamulka kharasaadka joogtada ah ee shirkadda.</p>
+    </div>
+    <div class="header-right">
+        <div class="header-actions">
+            <button class="btn btn-light border shadow-sm px-3 fw-bold small no-print me-2" onclick="window.print()">
+                <i class="fas fa-print me-2"></i> Print Report
+            </button>
+            <button class="btn btn-primary-elite" data-bs-toggle="offcanvas" data-bs-target="#addExpenseOffcanvas">
+                <i class="fas fa-plus me-2"></i> Record Expense
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-premium rounded-4 mb-5 animate-up">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table id="expensesTable" class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Expense Details</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th class="text-end no-print">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle bg-danger bg-opacity-10 text-danger me-3">
+                                    <i class="fas fa-receipt small"></i>
+                                </div>
+                                <div class="fw-bold text-main">{{ expense.description }}</div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-light text-muted border px-3 py-2 rounded-pill small">{{ expense.category }}</span></td>
+                        <td class="fw-bold text-danger">-${{ "{:,.2f}".format(expense.amount) }}</td>
+                        <td class="text-muted small">{{ expense.created_at.strftime('%b %d, %Y') }}</td>
+                        <td class="text-end no-print">
+                            <div class="d-flex justify-content-end gap-2">
+                                <button class="btn-action btn-edit edit-btn" 
+                                        data-id="{{ expense.id }}" 
+                                        data-desc="{{ expense.description }}"
+                                        data-amount="{{ expense.amount }}"
+                                        data-category="{{ expense.category }}"
+                                        data-bs-toggle="offcanvas" data-bs-target="#editExpenseOffcanvas"
+                                        title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-action btn-delete delete-btn" data-id="{{ expense.id }}" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Professional Print Footer -->
+<div class="print-only-section mt-5 pt-4 border-top border-light">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="text-muted small w-100">
+            <p class="mb-0 fw-bold" style="font-size: 0.65rem;">© 2026 <span class="text-primary">Rays Technology Center</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Warbixintan waxaa diyaariyay Rays Expenses Report</p>
+        </div>
+        <div class="text-end text-muted small flex-shrink-0">
+            <p class="mb-0" id="footerTimestamp" style="font-size: 0.6rem;"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas: Add Expense -->
+<div class="offcanvas offcanvas-end border-0 shadow-premium" tabindex="-1" id="addExpenseOffcanvas" style="width: 450px;">
+    <div class="offcanvas-header border-bottom border-light py-4 px-4" style="background-color: var(--surface);">
+        <h5 class="fw-bold mb-0 text-main">Add New Expense</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-4" style="background-color: var(--bg-main);">
+        <form action="{{ url_for('accounting.expenses') }}" method="POST">
+            <div class="mb-4">
+                <label class="form-label fw-bold text-main small">Expense Date <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-calendar-alt text-muted"></i></span>
+                    <input type="date" name="expense_date" class="form-control border-start-0 shadow-none" value="{{ current_date|default('') }}" required>
+                </div>
+            </div>
+
+            <!-- Expense Category (Dynamic) -->
+            <div class="mb-4">
+                <label class="form-label fw-bold text-main small">Expense Category (Nooca Kharashka) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-tags text-muted"></i></span>
+                    <select name="category" id="expenseCategory" class="form-select border-start-0 shadow-none" required>
+                        <option value="">Select Account</option>
+                        {% for acc in expense_accounts %}
+                        <option value="{{ acc.account_code }}">{{ acc.account_code }} - {{ acc.account_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Payment Account (Dynamic) -->
+            <div class="mb-4">
+                <label class="form-label fw-bold text-main small">Paid From (Laga bixiyey) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-wallet text-muted"></i></span>
+                    <select name="payment_account" class="form-select border-start-0 shadow-none" required>
+                        <option value="">Select Account</option>
+                        {% for acc in bank_accounts %}
+                        <option value="{{ acc.account_code }}">{{ acc.account_code }} - {{ acc.account_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Staff Selection Group (Grouped for Salary) -->
+            <div id="staffSelectionGroup" class="d-none animate-up">
+                <div class="card border-0 bg-light rounded-4 p-3 mb-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-main small">Select Staff Member</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-user-circle text-muted"></i></span>
+                            <select name="staff_id" id="staffSelector" class="form-select border-start-0 shadow-none">
+                                <option value="">Select Staff...</option>
+                                {% for member in staff %}
+                                <option value="{{ member.id }}" data-salary="{{ member.salary or 0 }}">{{ member.username }} (Salary: ${{ member.salary or 0 }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-text small text-muted mt-2 d-flex align-items-center">
+                            <i class="fas fa-info-circle me-1 text-primary"></i> <span>Mushaharka shaqaalaha si toos ah ayaa loo aqrinayaa.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <label class="form-label fw-bold text-main small">Amount ($) <span class="text-danger">*</span> <span class="badge bg-primary bg-opacity-10 text-primary ms-1" style="font-size: 0.6rem;">Salary</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0"><i class="fas fa-dollar-sign text-muted"></i></span>
+                            <input type="number" step="0.01" name="amount" id="expenseAmount" class="form-control border-start-0 shadow-none" placeholder="0.00" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standard Amount (Shown when NOT Salary) -->
+            <div id="standardAmountGroup" class="mb-4">
+                <label class="form-label fw-bold text-main small">Amount ($) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-dollar-sign text-muted"></i></span>
+                    <input type="number" step="0.01" name="amount_standard" id="standardAmountInput" class="form-control border-start-0 shadow-none" placeholder="0.00">
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Description</label>
+                <textarea name="description" class="form-control border-secondary border-opacity-25 rounded-3" rows="3" placeholder="Enter expense details..."></textarea>
+            </div>
+
+            <div class="offcanvas-footer-fixed">
+                <button type="button" class="btn btn-light border shadow-sm" data-bs-dismiss="offcanvas">Cancel</button>
+                <button type="submit" class="btn btn-primary shadow-sm">Save Expense</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Offcanvas: Edit Expense -->
+<div class="offcanvas offcanvas-end border-0 shadow-premium" tabindex="-1" id="editExpenseOffcanvas" style="width: 450px;">
+    <div class="offcanvas-header border-bottom border-light py-4 px-4" style="background-color: var(--surface);">
+        <h5 class="fw-bold mb-0 text-main">Edit Expense</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-4" style="background-color: var(--bg-main);">
+        <form id="editExpenseForm">
+            <input type="hidden" id="editExpenseId">
+            <div class="mb-4">
+                <label class="form-label fw-bold text-main small">Category</label>
+                <select id="editExpenseCategory" class="form-select shadow-none" required>
+                    <option value="5060 - Salary Expense">5060 - Salary Expense</option>
+                    <option value="5030 - Fuel Station Expense">5030 - Fuel Station Expense</option>
+                    <option value="5000 - Cost of Goods Sold">5000 - Cost of Goods Sold</option>
+                    <option value="General Expense">General Expense</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold text-main small">Amount ($)</label>
+                <input type="number" step="0.01" id="editExpenseAmount" class="form-control shadow-none" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold text-main small">Description</label>
+                <textarea id="editExpenseDescription" class="form-control shadow-none" rows="3" required></textarea>
+            </div>
+            <div class="offcanvas-footer-fixed">
+                <button type="button" class="btn btn-light border shadow-sm" data-bs-dismiss="offcanvas">Cancel</button>
+                <button type="submit" class="btn btn-primary shadow-sm">Update Expense</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        if (!$.fn.DataTable.isDataTable('#expensesTable')) {
+            $('#expensesTable').DataTable({
+                "pageLength": 10,
+                "language": {
+                    "search": "",
+                    "searchPlaceholder": "Search expenses...",
+                    "paginate": {
+                        "previous": "Previous",
+                        "next": "Next"
+                    },
+                    "info": "Showing _START_ to _END_ of _TOTAL_ records"
+                },
+                "dom": '<"d-flex justify-content-between align-items-center mb-4"f>rt<"d-flex justify-content-between align-items-center mt-4"ip>',
+                "drawCallback": function() {
+                    $('.dataTables_filter input').addClass('form-control shadow-none');
+                }
+            });
+        }
+
+        const now = new Date();
+        const somaliDate = now.toLocaleDateString('so-SO', { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        if(document.getElementById('currentDateHeader')) document.getElementById('currentDateHeader').innerText = somaliDate;
+        
+        const timeStr = now.toLocaleTimeString('so-SO', { hour: '2-digit', minute: '2-digit' });
+        if(document.getElementById('footerTimestamp')) {
+            document.getElementById('footerTimestamp').innerText = `La soo saaray: ${somaliDate} | ${timeStr}`;
+        }
+
+        const categorySelect = document.getElementById('expenseCategory');
+        const staffGroup = document.getElementById('staffSelectionGroup');
+        const standardGroup = document.getElementById('standardAmountGroup');
+        const staffSelector = document.getElementById('staffSelector');
+        const salaryAmountInput = document.getElementById('expenseAmount');
+        const standardAmountInput = document.getElementById('standardAmountInput');
+        const descInput = document.querySelector('[name="description"]');
+
+        categorySelect?.addEventListener('change', function() {
+            if (this.value.includes('Salary')) {
+                staffGroup.classList.remove('d-none');
+                standardGroup.classList.add('d-none');
+                staffSelector.setAttribute('required', 'required');
+                salaryAmountInput.setAttribute('required', 'required');
+                standardAmountInput.removeAttribute('required');
+                standardAmountInput.value = '';
+            } else {
+                staffGroup.classList.add('d-none');
+                standardGroup.classList.remove('d-none');
+                staffSelector.removeAttribute('required');
+                salaryAmountInput.removeAttribute('required');
+                standardAmountInput.setAttribute('required', 'required');
+                salaryAmountInput.value = '';
+            }
+        });
+
+        staffSelector?.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const salary = selectedOption.getAttribute('data-salary');
+            const name = selectedOption.text.split(' (')[0];
+            
+            if (salary && salary > 0) {
+                salaryAmountInput.value = salary;
+            }
+            
+            if (name) {
+                descInput.value = "Monthly Salary payment for " + name;
+            }
+        });
+
+        // Sync inputs before submit
+        document.querySelector('form')?.addEventListener('submit', function() {
+            if (categorySelect.value.includes('Salary')) {
+                // salaryAmountInput already has the value and the name "amount"
+            } else {
+                // Give standardAmountInput the name "amount" so backend receives it
+                standardAmountInput.setAttribute('name', 'amount');
+                salaryAmountInput.removeAttribute('name');
+            }
+        });
+
+        // Edit Expense Logic
+        $('.edit-btn').on('click', function() {
+            $('#editExpenseId').val($(this).data('id'));
+            $('#editExpenseDescription').val($(this).data('desc'));
+            $('#editExpenseAmount').val($(this).data('amount'));
+            $('#editExpenseCategory').val($(this).data('category'));
+        });
+
+        $('#editExpenseForm').on('submit', function(e) {
+            e.preventDefault();
+            const id = $('#editExpenseId').val();
+            const data = {
+                description: $('#editExpenseDescription').val(),
+                amount: $('#editExpenseAmount').val(),
+                category: $('#editExpenseCategory').val()
+            };
+
+            fetch(`/accounting/expense/edit/${id}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(result => {
+                if(result.success) {
+                    location.reload();
+                } else {
+                    alert(result.message);
+                }
+            });
+        });
+
+        // Delete Expense Logic
+        $('.delete-btn').on('click', function() {
+            const id = $(this).data('id');
+            if (confirm('Ma hubtaa inaad tirtirto kharashkan?')) {
+                fetch(`/accounting/expense/delete/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if(result.success) {
+                        location.reload();
+                    } else {
+                        alert(result.message);
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

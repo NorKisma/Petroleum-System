@@ -1,0 +1,625 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}SaaS Management Dashboard{% endblock %}
+
+{% block page_title %}SaaS Multi-Tenant Management{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+{% endblock %}
+
+{% block content %}
+<!-- Global Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-premium border-0 animate-up">
+                <div class="card-body p-4 text-center">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-3 d-inline-block mb-3">
+                        <i class="fas fa-building fa-2x text-primary"></i>
+                    </div>
+                    <h2 class="fw-bold mb-1">{{ total_tenants }}</h2>
+                    <p class="text-muted small text-uppercase mb-0">Total Businesses</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-premium border-0 animate-up" style="animation-delay: 0.1s;">
+                <div class="card-body p-4 text-center">
+                    <div class="bg-success bg-opacity-10 rounded-circle p-3 d-inline-block mb-3">
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                    </div>
+                    <h2 class="fw-bold mb-1 text-success">${{ "{:,.2f}".format(total_sub_collected) }}</h2>
+                    <p class="text-muted small text-uppercase mb-0">Total Collected</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-premium border-0 animate-up" style="animation-delay: 0.2s;">
+                <div class="card-body p-4 text-center">
+                    <div class="bg-warning bg-opacity-10 rounded-circle p-3 d-inline-block mb-3">
+                        <i class="fas fa-clock fa-2x text-warning"></i>
+                    </div>
+                    <h2 class="fw-bold mb-1 text-warning">${{ "{:,.2f}".format(total_sub_pending) }}</h2>
+                    <p class="text-muted small text-uppercase mb-0">Pending (SaaS Debt)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tenant Management Table -->
+    <div class="card shadow-premium border-0 animate-up">
+        <div class="card-header bg-white border-bottom py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="m-0 fw-bold"><i class="fas fa-list me-2 text-primary"></i> Registered Businesses</h5>
+                <div class="d-flex gap-2 align-items-center">
+                    <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#addTenantModal">
+                        <i class="fas fa-plus-circle me-1"></i> Add Business
+                    </button>
+                    <span class="badge bg-light text-dark">{{ total_tenants }} Tenants</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive p-4">
+                <table id="tenantsTable" class="table table-hover align-middle mb-0">
+                    <thead style="background: #1e293b; color: white;">
+                        <tr>
+                            <th class="ps-4 py-3" style="width: 30%;">BUSINESS INFO</th>
+                            <th class="py-3" style="width: 20%;">ACTIVITY</th>
+                            <th class="py-3" style="width: 20%;">SUBSCRIPTION</th>
+                            <th class="py-3" style="width: 10%;">STATUS</th>
+                            <th class="text-end pe-4 py-3" style="width: 20%;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in stats %}
+                        <tr>
+                            <td class="ps-4 py-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-light rounded p-3 me-3 text-primary">
+                                        <i class="fas fa-store fa-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-1">{{ s.tenant.name }}</h6>
+                                        <div class="text-muted" style="font-size: 0.8rem;">
+                                            <div class="mb-1"><i class="fas fa-envelope text-primary opacity-75 me-1" style="width: 14px;"></i> {{ s.tenant.email or 'N/A' }}</div>
+                                            <div class="mb-1"><i class="fas fa-phone-alt text-success opacity-75 me-1" style="width: 14px;"></i> {{ s.tenant.phone or 'N/A' }}</div>
+                                            <div><i class="fas fa-calendar-alt text-secondary opacity-75 me-1" style="width: 14px;"></i> Joined: {{ s.tenant.created_at.strftime('%d %b %Y') }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small text-muted">
+                                    <span class="d-block">Users: {{ s.user_count }}</span>
+                                    <span class="d-block">Sales: {{ s.sale_count }}</span>
+                                    <span class="d-block">Items: {{ s.product_count }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small">
+                                    <span class="d-block text-dark">Plan: <strong>${{ "{:,.2f}".format(s.tenant.monthly_fee) }}</strong></span>
+                                    {% if s.tenant.subscription_status == 'Paid' or s.tenant.subscription_balance <= 0.0 %}
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2">Paid</span>
+                                    {% elif s.tenant.subscription_status == 'Partial' or (s.tenant.subscription_balance > 0.0 and s.tenant.subscription_balance < s.tenant.monthly_fee) %}
+                                        <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2">Partial</span>
+                                        <span class="d-block text-danger x-small mt-1">Due: ${{ "{:,.2f}".format(s.tenant.subscription_balance) }}</span>
+                                    {% else %}
+                                        <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2">Unpaid</span>
+                                        <span class="d-block text-danger x-small mt-1">Due: ${{ "{:,.2f}".format(s.tenant.subscription_balance) }}</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% set users = s.tenant.users %}
+                                {% set active = users[0].is_active if users else False %}
+                                {% if active %}
+                                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">Active</span>
+                                  {% else %}
+                                    <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3">Suspended</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-flex justify-content-end gap-1">
+                                    {% if s.tenant.subscription_balance > 0.0 %}
+                                    <button onclick="collectPayment('{{ s.tenant.id }}', '{{ s.tenant.subscription_balance }}')" class="btn btn-sm btn-success rounded-pill px-3">
+                                        <i class="fas fa-money-bill-wave me-1"></i> Pay
+                                    </button>
+                                    {% endif %}
+                                    <button onclick="viewPaymentHistory('{{ s.tenant.id }}', '{{ s.tenant.name|escape }}')" class="btn btn-sm btn-secondary rounded-pill px-3" title="Payment History">
+                                        <i class="fas fa-history me-1"></i> History
+                                    </button>
+                                    <button onclick="toggleTenant('{{ s.tenant.id }}')" class="btn btn-sm {{ 'btn-outline-danger' if active else 'btn-outline-success' }} rounded-pill px-3">
+                                        <i class="fas {{ 'fa-ban' if active else 'fa-check-circle' }} me-1"></i>
+                                        {{ 'Suspend' if active else 'Activate' }}
+                                    </button>
+                                    <button onclick="manageModules('{{ s.tenant.id }}', '{{ s.tenant.name|escape }}')" class="btn btn-sm btn-info rounded-pill px-3 text-white">
+                                        <i class="fas fa-layer-group me-1"></i> Modules
+                                    </button>
+                                    <button onclick="editTenant('{{ s.tenant.id }}')" class="btn btn-sm btn-outline-primary rounded-circle" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button onclick="viewTenant('{{ s.tenant.id }}')" class="btn btn-sm btn-light rounded-circle" title="View"><i class="fas fa-eye"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<!-- Tenant Details Modal -->
+<div class="modal fade" id="viewTenantModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold">Business Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-3 d-inline-block mb-2">
+                        <i class="fas fa-store fa-2x text-primary"></i>
+                    </div>
+                    <h4 class="fw-bold mb-0" id="det-name">---</h4>
+                    <p class="text-muted small" id="det-slogan">---</p>
+                </div>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item border-0 px-0 d-flex justify-content-between">
+                        <span class="text-muted">Email:</span>
+                        <span class="text-dark" id="det-email">---</span>
+                    </div>
+                    <div class="list-group-item border-0 px-0 d-flex justify-content-between">
+                        <span class="text-muted">Phone:</span>
+                        <span class="text-dark" id="det-phone">---</span>
+                    </div>
+                    <div class="list-group-item border-0 px-0 d-flex justify-content-between">
+                        <span class="text-muted">Address:</span>
+                        <span class="text-dark" id="det-address">---</span>
+                    </div>
+                    <div class="list-group-item border-0 px-0 d-flex justify-content-between">
+                        <span class="text-muted">Joined:</span>
+                        <span class="text-dark" id="det-date">---</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment History Modal -->
+<div class="modal fade" id="paymentHistoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold"><i class="fas fa-history text-secondary me-2"></i>Payment History - <span id="hist-tenant-name" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Billing Period</th>
+                                <th>Reference</th>
+                                <th class="text-end">Amount Paid</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payment-history-body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Modules Modal -->
+<div class="modal fade" id="manageModulesModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold"><i class="fas fa-layer-group text-info me-2"></i>Manage Modules for <span id="mod-tenant-name" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-4">Turn modules on or off for this specific tenant. Changes take effect immediately.</p>
+                <div class="list-group list-group-flush" id="modules-list-container" style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Tenant Modal -->
+<div class="modal fade" id="editTenantModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold"><i class="fas fa-edit text-primary me-2"></i>Edit Business</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="editTenantForm" method="POST" action="">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Business Name</label>
+                        <input type="text" name="name" id="edit-name" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Email</label>
+                            <input type="email" name="email" id="edit-email" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Phone</label>
+                            <input type="text" name="phone" id="edit-phone" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Address</label>
+                        <input type="text" name="address" id="edit-address" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Slogan</label>
+                        <input type="text" name="slogan" id="edit-slogan" class="form-control">
+                    </div>
+                    <div class="mb-4 border-top pt-3">
+                        <label class="form-label small fw-bold text-success">Monthly Subscription Fee ($)</label>
+                        <input type="number" step="0.01" name="monthly_fee" id="edit-fee" class="form-control border-success text-success fw-bold">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold rounded-pill">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Tenant Modal -->
+<div class="modal fade" id="addTenantModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold text-primary"><i class="fas fa-plus-circle me-2"></i>Diiwaangeli Shirkad Cusub (Add Business)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="addTenantForm" method="POST" action="{{ url_for('saas.add_tenant') }}">
+                    <div class="row">
+                        <!-- Business Details -->
+                        <div class="col-md-6 border-end pe-md-4">
+                            <h6 class="fw-bold text-dark mb-3 border-bottom pb-2"><i class="fas fa-store me-1 text-primary"></i> 1. Macluumaadka Shirkadda</h6>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Business Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" required placeholder="tusaale: Rays Tech">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Subdomain (URL) <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" name="subdomain" class="form-control" required placeholder="rays" pattern="[a-z0-9]+" title="Subdomain must be lowercase alphanumeric only">
+                                    <span class="input-group-text bg-light text-muted">.rays.so</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold">Email</label>
+                                    <input type="email" name="email" class="form-control" placeholder="info@rays.so">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold">Phone</label>
+                                    <input type="text" name="phone" class="form-control" placeholder="+252...">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Address</label>
+                                <input type="text" name="address" class="form-control" placeholder="Mogadishu, Somalia">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Slogan</label>
+                                <input type="text" name="slogan" class="form-control" placeholder="Your tech partner">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-success">Monthly Subscription Fee ($)</label>
+                                <input type="number" step="0.01" name="monthly_fee" value="15.00" class="form-control border-success text-success fw-bold">
+                            </div>
+                        </div>
+                        
+                        <!-- Admin Account Details -->
+                        <div class="col-md-6 ps-md-4">
+                            <h6 class="fw-bold text-dark mb-3 border-bottom pb-2"><i class="fas fa-user-shield me-1 text-primary"></i> 2. Koontada Maamulaha (Admin)</h6>
+                            <p class="text-muted x-small mb-3">Kani waa isticmaalaha ugu horreeya ee shirkaddan loo abuurayo si uu nidaamka u galo.</p>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Admin Username <span class="text-danger">*</span></label>
+                                <input type="text" name="admin_username" class="form-control" required placeholder="tusaale: rays_admin">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Admin Email <span class="text-danger">*</span></label>
+                                <input type="email" name="admin_email" class="form-control" required placeholder="admin@rays.so">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Admin Password <span class="text-danger">*</span></label>
+                                <input type="password" name="admin_password" class="form-control" required placeholder="••••••••">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 border-top pt-3 text-end">
+                        <button type="button" class="btn btn-light rounded-pill px-4 me-2" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm"><i class="fas fa-check-circle me-1"></i> Save Business</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Move modals to body to prevent backdrop issues
+    $('#viewTenantModal').appendTo("body");
+    $('#manageModulesModal').appendTo("body");
+    $('#editTenantModal').appendTo("body");
+    $('#paymentHistoryModal').appendTo("body");
+    $('#addTenantModal').appendTo("body");
+    
+    $('#tenantsTable').DataTable({
+        "pageLength": 10,
+        "ordering": true,
+        "info": true,
+        "language": {
+            "search": "Raadi Business:",
+            "lengthMenu": "Tusi _MENU_ shirkadood",
+            "info": "Waxaad aragtaa _START_ ilaa _END_ oo ka mid ah _TOTAL_ shirkadood",
+            "paginate": {
+                "next": "Xiga",
+                "previous": "Hore"
+            }
+        }
+    });
+});
+
+function toggleTenant(tenantId) {
+    Swal.fire({
+        title: 'Ma hubtaa?',
+        text: "Waxaad beddelaysaa status-ka shirkaddan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#4ba3e3',
+        cancelButtonColor: '#f94a4a',
+        confirmButtonText: 'Haa, beddel!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/saas/tenant/${tenantId}/toggle-status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Guul!', data.message, 'success').then(() => {
+                        location.reload();
+                    });
+                }
+            });
+        }
+    })
+}
+function viewTenant(tenantId) {
+    fetch(`/saas/tenant/${tenantId}/details`)
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('det-name').innerText = data.name;
+        document.getElementById('det-slogan').innerText = data.slogan;
+        document.getElementById('det-email').innerText = data.email;
+        document.getElementById('det-phone').innerText = data.phone;
+        document.getElementById('det-address').innerText = data.address;
+        document.getElementById('det-date').innerText = data.created_at;
+        
+        new bootstrap.Modal(document.getElementById('viewTenantModal')).show();
+    });
+}
+
+function editTenant(tenantId) {
+    fetch(`/saas/tenant/${tenantId}/details`)
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('editTenantForm').action = `/saas/tenant/${tenantId}/edit`;
+        document.getElementById('edit-name').value = data.name;
+        document.getElementById('edit-email').value = data.email !== 'N/A' ? data.email : '';
+        document.getElementById('edit-phone').value = data.phone !== 'N/A' ? data.phone : '';
+        document.getElementById('edit-address').value = data.address !== 'N/A' ? data.address : '';
+        document.getElementById('edit-slogan').value = data.slogan !== 'N/A' ? data.slogan : '';
+        document.getElementById('edit-fee').value = data.monthly_fee || 0;
+        
+        new bootstrap.Modal(document.getElementById('editTenantModal')).show();
+    });
+}
+
+let currentTenantId = null;
+
+const moduleDescriptions = {
+    'module_pos': { title: 'POS Terminal', desc: 'Point of Sale module for sales & cash register.' },
+    'module_inventory': { title: 'Inventory', desc: 'Products, categories, and stock management.' },
+    'module_accounting': { title: 'Accounting', desc: 'Financial reports, P&L, expenses, and ledgers.' },
+    'module_share': { title: 'Shareholders', desc: 'Investment and dividend management.' },
+    'module_sales': { title: 'Sales', desc: 'General sales tracking and invoicing.' },
+    'module_purchases': { title: 'Purchases', desc: 'Procurement and vendor management.' },
+    'module_customers': { title: 'Customers', desc: 'Customer database and balances.' },
+    'module_hrm': { title: 'HRM / Payroll', desc: 'Employee management and payroll.' },
+    'module_settings': { title: 'Settings', desc: 'Business configuration and preferences.' },
+    'module_expenses': { title: 'Expenses', desc: 'Track day-to-day business expenses.' },
+    'module_stock_transfer': { title: 'Stock Transfer', desc: 'Move inventory between branches.' },
+    'module_stock_adjustment': { title: 'Stock Adjustment', desc: 'Adjust inventory for damages or losses.' },
+    'module_service_staff': { title: 'Service Staff', desc: 'Manage service personnel (Waiters, etc).' },
+    'module_bookings': { title: 'Bookings', desc: 'Reservation and booking system.' },
+    'module_add_sale': { title: 'Add Sale (Manual)', desc: 'Manual entry for credit sales without POS.' },
+    'module_tables': { title: 'Tables Management', desc: 'Manage restaurant tables.' },
+    'module_modifiers': { title: 'Product Modifiers', desc: 'Addons and modifiers for products.' },
+    'module_kitchen': { title: 'Kitchen Display (KDS)', desc: 'Kitchen order management system.' },
+    'module_subscription': { title: 'Subscriptions', desc: 'Manage recurring billing.' },
+    'module_types_of_service': { title: 'Service Types', desc: 'Dine-in, Takeaway, Delivery, etc.' },
+    'module_crm': { title: 'CRM', desc: 'Advanced customer relationship management.' },
+    'module_manufacturing': { title: 'Manufacturing', desc: 'Production and BOM management.' },
+    'module_project': { title: 'Projects', desc: 'Project management and tracking.' },
+    'module_assets': { title: 'Asset Management', desc: 'Track fixed assets and depreciation.' },
+    'module_repair': { title: 'Repair Center', desc: 'Manage repair jobs and ticketing.' }
+};
+
+const moduleCategories = {
+    'Core Systems': ['module_pos', 'module_inventory', 'module_accounting', 'module_sales', 'module_purchases', 'module_customers', 'module_settings'],
+    'Operations & Staff': ['module_hrm', 'module_expenses', 'module_stock_transfer', 'module_stock_adjustment', 'module_service_staff'],
+    'Retail & Restaurant': ['module_kitchen', 'module_tables', 'module_modifiers', 'module_types_of_service', 'module_bookings', 'module_add_sale'],
+    'Enterprise ERP': ['module_crm', 'module_manufacturing', 'module_project', 'module_assets', 'module_repair', 'module_share', 'module_subscription']
+};
+
+function manageModules(tenantId, tenantName) {
+    currentTenantId = tenantId;
+    document.getElementById('mod-tenant-name').innerText = tenantName;
+    const container = document.getElementById('modules-list-container');
+    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+    
+    new bootstrap.Modal(document.getElementById('manageModulesModal')).show();
+    
+    // Fetch current module states
+    fetch(`/saas/tenant/${tenantId}/details`)
+    .then(response => response.json())
+    .then(data => {
+        let html = '';
+        
+        // Render by category
+        for (const [categoryName, modules] of Object.entries(moduleCategories)) {
+            let categoryHtml = `<div class="bg-light px-3 py-2 fw-bold text-primary text-uppercase small mt-3 mb-2 rounded border-start border-4 border-primary">${categoryName}</div>`;
+            let hasModules = false;
+            
+            for (const moduleKey of modules) {
+                if (data[moduleKey] !== undefined) {
+                    hasModules = true;
+                    const info = moduleDescriptions[moduleKey] || { 
+                        title: moduleKey.replace('module_', '').replace(/_/g, ' ').toUpperCase(), 
+                        desc: 'Add-on module feature.' 
+                    };
+                    const moduleName = moduleKey.replace('module_', '');
+                    const value = data[moduleKey];
+                    
+                    categoryHtml += `
+                        <div class="list-group-item border-0 px-2 d-flex justify-content-between align-items-center hover-bg-light rounded mb-1 transition-all">
+                            <div>
+                                <h6 class="mb-0 fw-bold text-dark">${info.title}</h6>
+                                <small class="text-muted" style="font-size: 0.75rem;">${info.desc}</small>
+                            </div>
+                            <div class="form-check form-switch fs-5 mb-0">
+                                <input class="form-check-input shadow-sm cursor-pointer" type="checkbox" id="toggle-${moduleName}" ${value ? 'checked' : ''} onchange="toggleModule('${moduleName}')">
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            if (hasModules) {
+                html += categoryHtml;
+            }
+        }
+        
+        container.innerHTML = html;
+    });
+}
+
+function toggleModule(moduleName) {
+    if(!currentTenantId) return;
+    
+    fetch(`/saas/tenant/${currentTenantId}/toggle-module`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ module: moduleName })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: data.message,
+                showConfirmButton: false,
+                timer: 3000
+            });
+        }
+    });
+}
+
+function collectPayment(tenantId, currentBalance) {
+    Swal.fire({
+        title: 'Lacag Qabasho',
+        text: `Balance-ka hadda haray waa $${parseFloat(currentBalance).toFixed(2)}. Immisa ayaad qabanaysaa?`,
+        input: 'number',
+        inputAttributes: {
+            min: 0.01,
+            step: 0.01
+        },
+        inputValue: currentBalance > 0 ? currentBalance : '',
+        showCancelButton: true,
+        confirmButtonText: 'Qabo Lacagta',
+        confirmButtonColor: '#2ecc71',
+        showLoaderOnConfirm: true,
+        preConfirm: (amount) => {
+            return fetch(`/saas/tenant/${tenantId}/collect-payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: amount })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) throw new Error(data.message)
+                return data
+            })
+            .catch(error => {
+                Swal.showValidationMessage(`Cillad: ${error}`)
+            })
+        },
+        allowOutsideClick: () => !Swal.isLoading()
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire('Guul!', result.value.message, 'success').then(() => {
+                location.reload();
+            });
+        }
+    })
+}
+
+function viewPaymentHistory(tenantId, tenantName) {
+    document.getElementById('hist-tenant-name').innerText = tenantName;
+    const tbody = document.getElementById('payment-history-body');
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>';
+    
+    new bootstrap.Modal(document.getElementById('paymentHistoryModal')).show();
+    
+    fetch(`/saas/tenant/${tenantId}/payment-history`)
+    .then(response => response.json())
+    .then(data => {
+        if(data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Lama helin wax xog lacag bixin ah (No payment history found).</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        data.forEach(payment => {
+            html += `
+                <tr>
+                    <td>${payment.date}</td>
+                    <td><span class="badge bg-info bg-opacity-10 text-info px-2 py-1">${payment.period}</span></td>
+                    <td><small class="text-muted fw-bold">${payment.reference}</small></td>
+                    <td class="text-end fw-bold text-success">$${payment.amount.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    });
+}
+</script>
+{% endblock %}

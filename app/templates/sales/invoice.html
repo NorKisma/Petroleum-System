@@ -1,0 +1,141 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Invoice #{{ sale.invoice_no }}{% endblock %}
+
+{% block styles %}
+<style>
+    @media print {
+        body * { visibility: hidden; }
+        #printableReceipt, #printableReceipt * { visibility: visible; }
+        #printableReceipt {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 80mm;
+        }
+        .no-print { display: none !important; }
+    }
+    
+    #printableReceipt {
+        background: #fff;
+        padding: 20px;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #000;
+        width: 350px;
+        margin: 20px auto;
+        border: 1px solid #ddd;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .receipt-header {
+        text-align: center;
+        border-bottom: 2px dashed #eee;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+    }
+    .receipt-footer {
+        text-align: center;
+        border-top: 2px dashed #eee;
+        padding-top: 15px;
+        margin-top: 15px;
+        font-size: 11px;
+    }
+    .receipt-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    .receipt-total {
+        font-weight: bold;
+        font-size: 16px;
+        margin-top: 15px;
+        border-top: 1px solid #eee;
+        padding-top: 10px;
+    }
+    .brand-name {
+        font-size: 20px;
+        font-weight: bold;
+        color: var(--primary-color);
+        margin-bottom: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row no-print mb-4 items-center justify-center text-center">
+        <div class="col-12">
+            <button class="btn btn-primary btn-lg px-5 shadow" onclick="window.print()">
+                <i class="fas fa-print me-2"></i> Print Receipt
+            </button>
+            <a href="{{ url_for('sales.pos') }}" class="btn btn-outline-secondary btn-lg ms-3">
+                <i class="fas fa-plus me-2"></i> New Sale
+            </a>
+        </div>
+    </div>
+
+    <div id="printableReceipt">
+        <div class="receipt-header">
+            <div class="brand-name">{{ current_user.tenant.name }}</div>
+            <p class="mb-1 text-muted">Specialist in Retail & Wholesale</p>
+            <p class="mb-0">Tel: +252 XXXXXXXX</p>
+            <p class="mb-0">Mogadishu, Somalia</p>
+            <hr>
+            <p class="mb-0"><strong>INVOICE: #{{ sale.invoice_no }}</strong></p>
+            <p class="mb-0">Date: {{ sale.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+
+        <div class="receipt-items">
+            <div class="receipt-item font-weight-bold border-bottom mb-2 pb-1">
+                <span style="width: 50%;">Description</span>
+                <span style="width: 20%; text-align: center;">Qty</span>
+                <span style="width: 30%; text-align: right;">Total</span>
+            </div>
+            {% for item in sale.items %}
+            <div class="receipt-item">
+                <span style="width: 50%;" class="text-dark">{{ item.product.name }}</span>
+                <span style="width: 20%; text-align: center;">{{ item.quantity }}</span>
+                <span style="width: 30%; text-align: right;">${{ "{:,.2f}".format(item.quantity * item.unit_price) }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="receipt-total mt-3">
+            <div class="receipt-item">
+                <span class="fw-bold">GRAND TOTAL:</span>
+                <span class="text-primary fw-bold">${{ "{:,.2f}".format(sale.total_amount) }}</span>
+            </div>
+            <div class="receipt-item small text-muted">
+                <span>Total Paid:</span>
+                <span>${{ "{:,.2f}".format(sale.total_amount if sale.payment_method != 'Credit' else 0) }}</span>
+            </div>
+            {% if sale.payment_method == 'Credit' %}
+            <div class="receipt-item fw-bold text-danger pt-1 mt-1 border-top border-dashed">
+                <span>BALANCE DUE:</span>
+                <span>${{ "{:,.2f}".format(sale.total_amount) }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="mt-3 text-center">
+            {% if sale.payment_method == 'Credit' %}
+                <div class="badge bg-danger px-4 py-2 rounded-pill shadow-sm" style="font-size: 14px; letter-spacing: 1px;">UNPAID / DEBT</div>
+            {% else %}
+                <div class="badge bg-success px-4 py-2 rounded-pill shadow-sm" style="font-size: 14px; letter-spacing: 1px;">PAID</div>
+            {% endif %}
+        </div>
+        
+        <div class="mt-2 small text-muted text-center">
+            Payment Method: <span class="badge bg-light text-dark border">{{ sale.payment_method }}</span>
+        </div>
+
+        <div class="receipt-footer">
+            <p class="mb-1">Waad ku mahadsantahay ganacsigaaga!</p>
+            <p class="mb-1 font-weight-bold">MAHADSANID - SOO DHOWOW</p>
+            <div class="mt-3">
+                <small>System by: <strong>Advanced POS SaaS</strong></small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

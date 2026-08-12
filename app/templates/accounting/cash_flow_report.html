@@ -1,0 +1,219 @@
+{% extends "layouts/base.html" %}
+{% block title %}Cash Flow Statement – Financial Intelligence{% endblock %}
+
+{% block styles %}
+<style>
+.cf-container { max-width: 960px; margin: 0 auto; }
+
+/* ── Metric Cards ─────────────────────────────────────────── */
+.cf-metric {
+    border-radius: 20px;
+    padding: 1.35rem 1.5rem;
+    position: relative; overflow: hidden;
+    transition: transform 0.25s;
+}
+.cf-metric:hover { transform: translateY(-4px); }
+.cf-metric .lbl { font-size: 0.68rem; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; opacity: 0.75; margin-bottom: 4px; }
+.cf-metric .val { font-size: 1.6rem; font-weight: 900; line-height: 1.1; }
+.cf-metric .sub { font-size: 0.75rem; opacity: 0.6; margin-top: 4px; }
+
+/* ── Statement Card ───────────────────────────────────────── */
+.cf-card {
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+[data-theme='dark'] .cf-card { background: rgba(15,23,42,0.8); border-color: rgba(255,255,255,0.06); }
+
+/* ── Section rows ─────────────────────────────────────────── */
+.cf-section td {
+    font-size: 0.7rem !important; font-weight: 800 !important;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 0.9rem 1.5rem !important; border: none !important;
+}
+.cf-section.operating td { color: #4ba3e3 !important; background: rgba(59,130,246,0.05) !important; }
+.cf-section.investing td { color: #8b5cf6 !important; background: rgba(139,92,246,0.05) !important; }
+.cf-section.financing td { color: #f59e0b !important; background: rgba(245,158,11,0.05) !important; }
+
+.cf-item td {
+    padding: 0.82rem 1.5rem !important; border: none !important;
+    border-bottom: 1px solid rgba(0,0,0,0.04) !important;
+    font-size: 0.87rem; vertical-align: middle;
+}
+[data-theme='dark'] .cf-item td { border-bottom-color: rgba(255,255,255,0.04) !important; }
+.cf-item td:first-child { padding-left: 2.5rem !important; color: #64748b; }
+
+.cf-subtotal td {
+    font-weight: 800 !important; font-size: 0.9rem !important;
+    background: rgba(99,102,241,0.04) !important;
+    border-top: 1px solid rgba(99,102,241,0.08) !important;
+    border-bottom: none !important;
+    padding: 0.9rem 1.5rem !important;
+}
+
+.cf-grand td {
+    font-weight: 900 !important; font-size: 1.05rem !important;
+    padding: 1.1rem 1.5rem !important; border: none !important;
+    text-transform: uppercase; letter-spacing: 0.5px;
+}
+.cf-grand.positive td { background: rgba(16,185,129,0.08) !important; color: #059669 !important; border-top: 2px solid rgba(16,185,129,0.2) !important; }
+.cf-grand.negative td { background: rgba(239,68,68,0.08) !important; color: #dc2626 !important; border-top: 2px solid rgba(239,68,68,0.2) !important; }
+
+@media print {
+    .page-header-elite, .no-print { display: none !important; }
+    .cf-card { box-shadow: none !important; }
+    .cf-container { max-width: 100% !important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up mb-4 no-print">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h4 class="mb-0 fw-bold text-white"><i class="fas fa-water me-2 text-primary"></i> Cash Flow Statement</h4>
+            <p class="text-white text-opacity-50 small mb-0">Operating, Investing & Financing cash movement.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('accounting.reports_hub') }}" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-th-large me-2 text-primary"></i> Reports
+            </a>
+            <a href="{{ url_for('accounting.print_cash_flow_report') }}" target="_blank" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-file-pdf me-2 text-danger"></i> Export PDF
+            </a>
+            <button onclick="window.print()" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-print me-2"></i> Print
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="cf-container pb-5">
+
+    <!-- Metric Cards -->
+    <div class="row g-4 mb-4 animate-up no-print">
+        <div class="col-6 col-md-3">
+            <div class="cf-metric" style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.15);color:#4ba3e3;">
+                <div class="lbl">Operating Cash</div>
+                <div class="val">${{ "{:,.0f}".format(net_operating_cash) }}</div>
+                <div class="sub">Core business flow</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="cf-metric" style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.15);color:#8b5cf6;">
+                <div class="lbl">Investing Cash</div>
+                <div class="val">${{ "{:,.0f}".format(net_investing_cash) }}</div>
+                <div class="sub">Asset movements</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="cf-metric" style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);color:#f59e0b;">
+                <div class="lbl">Financing Cash</div>
+                <div class="val">${{ "{:,.0f}".format(net_financing_cash) }}</div>
+                <div class="sub">Capital & equity</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            {% if net_cash_flow >= 0 %}
+            <div class="cf-metric" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.15);color:#10b981;">
+            {% else %}
+            <div class="cf-metric" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.15);color:#f94a4a;">
+            {% endif %}
+                <div class="lbl">Net Cash Flow</div>
+                <div class="val">${{ "{:,.0f}".format(net_cash_flow|abs) }}</div>
+                <div class="sub">{{ 'Net Inflow ↑' if net_cash_flow >= 0 else 'Net Outflow ↓' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statement Table -->
+    <div class="cf-card animate-up">
+        <div class="p-4 border-bottom border-light d-flex align-items-center justify-content-between">
+            <h6 class="fw-bold mb-0 text-main"><i class="fas fa-chart-area me-2 text-primary"></i> Statement of Cash Flows</h6>
+            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-bold small">All Periods</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <tbody>
+                    <!-- OPERATING ACTIVITIES -->
+                    <tr class="cf-section operating">
+                        <td colspan="2"><i class="fas fa-cogs me-2 opacity-60"></i>Cash Flows from Operating Activities</td>
+                    </tr>
+                    <tr class="cf-item">
+                        <td>Cash Sales</td>
+                        <td class="text-end fw-bold text-success">${{ "{:,.2f}".format(cash_sales) }}</td>
+                    </tr>
+                    <tr class="cf-item">
+                        <td>Customer Payments (AR Received)</td>
+                        <td class="text-end fw-bold text-success">${{ "{:,.2f}".format(customer_payments) }}</td>
+                    </tr>
+                    <tr class="cf-item">
+                        <td>Other Income</td>
+                        <td class="text-end fw-bold text-success">${{ "{:,.2f}".format(other_income) }}</td>
+                    </tr>
+                    <tr class="cf-item">
+                        <td>Cash Purchases (COGS)</td>
+                        <td class="text-end fw-bold text-danger">(${{ "{:,.2f}".format(cash_purchases) }})</td>
+                    </tr>
+                    <tr class="cf-item">
+                        <td>Vendor Payments (AP Paid)</td>
+                        <td class="text-end fw-bold text-danger">(${{ "{:,.2f}".format(vendor_payments) }})</td>
+                    </tr>
+                    <tr class="cf-item">
+                        <td>Operating Expenses</td>
+                        <td class="text-end fw-bold text-danger">(${{ "{:,.2f}".format(expenses) }})</td>
+                    </tr>
+                    <tr class="cf-subtotal">
+                        <td>Net Cash from Operating Activities</td>
+                        <td class="text-end text-primary">${{ "{:,.2f}".format(net_operating_cash) }}</td>
+                    </tr>
+
+                    <!-- INVESTING ACTIVITIES -->
+                    <tr class="cf-section investing">
+                        <td colspan="2"><i class="fas fa-chart-line me-2 opacity-60"></i>Cash Flows from Investing Activities</td>
+                    </tr>
+                    <tr class="cf-item">
+                        <td>Asset Purchases</td>
+                        <td class="text-end fw-bold text-danger">(${{ "{:,.2f}".format(asset_purchases) }})</td>
+                    </tr>
+                    <tr class="cf-subtotal">
+                        <td>Net Cash from Investing Activities</td>
+                        <td class="text-end" style="color:#8b5cf6;">${{ "{:,.2f}".format(net_investing_cash) }}</td>
+                    </tr>
+
+                    <!-- FINANCING ACTIVITIES -->
+                    <tr class="cf-section financing">
+                        <td colspan="2"><i class="fas fa-university me-2 opacity-60"></i>Cash Flows from Financing Activities</td>
+                    </tr>
+                    <tr class="cf-item">
+                        <td>Shareholder Investments</td>
+                        <td class="text-end fw-bold text-success">${{ "{:,.2f}".format(share_investments) }}</td>
+                    </tr>
+                    <tr class="cf-item">
+                        <td>Shareholder Withdrawals</td>
+                        <td class="text-end fw-bold text-danger">(${{ "{:,.2f}".format(share_withdrawals) }})</td>
+                    </tr>
+                    <tr class="cf-subtotal">
+                        <td>Net Cash from Financing Activities</td>
+                        <td class="text-end text-warning">${{ "{:,.2f}".format(net_financing_cash) }}</td>
+                    </tr>
+
+                    <!-- NET CASH FLOW -->
+                    <tr class="cf-grand {{ 'positive' if net_cash_flow >= 0 else 'negative' }}">
+                        <td>
+                            <i class="fas {{ 'fa-arrow-up me-2' if net_cash_flow >= 0 else 'fa-arrow-down me-2' }}"></i>
+                            Net Increase / (Decrease) in Cash
+                        </td>
+                        <td class="text-end">${{ "{:,.2f}".format(net_cash_flow) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

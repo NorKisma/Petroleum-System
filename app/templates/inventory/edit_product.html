@@ -1,0 +1,373 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Edit Product - Antigravity POS{% endblock %}
+{% block page_title %}Inventory - Edit Product{% endblock %}
+
+{% block styles %}
+<style>
+    .form-section-premium {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 35px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+        margin-bottom: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .section-title-elite {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 25px;
+        display: center;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 12px;
+    }
+
+    .form-label-elite {
+        font-weight: 700;
+        font-size: 0.825rem;
+        color: #475569;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .input-group-elite {
+        border-radius: 12px;
+        border: 1.5px solid #e2e8f0;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background-color: #f8fafc;
+    }
+
+    .input-group-elite:focus {
+        border-color: #4ba3e3;
+        background-color: #ffffff;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        outline: none;
+    }
+
+    .btn-plus-elite {
+        background: linear-gradient(135deg, #4ba3e3, #2563eb);
+        color: white !important;
+        border: none;
+        width: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0 12px 12px 0;
+        transition: all 0.3s ease;
+    }
+    .btn-plus-elite:hover {
+        transform: scale(1.05);
+        filter: brightness(1.1);
+    }
+
+    .select2-container--bootstrap-5 .select2-selection {
+        border-radius: 12px !important;
+        border: 1.5px solid #e2e8f0 !important;
+        height: 48px !important;
+        display: flex;
+        align-items: center;
+    }
+    
+    .ck-editor__editable {
+        min-height: 200px !important;
+        background: white !important;
+    }
+
+    .modal-content-elite {
+        border-radius: 24px;
+        border: none;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    
+    .modal-header-elite {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: white;
+        padding: 25px;
+        border-radius: 24px 24px 0 0;
+    }
+    
+    .btn-save-elite {
+        background: linear-gradient(135deg, #4ba3e3, #2563eb);
+        color: white !important;
+        font-weight: 700;
+        padding: 14px;
+        border-radius: 14px;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .btn-save-elite:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="mb-1">Edit Product: <span class="text-white-50">{{ product.name }}</span></h3>
+            <p class="text-white text-opacity-75 small mb-0">Update your product configuration.</p>
+        </div>
+        <a href="{{ url_for('inventory.list_products') }}" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm">
+            <i class="fas fa-arrow-left me-2"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<form action="{{ url_for('inventory.edit_product', id=product.id) }}" method="POST" enctype="multipart/form-data" class="animate-up">
+    <div class="form-section-premium">
+        <div class="section-title-elite">
+            <i class="fas fa-edit text-primary"></i> Basic Information
+        </div>
+        
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <label class="form-label-elite">Product Name:*</label>
+                <input type="text" name="name" class="form-control input-group-elite" value="{{ product.name }}" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label-elite">SKU / Barcode:</label>
+                <input type="text" name="barcode" class="form-control input-group-elite" value="{{ product.barcode or '' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label-elite">Status:*</label>
+                <select name="is_active" class="form-select input-group-elite">
+                    <option value="1" {% if product.is_active %}selected{% endif %}>Active</option>
+                    <option value="0" {% if not product.is_active %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <label class="form-label-elite">Unit:*</label>
+                <div class="input-group">
+                    <select name="unit_id" id="unitSelect" class="form-select input-group-elite searchable-select" style="border-radius: 12px 0 0 12px;">
+                        <option value="">Select Unit</option>
+                        {% for unit in units %}
+                        <option value="{{ unit.id }}" {% if product.unit_id == unit.id %}selected{% endif %}>{{ unit.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="btn-plus-elite" data-bs-toggle="modal" data-bs-target="#addUnitModal"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label-elite">Brand:</label>
+                <div class="input-group">
+                    <select name="brand_id" id="brandSelect" class="form-select input-group-elite searchable-select" style="border-radius: 12px 0 0 12px;">
+                        <option value="">No Brand</option>
+                        {% for brand in brands %}
+                        <option value="{{ brand.id }}" {% if product.brand_id == brand.id %}selected{% endif %}>{{ brand.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="btn-plus-elite" data-bs-toggle="modal" data-bs-target="#addBrandModal"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label-elite">Category:</label>
+                <select name="category_id" class="form-select input-group-elite searchable-select">
+                    <option value="">General</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if product.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <label class="form-label-elite">Alert Quantity:</label>
+                <input type="number" name="low_stock_threshold" class="form-control input-group-elite" value="{{ product.low_stock_threshold or 10 }}">
+            </div>
+            <div class="col-md-8">
+                <label class="form-label-elite">Business Locations:*</label>
+                <select class="form-select searchable-select" multiple name="locations[]">
+                    <option value="1" selected>Main Warehouse (BL0001)</option>
+                    <option value="2">Pharmacy Store (BL0002)</option>
+                    <option value="3">Retail Branch (BL0003)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section-premium">
+        <div class="section-title-elite">
+            <i class="fas fa-align-left text-primary"></i> Product Description
+        </div>
+        <textarea id="editor" name="description">{{ product.description or '' }}</textarea>
+    </div>
+
+    <div class="form-section-premium mt-4">
+        <div class="section-title-elite">
+            <i class="fas fa-dollar-sign text-primary"></i> Pricing & Inventory
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <label class="form-label-elite">Purchase Price:*</label>
+                <div class="input-group">
+                    <span class="input-group-text border-end-0 bg-light rounded-start-3" style="border: 1.5px solid #e2e8f0; border-radius: 12px 0 0 12px;">$</span>
+                    <input type="number" step="0.01" name="buy_price" class="form-control input-group-elite border-start-0" style="border-radius: 0 12px 12px 0;" value="{{ product.buy_price }}" required>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label-elite">Selling Price:*</label>
+                <div class="input-group">
+                    <span class="input-group-text border-end-0 bg-light rounded-start-3" style="border: 1.5px solid #e2e8f0; border-radius: 12px 0 0 12px;">$</span>
+                    <input type="number" step="0.01" name="sell_price" class="form-control input-group-elite border-start-0" style="border-radius: 0 12px 12px 0;" value="{{ product.sell_price }}" required>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label-elite">Current Stock Qty:*</label>
+                <input type="number" name="stock_quantity" class="form-control input-group-elite" value="{{ product.stock_quantity }}" required>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-3 mt-4 mb-5">
+        <button type="button" class="btn btn-light rounded-pill px-5 fw-bold border shadow-sm py-3" onclick="window.history.back()">
+            Cancel
+        </button>
+        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-lg py-3" style="background: linear-gradient(135deg, #4ba3e3, #2563eb); border: none; min-width: 250px;">
+            <i class="fas fa-sync-alt me-2"></i> Update Product Details
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block modals %}
+<!-- Modal: Add Unit -->
+<div class="modal fade" id="addUnitModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-elite">
+            <div class="modal-header modal-header-elite">
+                <h5 class="fw-bold mb-0"><i class="fas fa-balance-scale me-2"></i> Add New Unit</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-4">
+                    <label class="form-label-elite">Unit Name</label>
+                    <input type="text" id="newUnitName" class="form-control input-group-elite" 
+                           placeholder="e.g. Dozen" 
+                           style="background-color: #ffffff !important; color: #0f172a !important; pointer-events: auto !important; opacity: 1 !important; cursor: text !important;"
+                           autofocus>
+                </div>
+                <button type="button" id="saveUnitBtn" class="btn btn-save-elite w-100">
+                    <i class="fas fa-save me-2"></i> Save Unit Details
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Brand -->
+<div class="modal fade" id="addBrandModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-elite">
+            <div class="modal-header modal-header-elite">
+                <h5 class="fw-bold mb-0"><i class="fas fa-tags me-2"></i> Add New Brand</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-4">
+                    <label class="form-label-elite">Brand Name</label>
+                    <input type="text" id="newBrandName" class="form-control input-group-elite" 
+                           placeholder="e.g. Huawei" 
+                           style="background-color: #ffffff !important; color: #0f172a !important; pointer-events: auto !important; opacity: 1 !important; cursor: text !important;"
+                           autofocus>
+                </div>
+                <button type="button" id="saveBrandBtn" class="btn btn-save-elite w-100">
+                    <i class="fas fa-save me-2"></i> Save Brand Details
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+$(document).ready(function() {
+    $('.searchable-select').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'Select option'
+    });
+
+    // Init CKEditor
+    let editorInstance;
+    ClassicEditor
+        .create(document.querySelector('#editor'))
+        .then(newEditor => {
+            editorInstance = newEditor;
+        })
+        .catch(error => console.error(error));
+
+    // Save Unit AJAX
+    $('#saveUnitBtn').on('click', function() {
+        const btn = $(this);
+        const name = $('#newUnitName').val();
+        if(!name) return Swal.fire({ icon: 'error', title: 'Cilad', text: 'Fadlan magaca qor sxb!' });
+        
+        btn.html('<i class="fas fa-spinner fa-spin me-2"></i> Saving...').prop('disabled', true);
+        
+        fetch("{{ url_for('inventory.add_unit') }}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name: name})
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.html('<i class="fas fa-save me-2"></i> Save Unit Details').prop('disabled', false);
+            if(data.success) {
+                const newOption = new Option(data.name, data.id, true, true);
+                $('#unitSelect').append(newOption).trigger('change');
+                $('#addUnitModal').modal('hide');
+                $('#newUnitName').val('');
+                Swal.fire({ icon: 'success', title: 'Guul!', text: 'Unit-ka cusub waa la kaydiyay!', timer: 2000, showConfirmButton: false });
+            } else {
+                Swal.fire({ icon: 'error', title: 'Cilad', text: data.message });
+            }
+        });
+    });
+
+    // Save Brand AJAX
+    $('#saveBrandBtn').on('click', function() {
+        const btn = $(this);
+        const name = $('#newBrandName').val();
+        if(!name) return Swal.fire({ icon: 'error', title: 'Cilad', text: 'Fadlan magaca qor sxb!' });
+        
+        btn.html('<i class="fas fa-spinner fa-spin me-2"></i> Saving...').prop('disabled', true);
+        
+        fetch("{{ url_for('inventory.add_brand') }}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name: name})
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.html('<i class="fas fa-save me-2"></i> Save Brand Details').prop('disabled', false);
+            if(data.success) {
+                const newOption = new Option(data.name, data.id, true, true);
+                $('#brandSelect').append(newOption).trigger('change');
+                $('#addBrandModal').modal('hide');
+                $('#newBrandName').val('');
+                Swal.fire({ icon: 'success', title: 'Guul!', text: 'Brand-ka cusub waa la kaydiyay!', timer: 2000, showConfirmButton: false });
+            } else {
+                Swal.fire({ icon: 'error', title: 'Cilad', text: data.message });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

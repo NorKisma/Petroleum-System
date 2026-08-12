@@ -1,0 +1,15 @@
+flask
+flask-sqlalchemy
+flask-login
+flask-migrate
+flask-bcrypt
+flask-wtf
+flask-mail
+flask-cors
+pymysql
+python-dotenv
+pytest
+pytest-cov
+pdfkit
+pandas
+openpyxl

@@ -1,0 +1,504 @@
+{% extends "layouts/base.html" %}
+{% block title %}AI Intelligence Center — Rays ERP{% endblock %}
+
+{% block styles %}
+<style>
+:root {
+    --ai-purple: #4ba3e3;
+    --ai-blue: #2563eb;
+    --ai-green: #10b981;
+    --ai-orange: #f59e0b;
+    --ai-red: #f94a4a;
+    --ai-dark: #0f172a;
+    --ai-surface: #1e293b;
+}
+
+.ai-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    border-radius: 24px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+.ai-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(124,58,237,0.3) 0%, transparent 70%);
+    pointer-events: none;
+}
+.ai-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: 20%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(37,99,235,0.2) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.health-ring {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 6px solid;
+    box-shadow: 0 0 30px rgba(0,0,0,0.3);
+}
+
+.ai-card {
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    overflow: hidden;
+    height: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.ai-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.08);
+}
+
+.ai-card-header {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f1f5f9;
+}
+.ai-card-header .module-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.ai-card-body { padding: 1.25rem 1.5rem; }
+
+.trend-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.trend-up   { background: #d1fae5; color: #065f46; }
+.trend-down { background: #fee2e2; color: #991b1b; }
+.trend-stable { background: #e0e7ff; color: #3730a3; }
+
+.rec-item {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.82rem;
+    margin-bottom: 0.5rem;
+    border-left: 3px solid #e2e8f0;
+    line-height: 1.4;
+}
+.rec-item:last-child { margin-bottom: 0; }
+
+.metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.55rem 0;
+    border-bottom: 1px dashed #f1f5f9;
+    font-size: 0.85rem;
+}
+.metric-row:last-child { border-bottom: none; }
+
+.stock-bar-wrap { background: #f1f5f9; border-radius: 8px; height: 6px; flex: 1; margin: 0 10px; }
+.stock-bar { height: 6px; border-radius: 8px; }
+
+.inv-score-circle {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    border: 5px solid;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+}
+
+.ai-stat-box {
+    background: linear-gradient(135deg, var(--bg-from), var(--bg-to));
+    border-radius: 16px;
+    padding: 1.2rem 1.5rem;
+    color: white;
+    height: 100%;
+}
+
+[data-theme='dark'] .ai-card { background: #1e293b; border-color: rgba(255,255,255,0.08); }
+[data-theme='dark'] .ai-card-header { border-color: rgba(255,255,255,0.06); }
+[data-theme='dark'] .rec-item { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+[data-theme='dark'] .metric-row { border-color: rgba(255,255,255,0.06); }
+[data-theme='dark'] .stock-bar-wrap { background: rgba(255,255,255,0.1); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-4">
+
+    <!-- Hero Header -->
+    <div class="ai-hero">
+        <div class="row align-items-center g-4 position-relative" style="z-index:1;">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div style="width:52px;height:52px;background:rgba(124,58,237,0.3);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">
+                        🤖
+                    </div>
+                    <div>
+                        <h2 class="fw-bold text-white mb-0">AI Intelligence Center</h2>
+                        <p class="text-white opacity-75 mb-0 small">Real-time insights across all your ERP modules</p>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    {% set mods = [('Sales','📈'),('Inventory','📦'),('Purchasing','🛒'),('Customers','👥'),('HR','👔'),('Expenses','💰')] %}
+                    {% for mod, icon in mods %}
+                    <span class="badge" style="background:rgba(255,255,255,0.12);color:white;font-size:0.75rem;padding:6px 12px;border-radius:20px;">
+                        {{ icon }} {{ mod }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-md-4 text-center text-md-end">
+                <!-- Health Score Ring -->
+                <div class="d-inline-flex flex-column align-items-center">
+                    <div class="health-ring mb-2" style="border-color:{{ health.color }};box-shadow:0 0 30px {{ health.color }}40;">
+                        <span style="font-size:2rem;font-weight:900;color:{{ health.color }};">{{ health.score }}</span>
+                        <span style="font-size:0.7rem;color:rgba(255,255,255,0.6);margin-top:-4px;">/ 100</span>
+                    </div>
+                    <span class="badge" style="background:{{ health.color }};font-size:0.8rem;padding:5px 14px;border-radius:20px;">
+                        Grade {{ health.grade }} — Business Health
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Row 1: Key Metrics ── -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="ai-stat-box" style="--bg-from:#4ba3e3;--bg-to:#6d28d9;">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="fas fa-chart-line"></i>
+                    <span style="font-size:0.75rem;opacity:0.8;">7-Day Forecast</span>
+                </div>
+                <div style="font-size:1.5rem;font-weight:800;">${{ "{:,.0f}".format(sales.forecast_7d) }}</div>
+                <span class="trend-badge trend-{{ sales.trend }} mt-1 d-inline-block">
+                    {{ '▲' if sales.trend == 'up' else ('▼' if sales.trend == 'down' else '►') }}
+                    {{ sales.trend_pct }}%
+                </span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="ai-stat-box" style="--bg-from:#0284c7;--bg-to:#0369a1;">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="fas fa-boxes"></i>
+                    <span style="font-size:0.75rem;opacity:0.8;">Inventory Health</span>
+                </div>
+                <div style="font-size:1.5rem;font-weight:800;">{{ inventory.score }}%</div>
+                <span style="font-size:0.75rem;opacity:0.75;">{{ inventory.total_products }} total products</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="ai-stat-box" style="--bg-from:#059669;--bg-to:#047857;">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="fas fa-users"></i>
+                    <span style="font-size:0.75rem;opacity:0.8;">Active Customers</span>
+                </div>
+                <div style="font-size:1.5rem;font-weight:800;">{{ customers.total }}</div>
+                <span style="font-size:0.75rem;opacity:0.75;">+{{ customers.new_this_month }} this month</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="ai-stat-box" style="--bg-from:#d97706;--bg-to:#b45309;">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span style="font-size:0.75rem;opacity:0.8;">Total Purchases</span>
+                </div>
+                <div style="font-size:1.5rem;font-weight:800;">${{ "{:,.0f}".format(purchasing.total_spend) }}</div>
+                <span style="font-size:0.75rem;opacity:0.75;">{{ purchasing.vendor_count }} vendors</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Row 2: Sales + Inventory ── -->
+    <div class="row g-3 mb-4">
+
+        <!-- Sales AI -->
+        <div class="col-md-6">
+            <div class="ai-card">
+                <div class="ai-card-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="module-icon" style="background:#ede9fe;color:#4ba3e3;"><i class="fas fa-chart-bar"></i></div>
+                        <div>
+                            <div class="fw-bold">Sales Intelligence</div>
+                            <div class="text-muted" style="font-size:0.75rem;">Trend analysis & forecasting</div>
+                        </div>
+                    </div>
+                    <span class="trend-badge trend-{{ sales.trend }}">
+                        {{ '▲ Growing' if sales.trend == 'up' else ('▼ Declining' if sales.trend == 'down' else '► Stable') }}
+                    </span>
+                </div>
+                <div class="ai-card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <div class="text-muted" style="font-size:0.75rem;">Avg Daily Revenue</div>
+                            <div class="fw-bold fs-5">${{ "{:,.2f}".format(sales.avg_daily) }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted" style="font-size:0.75rem;">Peak Sales Time</div>
+                            <div class="fw-bold fs-5">{{ sales.peak_hour }}</div>
+                        </div>
+                    </div>
+
+                    {% if sales.top_products %}
+                    <div class="mb-3">
+                        <div class="fw-bold small mb-2">🏆 Top Products</div>
+                        {% for p in sales.top_products[:3] %}
+                        <div class="metric-row">
+                            <span>{{ p.name }}</span>
+                            <span class="fw-bold text-primary">${{ "{:,.0f}".format(p.rev) }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="fw-bold small mb-2">💡 AI Recommendations</div>
+                    {% for r in sales.recommendations %}
+                    <div class="rec-item">{{ r }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory AI -->
+        <div class="col-md-6">
+            <div class="ai-card">
+                <div class="ai-card-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="module-icon" style="background:#dbeafe;color:#2563eb;"><i class="fas fa-boxes"></i></div>
+                        <div>
+                            <div class="fw-bold">Inventory Intelligence</div>
+                            <div class="text-muted" style="font-size:0.75rem;">Stock health & dead stock</div>
+                        </div>
+                    </div>
+                    <div class="inv-score-circle" style="border-color:{% if inventory.score >= 80 %}#10b981{% elif inventory.score >= 60 %}#f59e0b{% else %}#f94a4a{% endif %}">
+                        <span class="fw-bold">{{ inventory.score }}%</span>
+                        <span style="font-size:0.6rem;color:#94a3b8;">health</span>
+                    </div>
+                </div>
+                <div class="ai-card-body">
+                    {% if inventory.low_stock %}
+                    <div class="mb-3">
+                        <div class="fw-bold small mb-2 text-danger">🚨 Low / Out of Stock ({{ inventory.low_stock|length }})</div>
+                        {% for p in inventory.low_stock[:4] %}
+                        <div class="metric-row">
+                            <span class="text-truncate" style="max-width:150px;">{{ p.name }}</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="stock-bar-wrap"><div class="stock-bar" style="width:{{ [p.qty/p.threshold*100,100]|min }}%;background:{% if p.severity=='critical' %}#f94a4a{% else %}#f59e0b{% endif %};"></div></div>
+                                <span class="badge {% if p.severity=='critical' %}bg-danger{% else %}bg-warning text-dark{% endif %}" style="font-size:0.7rem;">{{ p.qty }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if inventory.dead_stock %}
+                    <div class="mb-3">
+                        <div class="fw-bold small mb-2 text-warning">💤 Dead Stock ({{ inventory.dead_stock|length }})</div>
+                        {% for p in inventory.dead_stock[:3] %}
+                        <div class="metric-row">
+                            <span>{{ p.name }}</span>
+                            <span class="text-muted small">{{ p.days_idle }}d idle</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="fw-bold small mb-2">💡 AI Recommendations</div>
+                    {% for r in inventory.recommendations %}
+                    <div class="rec-item">{{ r }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Row 3: Customers + Purchasing + HR ── -->
+    <div class="row g-3 mb-4">
+
+        <!-- Customers AI -->
+        <div class="col-md-4">
+            <div class="ai-card">
+                <div class="ai-card-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="module-icon" style="background:#d1fae5;color:#059669;"><i class="fas fa-users"></i></div>
+                        <div>
+                            <div class="fw-bold">Customer AI</div>
+                            <div class="text-muted" style="font-size:0.75rem;">Segmentation & risk</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ai-card-body">
+                    <div class="row g-2 mb-3 text-center">
+                        <div class="col-4">
+                            <div style="font-size:1.4rem;font-weight:800;color:#4ba3e3;">{{ customers.total }}</div>
+                            <div class="text-muted" style="font-size:0.7rem;">Total</div>
+                        </div>
+                        <div class="col-4">
+                            <div style="font-size:1.4rem;font-weight:800;color:#f59e0b;">{{ customers.vip|length }}</div>
+                            <div class="text-muted" style="font-size:0.7rem;">VIP</div>
+                        </div>
+                        <div class="col-4">
+                            <div style="font-size:1.4rem;font-weight:800;color:#f94a4a;">{{ customers.at_risk|length }}</div>
+                            <div class="text-muted" style="font-size:0.7rem;">At Risk</div>
+                        </div>
+                    </div>
+                    {% if customers.vip %}
+                    <div class="fw-bold small mb-1">🌟 VIP Customers</div>
+                    {% for c in customers.vip[:3] %}
+                    <div class="metric-row">
+                        <span>{{ c.name }}</span>
+                        <span class="fw-bold text-success small">${{ "{:,.0f}".format(c.spend) }}</span>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    <div class="mt-3">
+                        {% for r in customers.recommendations %}
+                        <div class="rec-item">{{ r }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Purchasing AI -->
+        <div class="col-md-4">
+            <div class="ai-card">
+                <div class="ai-card-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="module-icon" style="background:#fef3c7;color:#d97706;"><i class="fas fa-truck"></i></div>
+                        <div>
+                            <div class="fw-bold">Purchasing AI</div>
+                            <div class="text-muted" style="font-size:0.75rem;">Vendor spend analysis</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ai-card-body">
+                    <div class="metric-row">
+                        <span class="text-muted">Total Spend</span>
+                        <span class="fw-bold">${{ "{:,.0f}".format(purchasing.total_spend) }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="text-muted">AP Pending</span>
+                        <span class="fw-bold text-danger">${{ "{:,.0f}".format(purchasing.ap_pending) }}</span>
+                    </div>
+                    {% if purchasing.top_vendors %}
+                    <div class="fw-bold small mt-3 mb-2">🏢 Top Vendors</div>
+                    {% for v in purchasing.top_vendors[:4] %}
+                    <div class="metric-row">
+                        <span>{{ v.name }}</span>
+                        <span class="fw-bold small">${{ "{:,.0f}".format(v.spend) }}</span>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    <div class="mt-3">
+                        {% for r in purchasing.recommendations %}
+                        <div class="rec-item">{{ r }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HR AI -->
+        <div class="col-md-4">
+            <div class="ai-card">
+                <div class="ai-card-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="module-icon" style="background:#ede9fe;color:#4ba3e3;"><i class="fas fa-id-badge"></i></div>
+                        <div>
+                            <div class="fw-bold">HR Intelligence</div>
+                            <div class="text-muted" style="font-size:0.75rem;">Staff & payroll analysis</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ai-card-body">
+                    <div class="row g-2 mb-3 text-center">
+                        <div class="col-6">
+                            <div style="font-size:1.4rem;font-weight:800;color:#2563eb;">{{ hr.active }}</div>
+                            <div class="text-muted" style="font-size:0.7rem;">Active Staff</div>
+                        </div>
+                        <div class="col-6">
+                            <div style="font-size:1.4rem;font-weight:800;color:#10b981;">${{ "{:,.0f}".format(hr.payroll) }}</div>
+                            <div class="text-muted" style="font-size:0.7rem;">Monthly Payroll</div>
+                        </div>
+                    </div>
+                    {% if hr.by_role %}
+                    <div class="fw-bold small mb-2">👤 Staff by Role</div>
+                    {% for r in hr.by_role[:4] %}
+                    <div class="metric-row">
+                        <span class="text-capitalize">{{ r.role }}</span>
+                        <span class="badge bg-primary">{{ r.count }}</span>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    <div class="mt-3">
+                        {% for r in hr.recommendations %}
+                        <div class="rec-item">{{ r }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── All Recommendations Summary ── -->
+    <div class="ai-card mb-4">
+        <div class="ai-card-header">
+            <div class="d-flex align-items-center gap-3">
+                <div class="module-icon" style="background:#fef9c3;color:#854d0e;font-size:1.3rem;">🧠</div>
+                <div>
+                    <div class="fw-bold">AI Action Plan</div>
+                    <div class="text-muted" style="font-size:0.75rem;">Consolidated recommendations across all modules</div>
+                </div>
+            </div>
+            <span class="badge bg-warning text-dark">{{ (sales.recommendations + inventory.recommendations + customers.recommendations + purchasing.recommendations)|length }} Actions</span>
+        </div>
+        <div class="ai-card-body">
+            <div class="row g-3">
+                {% set all_recs = [
+                    ('📈 Sales', sales.recommendations, '#ede9fe', '#4ba3e3'),
+                    ('📦 Inventory', inventory.recommendations, '#dbeafe', '#2563eb'),
+                    ('👥 Customers', customers.recommendations, '#d1fae5', '#059669'),
+                    ('🛒 Purchasing', purchasing.recommendations, '#fef3c7', '#d97706'),
+                    ('👔 HR', hr.recommendations, '#fce7f3', '#be185d'),
+                ] %}
+                {% for module, recs, bg, color in all_recs %}
+                {% if recs %}
+                <div class="col-md-6 col-lg-4">
+                    <div style="background:{{ bg }};border-radius:12px;padding:1rem;">
+                        <div class="fw-bold mb-2" style="color:{{ color }};font-size:0.85rem;">{{ module }}</div>
+                        {% for r in recs %}
+                        <div style="font-size:0.8rem;color:#334155;margin-bottom:0.4rem;line-height:1.4;">{{ r }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

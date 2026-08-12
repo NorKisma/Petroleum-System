@@ -1,0 +1,49 @@
+{% extends "reports/base_pdf.html" %}
+
+{% block content %}
+<div class="summary-grid">
+    <div class="summary-card">
+        <span class="label">Total Products</span>
+        <span class="value">{{ products|length }}</span>
+    </div>
+    <div class="summary-card">
+        <span class="label">Total Stock Value</span>
+        <span class="value">${{ "%.2f"|format(total_value) }}</span>
+    </div>
+    <div class="summary-card">
+        <span class="label">Low Stock Alerts</span>
+        <span class="value" style="color: #f94a4a;">{{ low_stock_count }}</span>
+    </div>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Barcode</th>
+            <th>Product Name</th>
+            <th>Category</th>
+            <th class="text-right">Price</th>
+            <th class="text-right">Stock</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in products %}
+        <tr>
+            <td><code>{{ p.barcode or '-' }}</code></td>
+            <td style="font-weight: 600;">{{ p.name }}</td>
+            <td>{{ p.category.name if p.category else '-' }}</td>
+            <td class="text-right">${{ "%.2f"|format(p.sell_price) }}</td>
+            <td class="text-right">{{ p.stock_quantity }}</td>
+            <td>
+                {% if p.stock_quantity <= p.low_stock_threshold %}
+                    <span class="badge badge-danger">Low Stock</span>
+                {% else %}
+                    <span class="badge badge-success">Healthy</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

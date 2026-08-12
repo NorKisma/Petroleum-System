@@ -1,0 +1,218 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Inventory Report - Antigravity POS{% endblock %}
+{% block page_title %}Inventory Report - Summary{% endblock %}
+
+{% block styles %}
+<style>
+    .report-stat-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        height: 100%;
+        transition: transform 0.2s;
+        border: 1px solid #f1f5f9;
+    }
+    .report-stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .report-stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        font-size: 1.25rem;
+    }
+    
+    @media print {
+        #sidebar, .navbar, .no-print, .btn, .dataTables_paginate, .dataTables_info {
+            display: none !important;
+        }
+        #content {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+        .card {
+            border: 1px solid #eee !important;
+            box-shadow: none !important;
+        }
+        .print-only {
+            display: block !important;
+        }
+    }
+    .print-only {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up no-print">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="mb-0">Inventory Report</h3>
+            <p class="text-white text-opacity-75 small mb-0">Warbixinta guud ee kaydka alaabta iyo qiimaha ay leeyihiin.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-light rounded-pill px-4 fw-bold shadow-sm" onclick="window.print()">
+                <i class="fas fa-print me-1 text-primary"></i> Print Report
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-5 animate-up no-print">
+    <div class="col-md-3">
+        <div class="report-stat-card">
+            <div class="report-stat-icon bg-primary bg-opacity-10 text-primary">
+                <i class="fas fa-box"></i>
+            </div>
+            <h6 class="text-muted small fw-bold text-uppercase mb-1">Total Products</h6>
+            <h3 class="fw-bold mb-0 text-dark">{{ total_products }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="report-stat-card">
+            <div class="report-stat-icon bg-success bg-opacity-10 text-success">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <h6 class="text-muted small fw-bold text-uppercase mb-1">Total Asset Cost</h6>
+            <h3 class="fw-bold mb-0 text-dark">${{ "{:,.2f}".format(total_cost) }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="report-stat-card">
+            <div class="report-stat-icon bg-info bg-opacity-10 text-info">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h6 class="text-muted small fw-bold text-uppercase mb-1">Sale Value</h6>
+            <h3 class="fw-bold mb-0 text-dark">${{ "{:,.2f}".format(total_sales) }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="report-stat-card">
+            <div class="report-stat-icon bg-warning bg-opacity-10 text-warning">
+                <i class="fas fa-piggy-bank"></i>
+            </div>
+            <h6 class="text-muted small fw-bold text-uppercase mb-1">Potential Profit</h6>
+            <h3 class="fw-bold mb-0 text-dark">${{ "{:,.2f}".format(total_profit) }}</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Table -->
+<div class="card border-0 shadow-premium rounded-4 mb-5 bg-white overflow-hidden animate-up no-print">
+    <div class="card-header card-header-elite-blue d-flex align-items-center py-3">
+        <h5 class="mb-0 text-white fw-bold"><i class="fas fa-list me-2"></i> Detailed Inventory</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="inventoryReportTable">
+                <thead class="thead-dark-elite">
+                    <tr>
+                        <th class="ps-4">Product Name</th>
+                        <th class="text-center">Stock</th>
+                        <th class="text-center">Cost Price</th>
+                        <th class="text-center">Sale Price</th>
+                        <th class="text-end pe-4">Asset Value</th>
+                    </tr>
+                </thead>
+                <tbody style="font-size: 0.9rem;">
+                    {% for product in products %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark">{{ product.name }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-light text-dark border px-3 py-1 rounded-pill">{{ "{:,.0f}".format(product.stock_quantity) }}</span>
+                        </td>
+                        <td class="text-center">${{ "{:,.2f}".format(product.buy_price) }}</td>
+                        <td class="text-center">${{ "{:,.2f}".format(product.sell_price) }}</td>
+                        <td class="text-end pe-4 fw-bold text-primary">${{ "{:,.2f}".format(product.buy_price * product.stock_quantity) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Print View (Clean and Professional) -->
+<div class="print-only">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold mb-1">{{ current_user.tenant.name }}</h2>
+        <h4 class="text-muted">Inventory Valuation Report</h4>
+        <p class="small text-muted">Generated on: {{ datetime_utcnow().strftime('%d %B, %Y %H:%M') }}</p>
+    </div>
+    
+    <table class="table table-bordered">
+        <thead class="bg-light">
+            <tr>
+                <th>Summary Metric</th>
+                <th class="text-end">Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Total Products</td>
+                <td class="text-end fw-bold">{{ total_products }}</td>
+            </tr>
+            <tr>
+                <td>Total Asset Cost Value</td>
+                <td class="text-end fw-bold">${{ "{:,.2f}".format(total_cost) }}</td>
+            </tr>
+            <tr>
+                <td>Total Potential Sale Value</td>
+                <td class="text-end fw-bold">${{ "{:,.2f}".format(total_sales) }}</td>
+            </tr>
+            <tr class="table-secondary">
+                <td class="fw-bold">Estimated Potential Profit</td>
+                <td class="text-end fw-bold">${{ "{:,.2f}".format(total_profit) }}</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="mt-5">
+        <h6 class="fw-bold text-uppercase border-bottom pb-2">Detailed Product List</h6>
+        <table class="table table-sm table-striped">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th class="text-center">Qty</th>
+                    <th class="text-end">Cost</th>
+                    <th class="text-end">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr>
+                    <td>{{ p.name }}</td>
+                    <td class="text-center">{{ p.stock_quantity }}</td>
+                    <td class="text-end">${{ "{:,.2f}".format(p.buy_price) }}</td>
+                    <td class="text-end">${{ "{:,.2f}".format(p.buy_price * p.stock_quantity) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#inventoryReportTable').DataTable({
+            "pageLength": 25,
+            "dom": '<"d-flex justify-content-between align-items-center mb-3"Bf>rt<"d-flex justify-content-between align-items-center mt-3"ip>',
+            "buttons": [
+                { extend: 'csv', text: '<i class="fas fa-file-csv me-1"></i> CSV', className: 'btn btn-sm btn-outline-secondary' },
+                { extend: 'excel', text: '<i class="fas fa-file-excel me-1"></i> Excel', className: 'btn btn-sm btn-outline-secondary' }
+            ]
+        });
+    });
+</script>
+{% endblock %}

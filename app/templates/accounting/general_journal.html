@@ -1,0 +1,509 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}General Journal - Advanced POS{% endblock %}
+{% block page_title %}General Journal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 col-xl-4 mb-4">
+        <div class="card shadow-sm" style="border-radius: 20px;">
+            <div class="card-header bg-white border-0 pt-4 pb-2" style="border-radius: 20px 20px 0 0;">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-plus-circle me-2"></i>New Journal Entry</h6>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('accounting.general_journal') }}" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Date</label>
+                        <input type="date" name="date" class="form-control form-control-sm rounded-3 bg-light border-0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Reference #</label>
+                        <input type="text" name="reference" class="form-control form-control-sm rounded-3 bg-light border-0" required placeholder="e.g. JRN-1001">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Description</label>
+                        <textarea name="description" class="form-control form-control-sm rounded-3 bg-light border-0" rows="2" placeholder="Memo"></textarea>
+                    </div>
+                    
+                    <div id="journalLines">
+                        <!-- Line 1 -->
+                        <div class="journal-line mb-3 border p-3 rounded-4 bg-light bg-opacity-50 border-primary border-opacity-10">
+                            <label class="form-label small fw-bold text-muted">Account</label>
+                            <select name="account_id[]" class="form-select form-select-sm mb-2 searchable-select" required>
+                                <option value="">Select Account</option>
+                                {% for acc in accounts %}
+                                <option value="{{ acc.id }}">{{ acc.account_code }} - {{ acc.account_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="number" step="0.01" name="debit[]" class="form-control form-control-sm border-success border-opacity-25 text-success debit-input" placeholder="Debit ($)">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" step="0.01" name="credit[]" class="form-control form-control-sm border-danger border-opacity-25 text-danger credit-input" placeholder="Credit ($)">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Line 2 -->
+                        <div class="journal-line mb-3 border p-3 rounded-4 bg-light bg-opacity-50 border-primary border-opacity-10">
+                            <label class="form-label small fw-bold text-muted">Account</label>
+                            <select name="account_id[]" class="form-select form-select-sm mb-2 searchable-select" required>
+                                <option value="">Select Account</option>
+                                {% for acc in accounts %}
+                                <option value="{{ acc.id }}">{{ acc.account_code }} - {{ acc.account_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="number" step="0.01" name="debit[]" class="form-control form-control-sm border-success border-opacity-25 text-success debit-input" placeholder="Debit ($)">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" step="0.01" name="credit[]" class="form-control form-control-sm border-danger border-opacity-25 text-danger credit-input" placeholder="Credit ($)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-sm btn-light text-primary fw-bold mb-3 w-100 rounded-pill border-primary border-opacity-10" id="addLineBtn">
+                        <i class="fas fa-plus me-1"></i> Add Another Line
+                    </button>
+                    
+                    <div class="d-flex justify-content-between mb-4 mt-2 px-3 py-2 bg-light rounded-pill">
+                        <div class="fw-bold text-muted small mt-1">Totals:</div>
+                        <div class="fw-bold">
+                            <span id="totalDebit" class="text-success me-2">$0.00</span> 
+                            <span class="text-muted">|</span> 
+                            <span id="totalCredit" class="text-danger ms-2">$0.00</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 fw-bold rounded-pill" id="postBtn" disabled>Post Journal Entry</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 col-xl-8">
+        <div class="card shadow-sm" style="border-radius: 20px;">
+            <div class="card-header bg-white border-0 pt-4 pb-2" style="border-radius: 20px 20px 0 0;">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fas fa-book me-2"></i>Recent Journal Entries</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light bg-opacity-50">
+                            <tr>
+                                <th class="ps-4 border-0 text-muted small text-uppercase">Date</th>
+                                <th class="border-0 text-muted small text-uppercase">Reference</th>
+                                <th class="border-0 text-muted small text-uppercase">Description</th>
+                                <th class="pe-4 border-0 text-muted small text-uppercase">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in entries %}
+                            <tr id="entry-row-{{ entry.id }}">
+                                <td class="ps-4 fw-bold text-dark">{{ entry.date.strftime('%Y-%m-%d') }}</td>
+                                <td><span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">{{ entry.reference }}</span></td>
+                                <td class="text-muted small">{{ entry.description }}</td>
+                                <td class="pe-4">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <table class="table table-sm table-borderless mb-0 small" style="width: 80%;">
+                                            {% for line in entry.lines %}
+                                            <tr>
+                                                <td style="width: 50%;" class="fw-bold opacity-75">{{ line.account.account_code }} - {{ line.account.account_name }}</td>
+                                                <td class="text-success text-end fw-bold" style="width: 25%;">{{ "{:,.2f}".format(line.debit) if line.debit > 0 else '' }}</td>
+                                                <td class="text-danger text-end fw-bold" style="width: 25%;">{{ "{:,.2f}".format(line.credit) if line.credit > 0 else '' }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </table>
+                                        <div class="d-flex gap-1 ms-3">
+                                            <button class="btn btn-sm btn-light-primary rounded-circle p-2" onclick="editEntry({{ entry.id }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-light-danger rounded-circle p-2" onclick="deleteEntry({{ entry.id }})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted py-5">No journal entries found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Journal Entry — Premium Offcanvas -->
+<div class="offcanvas offcanvas-end border-0" tabindex="-1" id="editJournalModal"
+     style="width:560px; box-shadow: -10px 0 40px rgba(0,0,0,0.15);">
+
+    <!-- Header with gradient -->
+    <div class="offcanvas-header border-0 px-4 py-4"
+         style="background: linear-gradient(135deg, #0046af 0%, #0066cc 100%);">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-3 p-2 d-flex align-items-center justify-content-center"
+                 style="background:rgba(255,255,255,0.2); width:44px; height:44px;">
+                <i class="fas fa-file-invoice text-white fa-lg"></i>
+            </div>
+            <div>
+                <h5 class="offcanvas-title fw-bold text-white mb-0">Edit Journal Entry</h5>
+                <small class="text-white opacity-75">Modify and rebalance the entry</small>
+            </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+
+    <div class="offcanvas-body px-4 py-4" style="overflow-y:auto; background:#f8fafc;">
+        <form id="editJournalForm" autocomplete="off">
+            <input type="hidden" id="editEntryId">
+
+            <!-- Header Fields Card — Collapsible -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4" style="background:#fff; overflow:hidden;">
+                <!-- Clickable Header Toggle -->
+                <div class="card-header border-0 px-4 py-3 d-flex justify-content-between align-items-center"
+                     id="entryDetailsToggle"
+                     style="cursor:pointer; background:#fff; user-select:none;"
+                     onclick="toggleEntryDetails()">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-info-circle text-primary"></i>
+                        <span class="fw-bold small text-uppercase text-muted" style="letter-spacing:1px;">Entry Details</span>
+                        <!-- Mini summary shown when collapsed -->
+                        <span id="entryDetailsSummary" class="badge bg-primary bg-opacity-10 text-primary rounded-pill small ms-1" style="display:none; font-size:11px; font-weight:600;"></span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted" style="font-size:11px;" id="entryDetailsHint">click to collapse</span>
+                        <i class="fas fa-chevron-up text-muted" id="entryDetailsChevron"
+                           style="transition:transform 0.3s; font-size:12px;"></i>
+                    </div>
+                </div>
+
+                <!-- Collapsible Body -->
+                <div id="entryDetailsBody" class="card-body p-4 pt-2"
+                     style="transition: max-height 0.35s ease, opacity 0.3s ease, padding 0.3s ease; max-height:400px; overflow:hidden; opacity:1;">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small mb-1" style="color:#374151;">
+                                <i class="fas fa-calendar-alt me-1 text-primary opacity-75"></i>Date
+                            </label>
+                            <input type="date" id="editDate" class="form-control fw-bold"
+                                   style="border:2px solid #e5e7eb; border-radius:10px; font-size:0.95rem; transition:border-color 0.2s;"
+                                   onfocus="this.style.borderColor='#0046af'" onblur="this.style.borderColor='#e5e7eb'"
+                                   required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small mb-1" style="color:#374151;">
+                                <i class="fas fa-hashtag me-1 text-primary opacity-75"></i>Reference #
+                            </label>
+                            <input type="text" id="editReference" class="form-control fw-bold"
+                                   style="border:2px solid #e5e7eb; border-radius:10px; font-size:0.95rem; transition:border-color 0.2s;"
+                                   onfocus="this.style.borderColor='#0046af'" onblur="this.style.borderColor='#e5e7eb'"
+                                   placeholder="e.g. JRN-1001" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold small mb-1" style="color:#374151;">
+                                <i class="fas fa-align-left me-1 text-primary opacity-75"></i>Description
+                            </label>
+                            <textarea id="editDescription" class="form-control"
+                                      style="border:2px solid #e5e7eb; border-radius:10px; font-size:0.95rem; resize:none; transition:border-color 0.2s;"
+                                      onfocus="this.style.borderColor='#0046af'" onblur="this.style.borderColor='#e5e7eb'"
+                                      rows="2" placeholder="Memo / Notes"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Journal Lines -->
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold text-muted small text-uppercase mb-0" style="letter-spacing:1px;">
+                    <i class="fas fa-list-ul me-2 text-primary"></i>Journal Lines
+                </h6>
+            </div>
+            <div id="editJournalLines" class="mb-3"></div>
+
+            <button type="button" id="addEditLineBtn"
+                    class="btn btn-sm w-100 fw-bold mb-4"
+                    style="border:2px dashed #0046af; border-radius:10px; color:#0046af; background:rgba(0,70,175,0.05); padding:10px; transition:all 0.2s;"
+                    onmouseover="this.style.background='rgba(0,70,175,0.1)'"
+                    onmouseout="this.style.background='rgba(0,70,175,0.05)'">
+                <i class="fas fa-plus-circle me-2"></i>Add Another Line
+            </button>
+
+            <!-- Totals Bar -->
+            <div class="rounded-3 px-4 py-3 mb-4 d-flex justify-content-between align-items-center"
+                 style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe); border:1px solid #bae6fd;">
+                <span class="fw-bold text-muted small">
+                    <i class="fas fa-calculator me-2 text-primary"></i>Running Totals
+                </span>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="text-center">
+                        <div style="font-size:10px; color:#059669; font-weight:700; text-transform:uppercase;">Debit</div>
+                        <div id="editTotalDebit" class="fw-bold" style="color:#059669; font-size:1rem;">$0.00</div>
+                    </div>
+                    <div style="width:1px; height:30px; background:#94a3b8;"></div>
+                    <div class="text-center">
+                        <div style="font-size:10px; color:#dc2626; font-weight:700; text-transform:uppercase;">Credit</div>
+                        <div id="editTotalCredit" class="fw-bold" style="color:#dc2626; font-size:1rem;">$0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <button type="submit" id="updateBtn"
+                    class="btn w-100 fw-bold py-3 shadow-sm"
+                    style="background:linear-gradient(135deg,#0046af,#0066cc); color:white; border:none; border-radius:14px; font-size:1rem; letter-spacing:0.5px; transition:all 0.3s;"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,70,175,0.4)'"
+                    onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                <i class="fas fa-save me-2"></i>Update Journal Entry
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Premium debit/credit input styling inside edit offcanvas */
+#editJournalLines .debit-input:focus {
+    border-color: #059669 !important;
+    box-shadow: 0 0 0 3px rgba(5,150,105,0.15) !important;
+    outline: none;
+}
+#editJournalLines .credit-input:focus {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220,38,38,0.15) !important;
+    outline: none;
+}
+#editJournalLines .journal-line {
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+#editJournalLines .journal-line:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08) !important;
+    transform: translateY(-1px);
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    // Set today's date if empty
+    const dateInput = document.querySelector('input[name="date"]');
+    if(dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    const journalLines = document.getElementById('journalLines');
+    const addLineBtn = document.getElementById('addLineBtn');
+    const postBtn = document.getElementById('postBtn');
+
+    // ── Expose calculateTotals GLOBALLY so inline onclick can reach it ────────
+    window.calculateTotals = function(containerId, debitId, creditId, btnId) {
+        let tDebit = 0, tCredit = 0;
+        const container = document.getElementById(containerId);
+        if(!container) return;
+        container.querySelectorAll('.debit-input').forEach(i => tDebit += parseFloat(i.value) || 0);
+        container.querySelectorAll('.credit-input').forEach(i => tCredit += parseFloat(i.value) || 0);
+        document.getElementById(debitId).textContent = '$' + tDebit.toFixed(2);
+        document.getElementById(creditId).textContent = '$' + tCredit.toFixed(2);
+        const btn = document.getElementById(btnId);
+        if(btn && btnId === 'postBtn') btn.disabled = !(tDebit > 0 && Math.abs(tDebit - tCredit) < 0.01);
+    };
+    
+    journalLines.addEventListener('input', () => window.calculateTotals('journalLines', 'totalDebit', 'totalCredit', 'postBtn'));
+    document.getElementById('editJournalLines').addEventListener('input', () => {
+        window.calculateTotals('editJournalLines', 'editTotalDebit', 'editTotalCredit', 'updateBtn');
+        // Always keep update enabled once user edits anything
+        document.getElementById('updateBtn').disabled = false;
+    });
+    
+    // ── New Journal Line Button ───────────────────────────────────────────────
+    addLineBtn.addEventListener('click', function() {
+        const firstLine = document.querySelector('.journal-line');
+        const newLine = firstLine.cloneNode(true);
+        newLine.querySelectorAll('input').forEach(input => input.value = '');
+        const select = newLine.querySelector('select');
+        select.value = '';
+        select.removeAttribute('data-select2-id');
+        select.classList.remove('select2-hidden-accessible');
+        const oldSpan = newLine.querySelector('.select2-container');
+        if(oldSpan) oldSpan.remove();
+        if(!newLine.querySelector('.remove-line-btn')) {
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn btn-sm btn-link text-danger p-0 mt-1 remove-line-btn';
+            removeBtn.innerHTML = '<i class="fas fa-times-circle"></i> Remove Line';
+            removeBtn.onclick = function() { newLine.remove(); window.calculateTotals('journalLines', 'totalDebit', 'totalCredit', 'postBtn'); };
+            newLine.appendChild(removeBtn);
+        }
+        journalLines.appendChild(newLine);
+        $(select).select2({ theme: 'bootstrap-5', width: '100%' });
+    });
+
+    // ── Edit Offcanvas ───────────────────────────────────────────────────────
+    const editOffcanvas = new bootstrap.Offcanvas(document.getElementById('editJournalModal'));
+    
+    // Expose addEditLine globally too
+    window.addEditLine = function(data) {
+        data = data || null;
+        const container = document.getElementById('editJournalLines');
+        const div = document.createElement('div');
+        div.className = 'journal-line mb-3 p-3 rounded-4';
+        div.style.cssText = 'border: 1px solid #dee2e6; background: #fff;';
+        
+        const accountsHtml = Array.from(document.querySelector('select[name="account_id[]"]').options)
+            .map(opt => `<option value="${opt.value}" ${data && String(data.account_id) === String(opt.value) ? 'selected' : ''}>${opt.text}</option>`)
+            .join('');
+            
+        div.innerHTML = `
+            <label class="form-label small fw-bold text-muted mb-1">Account</label>
+            <select class="form-select form-select-sm mb-3 edit-account-select" required>${accountsHtml}</select>
+            <div class="row g-2">
+                <div class="col-6">
+                    <label class="form-label small fw-bold mb-1" style="color:#198754;">Debit ($)</label>
+                    <input type="number" step="0.01" min="0"
+                           class="form-control debit-input"
+                           style="border:2px solid #198754;border-radius:8px;color:#198754;font-weight:700;font-size:1rem;"
+                           value="${data && data.debit > 0 ? data.debit : ''}"
+                           placeholder="0.00">
+                </div>
+                <div class="col-6">
+                    <label class="form-label small fw-bold mb-1" style="color:#dc3545;">Credit ($)</label>
+                    <input type="number" step="0.01" min="0"
+                           class="form-control credit-input"
+                           style="border:2px solid #dc3545;border-radius:8px;color:#dc3545;font-weight:700;font-size:1rem;"
+                           value="${data && data.credit > 0 ? data.credit : ''}"
+                           placeholder="0.00">
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-danger p-0 mt-2 remove-edit-line-btn">
+                <i class="fas fa-times-circle me-1"></i>Remove Line
+            </button>
+        `;
+        container.appendChild(div);
+
+        div.querySelector('.remove-edit-line-btn').addEventListener('click', function() {
+            div.remove();
+            window.calculateTotals('editJournalLines', 'editTotalDebit', 'editTotalCredit', 'updateBtn');
+            document.getElementById('updateBtn').disabled = false;
+        });
+
+        // dropdownParent = offcanvas body so Select2 doesn't clip
+        $(div.querySelector('select')).select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: document.getElementById('editJournalModal')
+        });
+    };
+
+    window.editEntry = function(id) {
+        fetch(`/accounting/general-journal/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if(!data.success) { alert('Could not load entry.'); return; }
+                const e = data.entry;
+
+                document.getElementById('editEntryId').value    = e.id;
+                document.getElementById('editDate').value        = e.date;
+                document.getElementById('editReference').value   = e.reference;
+                document.getElementById('editDescription').value = e.description;
+                
+                document.getElementById('editJournalLines').innerHTML = '';
+                e.lines.forEach(line => window.addEditLine(line));
+                
+                document.getElementById('updateBtn').disabled = false;
+                document.getElementById('updateBtn').innerHTML = '<i class="fas fa-save me-2"></i>Update Journal Entry';
+                window.calculateTotals('editJournalLines', 'editTotalDebit', 'editTotalCredit', 'updateBtn');
+                document.getElementById('updateBtn').disabled = false;
+
+                editOffcanvas.show();
+
+                document.getElementById('editJournalModal').addEventListener('shown.bs.offcanvas', function handler() {
+                    document.getElementById('editReference').focus();
+                    this.removeEventListener('shown.bs.offcanvas', handler);
+                });
+            });
+    };
+    
+    document.getElementById('addEditLineBtn').addEventListener('click', () => window.addEditLine());
+    
+    document.getElementById('editJournalForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('editEntryId').value;
+        const lines = [];
+        document.querySelectorAll('#editJournalLines .journal-line').forEach(line => {
+            lines.push({
+                account_id: line.querySelector('select') ? line.querySelector('select').value : '',
+                debit:  line.querySelector('.debit-input')  ? line.querySelector('.debit-input').value  : 0,
+                credit: line.querySelector('.credit-input') ? line.querySelector('.credit-input').value : 0
+            });
+        });
+        const payload = {
+            date: document.getElementById('editDate').value,
+            reference: document.getElementById('editReference').value,
+            description: document.getElementById('editDescription').value,
+            lines: lines
+        };
+        const updateBtn = document.getElementById('updateBtn');
+        updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        updateBtn.disabled = true;
+        fetch(`/accounting/general-journal/edit/${id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(payload)
+        }).then(res => res.json()).then(res => {
+            if(res.success) { location.reload(); }
+            else {
+                alert(res.message);
+                updateBtn.disabled = false;
+                updateBtn.innerHTML = 'Update Journal Entry';
+            }
+        });
+    });
+    
+    window.deleteEntry = function(id) {
+        if(!confirm('Ma hubtaa inaad tirtirto journal entry-gan? Waxay saamayn kartaa warbixinadaada xisaabaadka.')) return;
+        fetch(`/accounting/general-journal/delete/${id}`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': csrfToken }
+        }).then(res => res.json()).then(res => {
+            if(res.success) { document.getElementById(`entry-row-${id}`).remove(); }
+            else { alert(res.message); }
+        });
+    };
+    // ── Collapsible Entry Details ────────────────────────────────────────────
+    window.toggleEntryDetails = function() {
+        const body     = document.getElementById('entryDetailsBody');
+        const chevron  = document.getElementById('entryDetailsChevron');
+        const summary  = document.getElementById('entryDetailsSummary');
+        const hint     = document.getElementById('entryDetailsHint');
+        const isOpen   = body.style.maxHeight !== '0px' && body.style.maxHeight !== '';
+
+        if (isOpen) {
+            body.style.maxHeight = '0px';
+            body.style.opacity   = '0';
+            body.style.padding   = '0 1.5rem';
+            chevron.style.transform = 'rotate(180deg)';
+            hint.textContent = 'click to expand';
+            // Show mini-summary badge
+            const ref  = document.getElementById('editReference').value || '—';
+            const date = document.getElementById('editDate').value || '';
+            summary.textContent = ref + (date ? '  ·  ' + date : '');
+            summary.style.display = 'inline-block';
+        } else {
+            body.style.maxHeight = '500px';
+            body.style.opacity   = '1';
+            body.style.padding   = '1.5rem';
+            chevron.style.transform = 'rotate(0deg)';
+            hint.textContent = 'click to collapse';
+            summary.style.display = 'none';
+        }
+    };
+});
+</script>
+{% endblock %}

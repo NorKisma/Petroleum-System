@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Advanced POS & Accounting{% endblock %}</title>
+    <meta name="csrf-token" content="{{ csrf_token() if csrf_token else '' }}">
+    <!-- Premium Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#3498db">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Rays POS">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icon-192.png') }}">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+        rel="stylesheet" />
+    <style>
+        /* Premium DataTables Styling */
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 1.5rem;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            border: 1px solid #eaeaea !important;
+            border-radius: 8px !important;
+            padding: 8px 12px !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+            font-size: 0.85rem;
+            width: 300px !important;
+        }
+
+        .dataTables_wrapper .dataTables_length select {
+            border: 1px solid #eaeaea !important;
+            border-radius: 8px !important;
+            padding: 4px 8px !important;
+            font-size: 0.85rem;
+        }
+
+        .dataTables_info {
+            font-size: 0.85rem;
+            color: #64748b !important;
+            padding-top: 1.5rem !important;
+        }
+
+        /* Professional Printing Adjustments */
+        @media print {
+
+            .no-print,
+            .btn,
+            .sidebar,
+            .navbar,
+            .breadcrumb-item,
+            #sidebar-wrapper,
+            .sidebar-header {
+                display: none !important;
+            }
+
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+                margin-bottom: 0 !important;
+            }
+
+            .card-body {
+                padding: 0 !important;
+            }
+
+            .container-fluid {
+                padding: 0 !important;
+            }
+
+            body {
+                background: white !important;
+                font-size: 9pt !important;
+            }
+
+            table {
+                page-break-inside: auto !important;
+            }
+
+            tr {
+                page-break-inside: avoid !important;
+                page-break-after: auto !important;
+            }
+
+            thead {
+                display: table-header-group !important;
+            }
+
+            tfoot {
+                display: table-footer-group !important;
+            }
+
+            .animate-up {
+                transform: none !important;
+                opacity: 1 !important;
+            }
+
+            .col-6 {
+                width: 50% !important;
+                float: left !important;
+                display: block !important;
+            }
+
+            .row {
+                display: flex !important;
+                flex-wrap: wrap !important;
+            }
+
+            #page-content-wrapper {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+            }
+
+            .print-only-section {
+                display: block !important;
+            }
+
+            .d-print-table {
+                display: table !important;
+            }
+        }
+
+        .print-only-section {
+            display: none !important;
+        }
+
+        /* Elite Theme Colors */
+        :root {
+            --elite-blue: #0046af;
+            --elite-blue-dark: #00378b;
+            --elite-bg: #f8fafc;
+            --elite-surface: #ffffff;
+        }
+
+        /* Custom Blue Selection */
+        ::selection {
+            background: var(--elite-blue);
+            color: white;
+        }
+
+        ::-moz-selection {
+            background: var(--elite-blue);
+            color: white;
+        }
+
+        /* Navbar Deep Blue */
+        /* Navbar Elite Style - Space Efficient */
+        .navbar-elite {
+            background-color: var(--elite-blue) !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            padding: 0.35rem 1.5rem !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+            min-height: 60px;
+            z-index: 1030;
+        }
+
+        /* No floating margins for navbar on mobile */
+
+        .navbar-elite .nav-link,
+        .navbar-elite .btn,
+        .navbar-elite h5,
+        .navbar-elite .text-dark,
+        .navbar-elite span,
+        [data-theme='light'] .navbar-elite h5,
+        [data-theme='light'] .navbar-elite .text-dark,
+        [data-theme='light'] .navbar-elite span {
+            color: white !important;
+            /* Ensure all text is white */
+        }
+
+        .navbar-elite .bg-light {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .navbar-elite .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .navbar-elite .input-group-text,
+        .navbar-elite .form-control {
+            color: white !important;
+        }
+
+        /* Status Indicator */
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            background-color: #2ecc71;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 8px;
+            box-shadow: 0 0 10px #2ecc71;
+        }
+
+        /* Professional Navbar Components */
+        .nav-btn-elite {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important;
+            padding: 8px 12px !important;
+            transition: all 0.2s ease !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white !important;
+        }
+
+        .nav-btn-elite:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            transform: translateY(-1px);
+        }
+
+        .card-header-elite-dark {
+            background: linear-gradient(135deg, var(--elite-blue) 0%, var(--elite-dark) 100%) !important;
+            color: white !important;
+            padding: 1rem 1.25rem !important;
+        }
+
+        .nav-pos-btn {
+            background: rgba(255, 255, 255, 0.15) !important;
+            color: white !important;
+            font-weight: 700;
+            border-radius: 12px;
+            padding: 8px 16px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .nav-pos-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-date-box {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 6px 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        /* Calculator Premium Styling */
+        #calcDisplay {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: right;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            min-height: 60px;
+            color: #1e293b;
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .calc-btn {
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+
+        .calc-btn:hover {
+            background: #f1f5f9;
+            transform: translateY(-2px);
+        }
+
+        .calc-btn.operator {
+            background: #eff6ff;
+            color: #2563eb;
+            border-color: #bfdbfe;
+        }
+
+        .calc-btn.equals {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+    
+        /* Hide sidebar margin */
+        #page-content-wrapper {
+            width: 100% !important;
+            margin-left: 0 !important;
+        }
+        .navbar-elite {
+            padding-left: 1rem !important;
+        }
+
+    </style>
+    {% block styles %}{% endblock %}
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body data-theme="dark">
+
+    <div class="d-flex" id="wrapper">
+        <!-- Mobile Toggle Button (Hidden, using integrated navbar hamburger instead) -->
+        
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <nav class="navbar navbar-expand-lg navbar-elite no-print sticky-top border-0">
+                <div class="container-fluid">
+                    <div class="d-flex align-items-center">
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-link p-0 me-4 border-0 text-white" title="Apps Menu">
+                            <i class="fas fa-th fs-4"></i>
+                        </a>
+
+                        <div class="d-flex align-items-center me-2 me-md-4 pe-0 pe-md-4">
+                            <h5 class="mb-0 fw-bold" style="font-size: clamp(0.75rem, 3vw, 1rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw;">
+                                {{ company_settings.name if company_settings else 'Rays POS' }}
+                            </h5>
+                            <span class="status-dot ms-2"></span>
+                        </div>
+
+                        <!-- App Menus (Desktop/Tablet only - mobile uses bottom nav) -->
+                        <div class="d-none d-md-flex ms-3 gap-2">
+                            {% set ep = request.endpoint or '' %}
+                            
+                            {% if 'inventory' in ep %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Inventory</button>
+                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+                                    <li><a class="dropdown-item" href="{{ url_for('inventory.list_products') }}">All Products</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('inventory.list_categories') }}">Categories</a></li>
+                                    {% if company_settings.module_stock_transfer %}
+                                    <li><a class="dropdown-item" href="{{ url_for('inventory.list_transfers') }}">Stock Transfers</a></li>
+                                    {% endif %}
+                                    {% if company_settings.module_stock_adjustment %}
+                                    <li><a class="dropdown-item" href="{{ url_for('inventory.stock_adjustment') }}">Stock Adjustment</a></li>
+                                    {% endif %}
+                                    <li><a class="dropdown-item" href="{{ url_for('inventory.import_opening_stock') }}">Import Stock</a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            {% if 'pos' in ep %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Point of Sale</button>
+                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+                                    <li><a class="dropdown-item" href="{{ url_for('sales.pos') }}">Terminal</a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            {% if 'sale' in ep and 'pos' not in ep %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Sales</button>
+                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+                                    <li><a class="dropdown-item" href="{{ url_for('sales.list_sales') }}">All Sales</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('sales.list_returns') }}">Sales Returns</a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            {% if 'customer' in ep %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Contacts</button>
+                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+                                    <li><a class="dropdown-item" href="{{ url_for('customers.list_customers') }}">Customers</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('customers.receipts') }}">Receipts</a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                            
+                            {% if 'vendor' in ep %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Purchases</button>
+                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+                                    <li><a class="dropdown-item" href="{{ url_for('vendor.purchases', view='list') }}">All Purchases</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('vendor.purchases', view='add') }}">Add Purchase</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('vendor.returns', view='list') }}">Purchase Returns</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('vendor.list_vendors') }}">Suppliers</a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                            
+                            {% if 'accounting' in ep and 'expenses' not in ep and 'report' not in ep %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Accounting</button>
+                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+                                    <li><a class="dropdown-item" href="{{ url_for('accounting.general_ledger') }}">General Ledger</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('accounting.chart_of_accounts') }}">Chart of Accounts</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('accounting.bank_accounts') }}">Bank Accounts</a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            {% if 'expenses' in ep %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Expenses</button>
+                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+                                    <li><a class="dropdown-item" href="{{ url_for('accounting.expenses') }}">All Expenses</a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            {% if 'report' in ep %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Reports</button>
+                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+                                    <li><a class="dropdown-item" href="{{ url_for('accounting.reports_hub') }}">All Reports</a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                            
+                            {% if 'settings' in ep %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Settings</button>
+                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+                                    <li><a class="dropdown-item" href="{{ url_for('settings.index') }}">Business Settings</a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            {% if 'staff' in ep and 'payroll' not in ep %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Employees</button>
+                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+                                    <li><a class="dropdown-item" href="{{ url_for('staff.list_staff') }}">Staff List</a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+
+                            {% if 'payroll' in ep %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">Payroll</button>
+                                <ul class="dropdown-menu shadow border-0 mt-2 rounded-3">
+                                    <li><a class="dropdown-item" href="{{ url_for('staff.list_payroll') }}">All Payrolls</a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+
+
+                        <div class="navbar-divider d-none d-lg-block"></div>
+
+                        <div class="d-none d-lg-flex align-items-center text-white text-opacity-50">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <span class="small fw-medium">System Active</span>
+                        </div>
+
+                        <!-- Streamlined Header: Removed Expansion icon -->
+                    </div>
+
+                    <div class="ms-auto d-flex align-items-center gap-2 gap-md-3">
+                        <!-- Streamlined Header: Removed Plus icon -->
+
+                        <!-- Calculator -->
+                        <a href="#" class="nav-btn-elite d-none d-md-flex" data-bs-toggle="modal"
+                            data-bs-target="#calculatorModal">
+                            <i class="fas fa-calculator"></i>
+                        </a>
+
+                        <!-- POS Shortcut -->
+                        <a href="{{ url_for('sales.pos') }}" class="nav-pos-btn d-none d-sm-flex">
+                            <i class="fas fa-cash-register"></i>
+                            <span class="d-none d-md-inline">POS</span>
+                        </a>
+
+                        <!-- Theme Toggle -->
+                        <button id="themeToggle" class="nav-btn-elite d-flex">
+                            <i class="fas fa-moon"></i>
+                        </button>
+
+                        <!-- Date Display -->
+                        <div class="nav-date-box d-none d-xl-block">
+                            {{ datetime_utcnow().strftime('%d/%m/%Y') }}
+                        </div>
+
+                        <!-- Notifications -->
+                        <a href="#" class="nav-btn-elite position-relative d-none d-sm-flex">
+                            <i class="far fa-bell"></i>
+                            <span
+                                class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
+                                style="width: 8px; height: 8px;"></span>
+                        </a>
+
+                        <div class="dropdown">
+                            <a class="nav-link d-flex align-items-center gap-3 bg-white bg-opacity-10 py-2 px-3 rounded-4 border border-white border-opacity-10"
+                                href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                <div class="text-end d-none d-lg-block">
+                                    <div class="fw-bold small">{{ current_user.username if current_user.is_authenticated
+                                        else 'Guest' }}</div>
+                                    <div class="opacity-75" style="font-size: 0.7rem;">{{ current_user.role | capitalize
+                                        }}</div>
+                                </div>
+                                <div class="img-wrapper p-1 rounded-circle bg-white bg-opacity-25 shadow-sm">
+                                    <img class="rounded-circle"
+                                        src="https://ui-avatars.com/api/?name={{ current_user.username if current_user.is_authenticated else 'Guest' }}&background=fff&color=0046af"
+                                        width="32" height="32">
+                                </div>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 rounded-4 animate-up">
+                                <li><a class="dropdown-item py-2 px-3 small fw-bold" href="#" data-bs-toggle="offcanvas"
+                                        data-bs-target="#userProfileOffcanvas"><i
+                                            class="fas fa-user-circle me-3 text-primary"></i> Profile</a></li>
+                                <li><a class="dropdown-item py-2 px-3 small fw-bold"
+                                        href="{{ url_for('auth.change_password') }}"><i
+                                            class="fas fa-key me-3 text-primary"></i> Change Password</a></li>
+                                <li><a class="dropdown-item py-2 px-3 small fw-bold"
+                                        href="{{ url_for('settings.index') }}"><i
+                                            class="fas fa-cog me-3 text-primary"></i> Settings</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item py-2 px-3 small fw-bold text-danger"
+                                        href="{{ url_for('auth.logout') }}"><i class="fas fa-power-off me-3"></i>
+                                        Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="container-fluid animate-up">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} border-0 shadow-lg rounded-4 alert-dismissible fade show"
+                    role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-info-circle me-3"></i>
+                        <div>{{ message }}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                <div class="content-body">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation (Mobile Only) -->
+    <div class="bottom-nav d-lg-none">
+        <a href="{{ url_for('main.dashboard') }}"
+            class="bottom-nav-item {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+            <i class="fas fa-th-large"></i>
+            <span>Apps</span>
+        </a>
+        <a href="{{ url_for('sales.list_sales') }}"
+            class="bottom-nav-item {% if 'sale' in (request.endpoint or '') %}active{% endif %}">
+            <i class="fas fa-file-invoice-dollar"></i>
+            <span>Sales</span>
+        </a>
+        <div class="bottom-nav-item">
+            <a href="{{ url_for('sales.pos') }}" class="fab-main">
+                <i class="fas fa-plus"></i>
+            </a>
+            <span style="margin-top: 5px;">POS</span>
+        </div>
+        <a href="{{ url_for('inventory.list_products') }}"
+            class="bottom-nav-item {% if 'inventory' in (request.endpoint or '') %}active{% endif %}">
+            <i class="fas fa-cubes"></i>
+            <span>Inventory</span>
+        </a>
+        <a href="{{ url_for('accounting.reports_hub') }}"
+            class="bottom-nav-item {% if 'report' in (request.endpoint or '') %}active{% endif %}">
+            <i class="fas fa-chart-line"></i>
+            <span>Reports</span>
+        </a>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            const body = $('body');
+            const sidebarCollapse = $('#sidebarCollapse');
+            const mobileSidebarToggle = $('#mobileSidebarToggle');
+            const overlay = $('#sidebarOverlay');
+
+            // Unified Sidebar Toggle Logic
+            function toggleSidebar() {
+                body.toggleClass('sidebar-toggled');
+            }
+
+            sidebarCollapse.on('click', toggleSidebar);
+            mobileSidebarToggle.on('click', toggleSidebar);
+            overlay.on('click', toggleSidebar);
+
+            // Close sidebar on link click (Mobile)
+            if ($(window).width() < 992) {
+                $('.sidebar .nav-link:not([data-bs-toggle="collapse"])').on('click', function () {
+                    body.removeClass('sidebar-toggled');
+                });
+            }
+
+            // Initialize Select2
+            $('.searchable-select').each(function () {
+                let parent = $(this).closest('.modal, .offcanvas');
+                $(this).select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    closeOnSelect: true,
+                    dropdownParent: parent.length ? parent : $(document.body)
+                });
+            });
+
+            // Theme Toggle Logic
+            const themeToggle = $('#themeToggle');
+            const themeIcon = themeToggle.find('i');
+
+            // Check for saved theme
+            const currentTheme = localStorage.getItem('theme') || 'dark';
+            body.attr('data-theme', currentTheme);
+            updateThemeIcon(currentTheme);
+
+            themeToggle.on('click', function () {
+                const newTheme = body.attr('data-theme') === 'light' ? 'dark' : 'light';
+                body.attr('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateThemeIcon(newTheme);
+            });
+
+            function updateThemeIcon(theme) {
+                if (theme === 'dark') {
+                    themeIcon.removeClass('fa-moon').addClass('fa-sun');
+                } else {
+                    themeIcon.removeClass('fa-sun').addClass('fa-moon');
+                }
+            }
+
+            // Auto hide alerts after 5 seconds
+            setTimeout(function () {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+        });
+
+        // Global Toast System
+        function showToast(title, message, type = 'success') {
+            const toastEl = document.getElementById('liveToast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastMsg = document.getElementById('toastMessage');
+
+            // Set styles
+            if (type === 'success') {
+                toastIcon.className = 'fas fa-check-circle fa-lg text-success';
+                toastEl.classList.remove('bg-danger', 'text-white');
+            } else {
+                toastIcon.className = 'fas fa-exclamation-circle fa-lg text-danger';
+                // toastEl.classList.add('bg-danger', 'text-white'); // Optional: dark mode error
+            }
+
+            toastMsg.innerText = message;
+
+            const toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+            toast.show();
+        }
+    </script>
+    <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}")
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed', err));
+            });
+        }
+    </script>
+    <!-- Offcanvas: User Profile -->
+    <div class="offcanvas offcanvas-end border-0 shadow-premium" tabindex="-1" id="userProfileOffcanvas"
+        style="width: 400px;">
+        <div class="offcanvas-header border-bottom border-light py-4 px-4" style="background-color: var(--surface);">
+            <h5 class="fw-bold mb-0 text-main"><i class="fas fa-id-badge text-primary me-2"></i> My Profile</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-4" style="background-color: var(--bg-main);">
+            <div class="text-center mb-4">
+                <div
+                    class="img-wrapper p-2 rounded-circle border border-primary border-opacity-25 shadow-sm d-inline-block bg-white">
+                    <img class="rounded-circle"
+                        src="https://ui-avatars.com/api/?name={{ current_user.username if current_user.is_authenticated else 'Guest' }}&background=4a9cdb&color=fff&size=80"
+                        width="80" height="80">
+                </div>
+                <h5 class="mt-3 fw-bold text-dark">{{ current_user.username if current_user.is_authenticated else
+                    'Guest' }}</h5>
+                <p class="text-muted small mb-1">{{ current_user.email if current_user.is_authenticated else '' }}</p>
+                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 mt-1 text-uppercase"
+                    style="font-size: 0.65rem;">
+                    {{ current_user.role if current_user.is_authenticated else 'Guest' }}
+                </span>
+            </div>
+
+            <hr class="border-light mb-4">
+
+            <form action="{{ url_for('auth.update_profile') }}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i
+                                class="fas fa-user text-muted"></i></span>
+                        <input type="text" name="username" class="form-control border-start-0 shadow-none"
+                            value="{{ current_user.username if current_user.is_authenticated else '' }}" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Phone Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i
+                                class="fas fa-phone text-muted"></i></span>
+                        <input type="text" name="phone" class="form-control border-start-0 shadow-none"
+                            value="{{ current_user.phone if current_user.is_authenticated and current_user.phone else '' }}"
+                            placeholder="Enter phone number">
+                    </div>
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-primary fw-bold py-2 shadow-sm rounded-3">Update
+                        Profile</button>
+                </div>
+            </form>
+
+            <div class="mt-4 pt-3 border-top text-center border-light">
+                <a href="{{ url_for('auth.change_password') }}"
+                    class="text-decoration-none small text-muted hover-primary">
+                    <i class="fas fa-lock me-1"></i> Change Password
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+        <div id="liveToast" class="toast border-0 shadow-lg rounded-4" role="alert" aria-live="assertive"
+            aria-atomic="true">
+            <div class="d-flex align-items-center p-2">
+                <div class="toast-icon-wrapper me-3 ms-2">
+                    <i class="fas fa-check-circle fa-lg text-success" id="toastIcon"></i>
+                </div>
+                <div class="toast-body fw-bold py-3" id="toastMessage">
+                    Action completed successfully!
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    {% block scripts %}{% endblock %}
+    {% block modals %}{% endblock %}
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}")
+                    .then(reg => console.log('Service Worker Registered'))
+                    .catch(err => console.log('Service Worker Failed', err));
+            });
+        }
+    </script>
+    <!-- Calculator Modal -->
+    <div class="modal fade" id="calculatorModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 350px;">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Calculator</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div id="calcDisplay">0</div>
+                    <div class="calc-grid">
+                        <button class="calc-btn operator" onclick="clearCalc()">C</button>
+                        <button class="calc-btn operator" onclick="appendCalc('/')">/</button>
+                        <button class="calc-btn operator" onclick="appendCalc('*')">×</button>
+                        <button class="calc-btn operator" onclick="backspaceCalc()"><i
+                                class="fas fa-backspace"></i></button>
+
+                        <button class="calc-btn" onclick="appendCalc('7')">7</button>
+                        <button class="calc-btn" onclick="appendCalc('8')">8</button>
+                        <button class="calc-btn" onclick="appendCalc('9')">9</button>
+                        <button class="calc-btn operator" onclick="appendCalc('-')">-</button>
+
+                        <button class="calc-btn" onclick="appendCalc('4')">4</button>
+                        <button class="calc-btn" onclick="appendCalc('5')">5</button>
+                        <button class="calc-btn" onclick="appendCalc('6')">6</button>
+                        <button class="calc-btn operator" onclick="appendCalc('+')">+</button>
+
+                        <button class="calc-btn" onclick="appendCalc('1')">1</button>
+                        <button class="calc-btn" onclick="appendCalc('2')">2</button>
+                        <button class="calc-btn" onclick="appendCalc('3')">3</button>
+                        <button class="calc-btn equals" onclick="calculateResult()" style="grid-row: span 2;">=</button>
+
+                        <button class="calc-btn" onclick="appendCalc('0')" style="grid-column: span 2;">0</button>
+                        <button class="calc-btn" onclick="appendCalc('.')">.</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentInput = '0';
+        function updateDisplay() {
+            document.getElementById('calcDisplay').innerText = currentInput;
+        }
+        function appendCalc(val) {
+            if (currentInput === '0' && !isNaN(val)) currentInput = val;
+            else currentInput += val;
+            updateDisplay();
+        }
+        function clearCalc() {
+            currentInput = '0';
+            updateDisplay();
+        }
+        function backspaceCalc() {
+            currentInput = currentInput.slice(0, -1);
+            if (currentInput === '') currentInput = '0';
+            updateDisplay();
+        }
+        function calculateResult() {
+            try {
+                currentInput = eval(currentInput).toString();
+            } catch (e) {
+                currentInput = 'Error';
+            }
+            updateDisplay();
+        }
+    </script>
+</body>
+
+</html>

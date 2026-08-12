@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Business — Advanced POS SaaS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            padding: 30px 16px;
+        }
+
+        .register-container {
+            width: 100%;
+            max-width: 540px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.13);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 32px;
+            padding: 44px 40px;
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.3);
+            color: white;
+            text-align: center;
+            animation: slideUp 0.7s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-circle {
+            width: 78px;
+            height: 78px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            color: #4ba3e3;
+            font-size: 1.9rem;
+        }
+
+        .step-badges {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 28px;
+        }
+
+        .step-badge {
+            width: 28px;
+            height: 6px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.3);
+            transition: background 0.3s;
+        }
+        .step-badge.active { background: white; }
+
+        .section-label {
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.6;
+            margin-bottom: 14px;
+            text-align: left;
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 14px;
+            color: white;
+            padding: 12px 18px;
+            transition: all 0.3s;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255,255,255,0.7);
+            color: white;
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.15);
+        }
+
+        .form-control::placeholder { color: rgba(255,255,255,0.5); }
+
+        .form-select option { background: #50a5e6; color: white; }
+
+        .input-icon-group {
+            position: relative;
+        }
+        .input-icon-group .field-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.55);
+            font-size: 0.95rem;
+        }
+        .input-icon-group .form-control,
+        .input-icon-group .form-select {
+            padding-left: 42px;
+        }
+
+        .divider {
+            border-color: rgba(255,255,255,0.2);
+            margin: 22px 0 18px;
+        }
+
+        .btn-register {
+            background: #4ba3e3;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 14px;
+            font-weight: 700;
+            font-size: 1rem;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s;
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 28px rgba(0,0,0,0.2);
+            background: #f8fafc;
+            color: #50a5e6;
+        }
+
+        .btn-register:active {
+            transform: translateY(0);
+        }
+
+        .strength-bar {
+            height: 5px;
+            border-radius: 4px;
+            margin-top: 6px;
+            background: rgba(255,255,255,0.15);
+            overflow: hidden;
+        }
+        .strength-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s, background 0.3s;
+            width: 0%;
+        }
+
+        .footer-links {
+            margin-top: 22px;
+            font-size: 0.88rem;
+            color: rgba(255,255,255,0.7);
+        }
+        .footer-links a {
+            color: #4aa3ff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .footer-links a:hover { text-decoration: underline; }
+
+        .terms-text {
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.55);
+            margin-top: 14px;
+            line-height: 1.5;
+        }
+        .terms-text a { color: rgba(255,255,255,0.8); }
+    </style>
+</head>
+<body>
+
+<div class="register-container">
+    <div class="glass-card">
+
+        <!-- Logo -->
+        <div class="logo-circle">
+            <i class="fas fa-rocket"></i>
+        </div>
+        <h2 class="fw-bold mb-1">Create Your Business</h2>
+        <p class="mb-3" style="color:rgba(255,255,255,0.65);font-size:0.9rem;">
+            Enterprise POS &amp; Accounting — Free to start
+        </p>
+
+        <!-- Step Indicators -->
+        <div class="step-badges">
+            <div class="step-badge active" id="s1"></div>
+            <div class="step-badge active" id="s2"></div>
+            <div class="step-badge" id="s3"></div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} bg-danger border-0 text-white small py-2 mb-3">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm">
+
+            <!-- ── Section 1: Business Info ──────────────────────────── -->
+            <p class="section-label"><i class="fas fa-building me-1"></i> Business Information</p>
+
+            <div class="mb-3 text-start">
+                <div class="input-icon-group">
+                    <i class="fas fa-store field-icon"></i>
+                    <input type="text" name="business_name" class="form-control"
+                           placeholder="Business Name (e.g. Rays Technology)"
+                           required autocomplete="organization">
+                </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <div class="input-icon-group">
+                        <i class="fas fa-phone field-icon"></i>
+                        <input type="tel" name="business_phone" class="form-control"
+                               placeholder="Phone Number">
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="input-icon-group">
+                        <i class="fas fa-dollar-sign field-icon"></i>
+                        <select name="currency" class="form-select">
+                            <option value="$">USD ($)</option>
+                            <option value="SL">SomSh (SL)</option>
+                            <option value="€">EUR (€)</option>
+                            <option value="£">GBP (£)</option>
+                            <option value="KES">KES</option>
+                            <option value="ETB">ETB</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <!-- ── Section 2: Admin Account ───────────────────────────── -->
+            <p class="section-label"><i class="fas fa-user-shield me-1"></i> Admin Account</p>
+
+            <div class="mb-3 text-start">
+                <div class="input-icon-group">
+                    <i class="fas fa-user field-icon"></i>
+                    <input type="text" name="username" class="form-control"
+                           placeholder="Admin Username" required
+                           pattern="[a-zA-Z0-9_]{3,20}"
+                           title="3-20 characters, letters/numbers/underscore only"
+                           autocomplete="username">
+                </div>
+            </div>
+
+            <div class="mb-3 text-start">
+                <div class="input-icon-group">
+                    <i class="fas fa-envelope field-icon"></i>
+                    <input type="email" name="email" class="form-control"
+                           placeholder="Admin Email Address" required
+                           autocomplete="email">
+                </div>
+            </div>
+
+            <div class="mb-2 text-start">
+                <div class="input-icon-group">
+                    <i class="fas fa-lock field-icon"></i>
+                    <input type="password" name="password" class="form-control"
+                           placeholder="Strong Password (min 8 chars)" required
+                           minlength="8" id="passwordField"
+                           autocomplete="new-password">
+                </div>
+                <div class="strength-bar mt-2">
+                    <div class="strength-fill" id="strengthFill"></div>
+                </div>
+                <small id="strengthText" class="d-block text-start ms-1 mt-1"
+                       style="font-size:0.72rem;color:rgba(255,255,255,0.55);">
+                    Enter a password
+                </small>
+            </div>
+
+            <div class="mb-3 text-start">
+                <div class="input-icon-group">
+                    <i class="fas fa-shield-alt field-icon"></i>
+                    <input type="password" name="confirm_password" class="form-control"
+                           placeholder="Confirm Password" required
+                           minlength="8" id="confirmField"
+                           autocomplete="new-password">
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn btn-register" id="submitBtn">
+                CREATE BUSINESS ACCOUNT <i class="fas fa-arrow-right ms-2"></i>
+            </button>
+
+            <p class="terms-text">
+                By registering, you agree to our
+                <a href="#">Terms of Service</a> and <a href="{{ url_for('main.privacy_policy') }}">Privacy Policy</a>.
+            </p>
+        </form>
+
+        <div class="footer-links">
+            Already have an account?
+            <a href="{{ url_for('auth.login') }}">Sign In</a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ── Password Strength Meter ──────────────────────────────────────────────
+    const passwordField = document.getElementById('passwordField');
+    const strengthFill  = document.getElementById('strengthFill');
+    const strengthText  = document.getElementById('strengthText');
+
+    passwordField.addEventListener('input', function () {
+        const val = this.value;
+        let score = 0;
+        if (val.length >= 8)                   score++;
+        if (/[A-Z]/.test(val))                 score++;
+        if (/[0-9]/.test(val))                 score++;
+        if (/[^A-Za-z0-9]/.test(val))          score++;
+
+        const levels = [
+            { pct: '0%',   color: 'transparent',  label: 'Enter a password' },
+            { pct: '25%',  color: '#f94a4a',       label: '⚠️ Weak' },
+            { pct: '50%',  color: '#f97316',       label: '🔶 Fair' },
+            { pct: '75%',  color: '#eab308',       label: '🔷 Good' },
+            { pct: '100%', color: '#22c55e',       label: '✅ Strong' },
+        ];
+
+        const level = levels[score];
+        strengthFill.style.width      = level.pct;
+        strengthFill.style.background = level.color;
+        strengthText.textContent      = level.label;
+    });
+
+    // ── Password Match Validation ────────────────────────────────────────────
+    const confirmField = document.getElementById('confirmField');
+    const submitBtn    = document.getElementById('submitBtn');
+
+    function checkMatch() {
+        if (confirmField.value && passwordField.value !== confirmField.value) {
+            confirmField.style.borderColor = 'rgba(239,68,68,0.8)';
+            submitBtn.disabled = true;
+        } else {
+            confirmField.style.borderColor = '';
+            submitBtn.disabled = false;
+        }
+    }
+    confirmField.addEventListener('input', checkMatch);
+    passwordField.addEventListener('input', checkMatch);
+
+    // ── Step Indicator animation ─────────────────────────────────────────────
+    const inputs = document.querySelectorAll('input, select');
+    inputs.forEach(inp => {
+        inp.addEventListener('focus', () => {
+            document.getElementById('s3').classList.add('active');
+        });
+    });
+</script>
+</body>
+</html>

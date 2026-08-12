@@ -1,0 +1,571 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Purchase Returns - Elite POS{% endblock %}
+
+{% block styles %}
+<style>
+    .glass-card-elite {
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+        overflow: hidden;
+    }
+    [data-theme='dark'] .glass-card-elite {
+        background: rgba(15, 23, 42, 0.75);
+        border-color: rgba(255, 255, 255, 0.06);
+    }
+
+    /* Product Search */
+    .product-search-bar {
+        background: #1e293b;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .product-search-bar input {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 12px;
+        color: white;
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+        flex: 1;
+    }
+    .product-search-bar input::placeholder { color: rgba(255,255,255,0.4); }
+    .product-search-bar input:focus {
+        outline: none;
+        border-color: #4ba3e3;
+        background: rgba(59,130,246,0.1);
+        color: white;
+    }
+
+    /* Table */
+    .return-table thead th {
+        background: #f1f5f9;
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #64748b;
+        padding: 1rem 1.25rem;
+        border: none !important;
+    }
+    [data-theme='dark'] .return-table thead th { background: #1e293b; color: #94a3b8; }
+
+    .return-table tbody tr { transition: background 0.2s; }
+    .return-table tbody tr:hover { background: rgba(59,130,246,0.04) !important; }
+    .return-table tbody td { padding: 0.9rem 1.25rem; border: none !important; vertical-align: middle; }
+
+    .qty-input {
+        width: 80px !important;
+        text-align: center;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.4rem 0.5rem;
+        font-weight: 700;
+        font-size: 0.9rem;
+        transition: border-color 0.2s;
+    }
+    .qty-input:focus { border-color: #4ba3e3; outline: none; }
+
+    .btn-action {
+        width: 34px; height: 34px;
+        border-radius: 10px;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .btn-action.btn-view  { background: rgba(59,130,246,0.1); color: #4ba3e3; }
+    .btn-action.btn-print { background: rgba(16,185,129,0.1); color: #10b981; }
+    .btn-action.btn-delete{ background: rgba(239,68,68,0.1);  color: #f94a4a; }
+    .btn-action:hover { transform: scale(1.12); }
+
+    /* Total bar */
+    .total-bar {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: white;
+        padding: 1.25rem 1.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .total-value { font-size: 1.6rem; font-weight: 800; color: #34d399; }
+
+    /* Suggestion dropdown */
+    #suggestionBox {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        z-index: 9999;
+        max-height: 240px;
+        overflow-y: auto;
+        display: none;
+    }
+    [data-theme='dark'] #suggestionBox { background: #1e293b; }
+    .suggestion-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(0,0,0,0.04);
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: background 0.15s;
+    }
+    .suggestion-item:hover { background: rgba(59,130,246,0.06); color: #4ba3e3; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header-elite animate-up mb-4">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h4 class="mb-0 fw-bold text-white">
+                <i class="fas fa-undo-alt me-2 text-primary"></i>
+                Purchase Returns
+            </h4>
+            <p class="text-white text-opacity-50 small mb-0">Track and manage items returned to suppliers.</p>
+        </div>
+        <div class="d-flex gap-2">
+            {% if request.args.get('view') == 'add' %}
+            <a href="{{ url_for('vendor.returns') }}" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fas fa-list me-2 text-primary"></i> View List
+            </a>
+            {% else %}
+            <a href="{{ url_for('vendor.returns', view='add') }}" class="btn btn-primary-elite">
+                <i class="fas fa-plus me-2"></i> Add Return
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="animate-up">
+{% if request.args.get('view') == 'add' %}
+<!-- ==================== ADD RETURN FORM ==================== -->
+<div class="glass-card-elite mb-4">
+    <div class="p-4 border-bottom border-light">
+        <h6 class="fw-800 text-main mb-0"><i class="fas fa-edit me-2 text-primary"></i> Register New Purchase Return</h6>
+    </div>
+    <div class="p-4">
+        <div class="row g-3">
+            <!-- Supplier -->
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-main">Supplier <span class="text-danger">*</span></label>
+                <select id="vendor_id" name="vendor_id" class="form-select rounded-3 border-light shadow-sm py-2" required
+                        style="pointer-events: auto !important; cursor: pointer !important;">
+                    <option value="">-- Select Supplier --</option>
+                    {% for v in vendors %}
+                    <option value="{{ v.id }}">{{ v.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Location -->
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-main">Business Location <span class="text-danger">*</span></label>
+                <select id="branch_id" name="branch_id" class="form-select rounded-3 border-light shadow-sm py-2" required
+                        style="pointer-events: auto !important; cursor: pointer !important;">
+                    <option value="">-- Select Location --</option>
+                    {% for b in branches %}
+                    <option value="{{ b.id }}">{{ b.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Reference No -->
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-main">Reference No</label>
+                <input type="text" id="invoice_no" class="form-control rounded-3 border-light shadow-sm py-2"
+                       placeholder="e.g. PR-2026-001"
+                       style="pointer-events: auto !important; cursor: text !important; background: #fff !important; color: #1e293b !important;">
+            </div>
+            <!-- Date -->
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-main">Date <span class="text-danger">*</span></label>
+                <input type="datetime-local" id="return_date" class="form-control rounded-3 border-light shadow-sm py-2"
+                       value="{{ now_str }}"
+                       style="pointer-events: auto !important; cursor: pointer !important; background: #fff !important; color: #1e293b !important;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Table -->
+<div class="glass-card-elite mb-4">
+    <div class="p-4 border-bottom border-light d-flex align-items-center justify-content-between">
+        <h6 class="fw-800 text-main mb-0"><i class="fas fa-boxes me-2 text-primary"></i> Return Items</h6>
+        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 fw-bold" id="itemCount">0 Items</span>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="product-search-bar">
+        <i class="fas fa-search text-white text-opacity-50"></i>
+        <div class="position-relative flex-grow-1">
+            <input type="text" id="productSearch" placeholder="Search product name to add to return list..." autocomplete="off">
+            <div id="suggestionBox"></div>
+        </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="table-responsive">
+        <table class="table return-table mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-4">Product</th>
+                    <th class="text-center">Lot / Batch</th>
+                    <th class="text-center">EXP Date</th>
+                    <th class="text-center" style="width:100px">Qty</th>
+                    <th class="text-end" style="width:130px">Unit Price</th>
+                    <th class="text-end" style="width:140px">Subtotal</th>
+                    <th class="text-center" style="width:50px"><i class="fas fa-trash-alt"></i></th>
+                </tr>
+            </thead>
+            <tbody id="returnItemsBody">
+                <tr class="empty-row" id="emptyRow">
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="fas fa-search fa-2x mb-2 d-block opacity-20"></i>
+                        Search and add products above to begin this return.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Total Bar -->
+    <div class="total-bar">
+        <div class="text-white text-opacity-50 fw-bold small text-uppercase">Total Return Amount</div>
+        <div class="total-value">$<span id="totalReturnAmount">0.00</span></div>
+    </div>
+</div>
+
+<!-- Submit -->
+<div class="d-flex justify-content-center mt-4">
+    <button type="button" id="btnSubmitReturn" class="btn btn-primary rounded-pill px-5 py-3 fw-800 shadow-lg" style="font-size:1.1rem; min-width: 280px;">
+        <i class="fas fa-paper-plane me-2"></i> SUBMIT RETURN
+    </button>
+</div>
+
+{% else %}
+<!-- ==================== LIST VIEW ==================== -->
+<div class="glass-card-elite mb-4">
+    <div class="p-4 border-bottom border-light d-flex align-items-center justify-content-between">
+        <h6 class="fw-800 text-main mb-0"><i class="fas fa-list-ul me-2 text-primary"></i> All Purchase Returns</h6>
+        <a href="{{ url_for('vendor.returns', view='add') }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+            <i class="fas fa-plus me-2"></i> New Return
+        </a>
+    </div>
+    <div class="card-body px-0 pb-0">
+        <div class="table-responsive">
+            <table id="returnsTable" class="table return-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Action</th>
+                        <th>Date</th>
+                        <th>Reference No</th>
+                        <th>Supplier</th>
+                        <th>Total Qty</th>
+                        <th>Status</th>
+                        <th class="text-end">Grand Total</th>
+                        <th class="pe-4 text-center">Payment Due</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in returns %}
+                    {% set total_qty = r.items|sum(attribute='quantity') %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex gap-1">
+                                <button class="btn-action btn-view" title="View" 
+                                        data-id="{{ r.id }}"
+                                        data-ref="{{ r.invoice_no }}"
+                                        data-vendor="{{ r.purchase.vendor.name if r.purchase else 'N/A' }}"
+                                        data-total="{{ "{:,.2f}".format(r.total_amount) }}"
+                                        data-qty="{{ total_qty }}"
+                                        data-date="{{ r.created_at.strftime('%d/%m/%Y %H:%M') }}">
+                                    <i class="far fa-eye"></i>
+                                </button>
+                                <button class="btn-action btn-print" title="Print" data-id="{{ r.id }}">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                                <button class="btn-action btn-delete" title="Delete"
+                                        data-id="{{ r.id }}">
+                                    <i class="far fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="small text-muted">{{ r.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td class="fw-bold">{{ r.invoice_no }}</td>
+                        <td>{{ r.purchase.vendor.name if r.purchase else 'N/A' }}</td>
+                        <td class="text-center"><span class="badge bg-light text-dark rounded-pill px-3">{{ total_qty }} Items</span></td>
+                        <td><span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Returned</span></td>
+                        <td class="fw-bold text-end text-primary">$ {{ "{:,.2f}".format(r.total_amount) }}</td>
+                        <td class="pe-4 text-center">
+                            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3">$ 0.00</span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox fa-2x mb-2 d-block opacity-20"></i>
+                            No purchase returns recorded yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script id="products-json" type="application/json">
+[
+    {% for p in products %}
+    { "id": {{ p.id }}, "name": {{ p.name | tojson }}, "price": {{ p.buy_price | float }}, "lot": {{ (p.barcode or '') | tojson }} }{% if not loop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
+<script>
+$(document).ready(function() {
+
+    // ======= LIST VIEW: DataTable =======
+    if ($('#returnsTable').length && $('#returnsTable tbody tr td').length > 1) {
+        $('#returnsTable').DataTable({
+            pageLength: 15,
+            dom: '<"d-flex justify-content-between align-items-center mb-3 px-4"Bf>rt<"d-flex justify-content-between align-items-center mt-3 px-4"ip>',
+            buttons: [
+                { extend: 'csv',   className: 'btn btn-sm btn-light border rounded-pill px-3 me-1', text: '<i class="fas fa-file-csv me-1"></i> CSV' },
+                { extend: 'excel', className: 'btn btn-sm btn-light border rounded-pill px-3 me-1', text: '<i class="fas fa-file-excel me-1"></i> Excel' },
+                { extend: 'print', className: 'btn btn-sm btn-light border rounded-pill px-3',       text: '<i class="fas fa-print me-1"></i> Print' }
+            ],
+            language: { searchPlaceholder: 'Search returns...', search: '' }
+        });
+    }
+
+    // ======= ADD RETURN FORM =======
+    const productsDataElement = document.getElementById('products-json');
+    const products = productsDataElement ? JSON.parse(productsDataElement.textContent) : [];
+
+    // Product Search & Suggestions
+    $('#productSearch').on('input', function() {
+        const q = $(this).val().trim().toLowerCase();
+        if (q.length < 1) { $('#suggestionBox').hide(); return; }
+
+        const matches = products.filter(p => p.name.toLowerCase().includes(q) || p.lot.toLowerCase().includes(q));
+        if (matches.length === 0) { $('#suggestionBox').hide(); return; }
+
+        let html = '';
+        matches.slice(0, 10).forEach(p => {
+            html += `<div class="suggestion-item" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-lot="${p.lot}">
+                        <span class="fw-bold">${p.name}</span>
+                        <span class="text-muted ms-2 small">${p.lot ? '· ' + p.lot : ''}</span>
+                        <span class="float-end text-primary fw-bold">$${parseFloat(p.price).toFixed(2)}</span>
+                     </div>`;
+        });
+        $('#suggestionBox').html(html).show();
+    });
+
+    // Select from suggestion
+    $(document).on('click', '.suggestion-item', function() {
+        const id    = $(this).data('id');
+        const name  = $(this).data('name');
+        const price = parseFloat($(this).data('price'));
+        const lot   = $(this).data('lot') || '--';
+
+        if ($(`#row-${id}`).length > 0) {
+            Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Alaabtan horaan loo daray!', showConfirmButton: false, timer: 2000 });
+        } else {
+            $('#emptyRow').hide();
+            const row = `
+                <tr id="row-${id}" class="item-row">
+                    <td class="ps-4 fw-bold">${name}<input type="hidden" name="items[][product_id]" value="${id}"></td>
+                    <td class="text-center text-muted small">${lot}</td>
+                    <td class="text-center small text-muted">--</td>
+                    <td class="text-center">
+                        <input type="number" class="qty-input" name="items[][qty]" value="1" min="1">
+                    </td>
+                    <td class="text-end fw-600">$<span class="price-val">${price.toFixed(2)}</span><input type="hidden" name="items[][unit_cost]" value="${price}"></td>
+                    <td class="text-end fw-bold text-primary">$<span class="subtotal-val">${price.toFixed(2)}</span></td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-link text-danger remove-row p-1"><i class="fas fa-trash-alt"></i></button>
+                    </td>
+                </tr>`;
+            $('#returnItemsBody').append(row);
+            updateItemCount();
+            calculateTotal();
+        }
+
+        $('#productSearch').val('');
+        $('#suggestionBox').hide();
+    });
+
+    // Hide suggestion on outside click
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#productSearch, #suggestionBox').length) {
+            $('#suggestionBox').hide();
+        }
+    });
+
+    // Remove row
+    $(document).on('click', '.remove-row', function() {
+        $(this).closest('tr').remove();
+        if ($('.item-row').length === 0) $('#emptyRow').show();
+        updateItemCount();
+        calculateTotal();
+    });
+
+    // Qty change
+    $(document).on('input', '.qty-input', function() {
+        const row   = $(this).closest('tr');
+        const qty   = parseFloat($(this).val()) || 0;
+        const price = parseFloat(row.find('.price-val').text()) || 0;
+        const sub   = qty * price;
+        row.find('.subtotal-val').text(sub.toFixed(2));
+        row.find('[name="items[][unit_cost]"]').val(price);
+        calculateTotal();
+    });
+
+    function calculateTotal() {
+        let total = 0;
+        $('.subtotal-val').each(function() { total += parseFloat($(this).text()) || 0; });
+        $('#totalReturnAmount').text(total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    }
+
+    function updateItemCount() {
+        const count = $('.item-row').length;
+        $('#itemCount').text(count + ' Item' + (count !== 1 ? 's' : ''));
+    }
+
+    // Submit Return
+    $('#btnSubmitReturn').on('click', function() {
+        const items = [];
+        $('.item-row').each(function() {
+            items.push({
+                product_id: $(this).find('[name="items[][product_id]"]').val(),
+                qty:        parseFloat($(this).find('.qty-input').val()),
+                unit_cost:  parseFloat($(this).find('.price-val').text())
+            });
+        });
+
+        if (!$('#vendor_id').val()) {
+            return Swal.fire({ icon: 'warning', title: 'Supplier Missing', text: 'Please select a supplier.' });
+        }
+        if (items.length === 0) {
+            return Swal.fire({ icon: 'warning', title: 'No Items', text: 'Add at least one product to the return.' });
+        }
+
+        Swal.fire({
+            title: 'Xaqiiji Celinta',
+            text: `Ma hubtaa inaad celiso ${items.length} alaab?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Haa, Celio!',
+            cancelButtonText: 'Baadil'
+        }).then(result => {
+            if (!result.isConfirmed) return;
+
+            const payload = {
+                vendor_id:  $('#vendor_id').val(),
+                branch_id:  $('#branch_id').val(),
+                invoice_no: $('#invoice_no').val(),
+                date:       $('#return_date').val(),
+                items:      items
+            };
+
+            $('#btnSubmitReturn').html('<i class="fas fa-spinner fa-spin me-2"></i> Submitting...').prop('disabled', true);
+
+            fetch("{{ url_for('vendor.add_purchase_return') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': $('meta[name="csrf-token"]').attr('content') },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: 'Guul!', text: data.message || 'Return recorded successfully!' })
+                        .then(() => window.location.href = "{{ url_for('vendor.returns') }}");
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Khalad!', text: data.message || 'Something went wrong.' });
+                    $('#btnSubmitReturn').html('<i class="fas fa-paper-plane me-2"></i> SUBMIT RETURN').prop('disabled', false);
+                }
+            })
+            .catch(() => {
+                Swal.fire({ icon: 'error', title: 'Network Error', text: 'Could not connect. Check your connection.' });
+                $('#btnSubmitReturn').html('<i class="fas fa-paper-plane me-2"></i> SUBMIT RETURN').prop('disabled', false);
+            });
+        });
+       // ======= LIST VIEW: ACTIONS =======
+    
+    // View Action (Delegated)
+    $(document).on('click', '.btn-view', function() {
+        const d = $(this).data();
+        Swal.fire({
+            title: 'Purchase Return Details',
+            html: `
+                <div class="text-start p-2">
+                    <div class="mb-3 border-bottom pb-2"><strong>Reference:</strong> <span class="float-end text-muted">${d.ref}</span></div>
+                    <div class="mb-3 border-bottom pb-2"><strong>Supplier:</strong> <span class="float-end text-muted">${d.vendor}</span></div>
+                    <div class="mb-3 border-bottom pb-2"><strong>Total Qty:</strong> <span class="float-end text-muted fw-bold">${d.qty} Items</span></div>
+                    <div class="mb-3 border-bottom pb-2"><strong>Grand Total:</strong> <span class="float-end text-primary fw-bold">$${d.total}</span></div>
+                    <div class="mb-0"><strong>Date:</strong> <span class="float-end text-muted">${d.date}</span></div>
+                </div>
+            `,
+            icon: 'info',
+            confirmButtonText: 'Xir',
+            customClass: { confirmButton: 'btn btn-primary rounded-pill px-4' }
+        });
+    });
+
+    // Print Action (Delegated)
+    $(document).on('click', '.btn-print', function() {
+        const id = $(this).data('id');
+        window.open(`/vendor/return/print/${id}`, '_blank');
+    });
+
+    // Delete Action (Delegated)
+    $(document).on('click', '.btn-delete', function() {
+        const id = $(this).data('id');
+        Swal.fire({
+            title: 'Ma hubtaa?',
+            text: 'Ficilkan laguma noqon karo, xogta celinta waa la tirtirayaa!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f94a4a',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Haa, tirtir!',
+            cancelButtonText: 'Jooji'
+        }).then(result => {
+            if (result.isConfirmed) {
+                fetch(`/accounting/return/purchase/delete/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': $('meta[name="csrf-token"]').attr('content') }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({ icon: 'success', title: 'La tirtiray!', text: data.message, timer: 2000, showConfirmButton: false })
+                            .then(() => location.reload());
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Cilad!', text: data.message });
+                    }
+                })
+                .catch(() => Swal.fire('Error', 'Xiriirka server-ka waa go’ay', 'error'));
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

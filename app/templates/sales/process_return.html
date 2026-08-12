@@ -1,0 +1,197 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Process Return - Antigravity POS{% endblock %}
+{% block page_title %}Process Sale Return{% endblock %}
+
+{% block styles %}
+<style>
+    .glass-card-elite {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(15px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        padding: 30px;
+    }
+    
+    .invoice-info-bar {
+        background: #0f172a;
+        color: white;
+        border-radius: 16px;
+        padding: 20px 30px;
+        margin-bottom: 30px;
+    }
+
+    .qty-input {
+        width: 80px;
+        text-align: center;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 5px;
+        font-weight: 700;
+    }
+
+    .total-refund-card {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid animate-up">
+    <div class="invoice-info-bar d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-1 fw-bold">Processing Return for Invoice #{{ sale.invoice_no }}</h4>
+            <p class="mb-0 text-white text-opacity-50 small">Customer: {{ sale.customer.name if sale.customer else 'Walk-In' }} | Date: {{ sale.created_at.strftime('%d/%m/%Y') }}</p>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-primary rounded-pill px-3 py-2">Original Total: ${{ "%.2f"|format(sale.total_amount) }}</span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="glass-card-elite">
+                <h5 class="fw-bold mb-4"><i class="fas fa-list me-2 text-primary"></i> Select Items to Return</h5>
+                <div class="table-responsive">
+                    <table class="table align-middle" id="returnItemsTable">
+                        <thead class="bg-light">
+                            <tr class="small text-uppercase fw-bold text-muted">
+                                <th>Product Name</th>
+                                <th class="text-center">Bought Qty</th>
+                                <th class="text-center">Return Qty</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-end">Return Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in sale.items %}
+                            <tr class="item-row" data-product-id="{{ item.product_id }}" data-price="{{ item.unit_price }}" data-max-qty="{{ item.quantity }}">
+                                <td>
+                                    <div class="fw-bold">{{ item.product.name }}</div>
+                                    <div class="text-muted small">Barcode: {{ item.product.barcode or 'N/A' }}</div>
+                                </td>
+                                <td class="text-center fw-bold text-muted">{{ item.quantity }}</td>
+                                <td class="text-center">
+                                    <input type="number" class="qty-input return-qty" value="0" min="0" max="{{ item.quantity }}">
+                                </td>
+                                <td class="text-end fw-bold">${{ "%.2f"|format(item.unit_price) }}</td>
+                                <td class="text-end fw-bold text-primary">$<span class="subtotal">0.00</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="total-refund-card mb-4">
+                <div class="small text-uppercase fw-bold text-white text-opacity-75 mb-2">Total Refund Amount</div>
+                <h1 class="fw-900 mb-0">$<span id="grandTotal">0.00</span></h1>
+            </div>
+
+            <div class="glass-card-elite">
+                <h6 class="fw-bold mb-3">Return Summary</h6>
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Reason for Return</label>
+                    <textarea id="final_reason" class="form-control rounded-3" rows="3">{{ reason }}</textarea>
+                </div>
+                
+                <div class="alert alert-info border-0 small mb-4">
+                    <i class="fas fa-info-circle me-2"></i> Items will be automatically added back to inventory.
+                </div>
+
+                <button class="btn btn-primary w-100 rounded-pill py-3 fw-800 shadow-lg" id="btnSubmitReturn">
+                    <i class="fas fa-check-circle me-2"></i> COMPLETE RETURN
+                </button>
+                <a href="{{ url_for('sales.list_returns') }}" class="btn btn-light w-100 rounded-pill py-3 fw-bold mt-2">Cancel</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Handle Quantity Change
+        $('.return-qty').on('input change', function() {
+            const row = $(this).closest('.item-row');
+            const qty = parseFloat($(this).val()) || 0;
+            const price = parseFloat(row.data('price'));
+            const maxQty = parseFloat(row.data('max-qty'));
+
+            if (qty > maxQty) {
+                $(this).val(maxQty);
+                Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'Ma soo celin kartid wax kabadan wixii la iibiyay!', showConfirmButton: false, timer: 2000 });
+                return;
+            }
+
+            const subtotal = qty * price;
+            row.find('.subtotal').text(subtotal.toFixed(2));
+            calculateGrandTotal();
+        });
+
+        function calculateGrandTotal() {
+            let total = 0;
+            $('.subtotal').each(function() {
+                total += parseFloat($(this).text()) || 0;
+            });
+            $('#grandTotal').text(total.toFixed(2));
+        }
+
+        // Submit Return
+        $('#btnSubmitReturn').on('click', function() {
+            const items = [];
+            $('.item-row').each(function() {
+                const qty = parseFloat($(this).find('.return-qty').val()) || 0;
+                if (qty > 0) {
+                    items.push({
+                        product_id: $(this).data('product-id'),
+                        qty: qty,
+                        unit_price: $(this).data('price')
+                    });
+                }
+            });
+
+            if (items.length === 0) {
+                return Swal.fire({ icon: 'warning', title: 'No Items Selected', text: 'Fadlan dooro ugu yaraan hal sheey oo la celinayo.' });
+            }
+
+            const payload = {
+                sale_id: parseInt("{{ sale.id }}"),
+                reason: $('#final_reason').val(),
+                items: items
+            };
+
+            $(this).html('<i class="fas fa-spinner fa-spin me-2"></i> Processing...').prop('disabled', true);
+
+            fetch("{{ url_for('accounting.add_sale_return') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': $('meta[name="csrf-token"]').attr('content') },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: 'Guul!', text: 'Celinta waa la dhamaystiray, stock-kana waa la cusboonaysiiyay.' })
+                    .then(() => window.location.href = "{{ url_for('sales.list_returns') }}");
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+                    $('#btnSubmitReturn').html('<i class="fas fa-check-circle me-2"></i> COMPLETE RETURN').prop('disabled', false);
+                }
+            })
+            .catch(() => {
+                Swal.fire({ icon: 'error', title: 'Network Error', text: 'Cillad ayaa dhacday xilligii xiriirka.' });
+                $('#btnSubmitReturn').html('<i class="fas fa-check-circle me-2"></i> COMPLETE RETURN').prop('disabled', false);
+            });
+        });
+    });
+</script>
+{% endblock %}

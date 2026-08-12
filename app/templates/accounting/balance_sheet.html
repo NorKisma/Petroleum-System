@@ -1,0 +1,778 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Balance Sheet - Advanced POS{% endblock %}
+{% block page_title %}{% endblock %}
+
+{% block styles %}
+<style>
+    /* Narrowed Container for Compact View */
+    .bs-report-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 15px;
+    }
+
+    /* ===== BALANCE SHEET GLASSMORPHISM STYLES ===== */
+    .bs-page-header {
+        background: rgba(255, 255, 255, 0.6);
+        background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(224, 242, 254, 0.5));
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border: 1px solid rgba(224, 242, 254, 0.8);
+        border-radius: 20px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.25rem;
+        box-shadow: 0 8px 32px rgba(186, 230, 253, 0.15);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .bs-page-header h5 {
+        font-weight: 800;
+        color: #0369a1;
+        margin: 0;
+    }
+
+    .bs-page-header .page-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #0284c7;
+        margin-bottom: 2px;
+    }
+
+    /* Summary Metric Cards */
+    .bs-metric-card {
+        background: rgba(255, 255, 255, 0.7);
+        background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(224, 242, 254, 0.4));
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(224, 242, 254, 0.85);
+        border-radius: 18px;
+        padding: 1rem 1.25rem;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(186, 230, 253, 0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+    .bs-metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(186, 230, 253, 0.2);
+    }
+
+    .bs-metric-card .metric-label {
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+
+    .bs-metric-card .metric-icon {
+        font-size: 1.4rem;
+        margin-bottom: 6px;
+    }
+
+    .bs-metric-card .metric-value {
+        font-size: 1.05rem;
+        font-weight: 900;
+    }
+
+    .bs-metric-card.assets {
+        border-top: 3px solid #38bdf8;
+    }
+
+    .bs-metric-card.assets .metric-icon,
+    .bs-metric-card.assets .metric-value {
+        color: #0284c7;
+    }
+
+    .bs-metric-card.liabilities {
+        border-top: 3px solid #f87171;
+    }
+
+    .bs-metric-card.liabilities .metric-icon,
+    .bs-metric-card.liabilities .metric-value {
+        color: #dc2626;
+    }
+
+    .bs-metric-card.equity {
+        border-top: 3px solid #818cf8;
+    }
+
+    .bs-metric-card.equity .metric-icon,
+    .bs-metric-card.equity .metric-value {
+        color: #4ba3e3;
+    }
+
+    .bs-metric-card.profit {
+        border-top: 3px solid #34d399;
+    }
+
+    .bs-metric-card.profit .metric-icon,
+    .bs-metric-card.profit .metric-value {
+        color: #059669;
+    }
+
+    /* Table Cards */
+    .bs-table-card {
+        background: rgba(255, 255, 255, 0.7);
+        background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(224, 242, 254, 0.3));
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(224, 242, 254, 0.85) !important;
+        border-radius: 20px !important;
+        box-shadow: 0 4px 24px rgba(186, 230, 253, 0.1) !important;
+        overflow: hidden;
+    }
+
+    .bs-table-card .card-header {
+        background: rgba(99, 102, 241, 0.04) !important;
+        border-bottom: 1px solid rgba(99, 102, 241, 0.08) !important;
+        padding: 0.9rem 1.25rem !important;
+    }
+
+    .bs-table-card .card-header h6 {
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        color: #50a5e6;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .bs-table-card .section-title td {
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #50a5e6 !important;
+        background: rgba(99, 102, 241, 0.04);
+        padding: 10px 20px !important;
+    }
+
+    .bs-table-card .total-row td {
+        font-weight: 900 !important;
+        font-size: 0.9rem !important;
+        background: rgba(99, 102, 241, 0.06) !important;
+        color: #1e293b !important;
+        border-top: 1px solid rgba(99, 102, 241, 0.1) !important;
+        padding: 12px 20px !important;
+    }
+
+    .bs-table-card .grand-total-row td {
+        font-weight: 900 !important;
+        font-size: 1rem !important;
+        background: rgba(99, 102, 241, 0.1) !important;
+        color: #4ba3e3 !important;
+        border-top: 2px solid rgba(99, 102, 241, 0.2) !important;
+        padding: 14px 20px !important;
+    }
+
+    .bs-table-card tbody tr:hover td {
+        background: rgba(99, 102, 241, 0.04) !important;
+    }
+
+    /* Print Styles */
+    @media print {
+        @page {
+            margin: 1cm;
+            size: A4 portrait;
+        }
+        
+        body * {
+            visibility: visible;
+        }
+        
+        .no-print, .no-print * {
+            display: none !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        #sidebar, .navbar, .btn, .bs-page-header .d-flex.gap-2, i.fas {
+            display: none !important;
+        }
+
+        body {
+            background: white !important;
+            color: #1e293b !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        }
+
+        .bs-report-container {
+            max-width: 100% !important;
+            padding: 0 !important;
+        }
+
+        /* Convert columns to stack cleanly */
+        .row {
+            display: block !important;
+            margin: 0 !important;
+        }
+
+        .col-lg-6 {
+            width: 100% !important;
+            margin-bottom: 10px !important;
+            padding: 0 !important;
+            page-break-inside: auto !important;
+        }
+
+        .bs-table-card {
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            page-break-inside: auto !important;
+            display: block !important;
+            height: auto !important;
+            margin-bottom: 10px !important;
+        }
+
+        .bs-table-card .card-body, .table-responsive {
+            padding: 0 !important;
+            height: auto !important;
+            display: block !important;
+        }
+
+        .table {
+            page-break-inside: auto !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-bottom: 0 !important;
+        }
+
+        tr {
+            page-break-inside: avoid !important;
+            page-break-after: auto !important;
+        }
+
+        /* High-End Corporate Header for Tables */
+        .bs-table-card .card-header {
+            background-color: #19335A !important; /* Premium Dark Blue */
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            border: none !important;
+            padding: 6px 12px !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            border-radius: 0 !important;
+        }
+
+        .bs-table-card .card-header h6 {
+            color: #ffffff !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            margin: 0 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+        }
+
+        .bs-table-card .card-header::after {
+            content: "AMOUNT";
+            color: #ffffff !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            letter-spacing: 1px !important;
+        }
+
+        /* Clean Rows */
+        .table td {
+            border: none !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            color: #334155 !important;
+            padding: 3px 12px !important;
+            font-size: 11px !important;
+            font-weight: 500 !important;
+            line-height: 1.2 !important;
+        }
+        
+        .table tbody tr:hover td {
+            background: transparent !important;
+        }
+
+        /* Subtle Section Titles */
+        .section-title td {
+            background-color: #f8fafc !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color: #64748b !important;
+            font-weight: 600 !important;
+            font-size: 10px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1.5px !important;
+            padding: 5px 12px !important;
+            border-top: 1px solid #e2e8f0 !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        
+        .section-title td::before { content: "— "; }
+        .section-title td::after { content: " —"; }
+
+        /* Child rows (indentation for detailed accounts) */
+        .bg-light.bg-opacity-25 td {
+            padding-left: 40px !important;
+            font-style: normal !important;
+            color: #64748b !important;
+            font-size: 11px !important;
+        }
+
+        /* Subtotals */
+        .total-row td {
+            background-color: #f1f5f9 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+            border-top: 1px solid #cbd5e1 !important;
+            font-size: 11px !important;
+            padding: 6px 12px !important;
+        }
+
+        /* Grand Totals */
+        .grand-total-row td {
+            background-color: white !important;
+            color: #19335A !important;
+            font-size: 12px !important;
+            border-top: 2px solid #19335A !important;
+            border-bottom: 2px solid #19335A !important;
+            font-weight: 900 !important;
+            text-transform: uppercase !important;
+            padding: 8px 12px !important;
+        }
+
+        /* Header Document Info */
+        .print-header {
+            display: flex !important;
+            align-items: flex-end !important;
+            justify-content: space-between !important;
+            margin-bottom: 15px !important;
+            border-bottom: 3px solid #19335A !important;
+            padding-bottom: 15px !important;
+        }
+        
+        .print-header h1 {
+            color: #19335A !important;
+            font-size: 28px !important;
+            letter-spacing: -0.5px !important;
+        }
+        
+        .print-header h4 {
+            color: #19335A !important;
+            font-size: 18px !important;
+            letter-spacing: 1px !important;
+            margin-bottom: 5px !important;
+        }
+
+        /* Signatures */
+        .signature-section {
+            display: flex !important;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding: 0 40px;
+        }
+
+        .sig-box {
+            text-align: center;
+            width: 250px;
+        }
+
+        .sig-line {
+            border-top: 1px solid #94a3b8 !important;
+            margin-bottom: 8px;
+        }
+        
+        .sig-box .fw-bold {
+            color: #0f172a !important;
+            font-size: 12px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+        }
+        
+        .print-only-section {
+            display: block !important;
+            margin-top: 60px !important;
+            border-top: 1px solid #e2e8f0 !important;
+            padding-top: 15px !important;
+            color: #64748b !important;
+        }
+    }
+
+    .signature-section {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="print-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            {% if current_user.tenant.logo %}
+            <img src="{{ url_for('static', filename=current_user.tenant.logo) }}" height="80" class="me-4">
+            {% else %}
+            <div class="bg-primary text-white p-3 rounded-4 me-4 fw-bold"
+                style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                {{ current_user.tenant.name[0] }}
+            </div>
+            {% endif %}
+            <div>
+                <h1 class="fw-bold mb-0" style="color: #1e293b;">{{ current_user.tenant.name }}</h1>
+                <p class="mb-0 text-muted fw-bold">{{ current_user.tenant.slogan or 'Enterprise Solutions' }}</p>
+                <small class="text-muted">{{ current_user.tenant.address or '' }} | {{ current_user.tenant.phone or ''
+                    }}</small>
+            </div>
+        </div>
+        <div class="text-end">
+            <h4 class="fw-bold text-primary mb-1">BALANCE SHEET</h4>
+            <div class="text-muted fw-bold" style="font-size: 0.75rem;">Taariikhda: <span id="currentDate"></span></div>
+        </div>
+    </div>
+</div>
+
+<!-- Page Header -->
+<div class="bs-page-header animate-up no-print">
+    <div class="d-flex align-items-center gap-4">
+        <div>
+            <div class="page-label"><i class="fas fa-balance-scale me-2"></i>Balance Sheet Report</div>
+            <h5 class="mb-0">Xisaabta Guud — Financial Overview</h5>
+        </div>
+        
+        <!-- Balance Status Indicator -->
+        <div class="ms-2 ps-4 border-start border-light border-2">
+            {% set balance_diff = (total_assets - (total_liabilities + total_equity))|abs %}
+            {% if balance_diff < 0.01 %}
+            <div class="d-flex align-items-center gap-3 bg-white bg-opacity-50 px-4 py-2 rounded-pill shadow-sm border border-success border-opacity-25">
+                <div class="bg-success p-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                    <i class="fas fa-check text-white small"></i>
+                </div>
+                <div>
+                    <div class="fw-bold text-success" style="font-size: 0.85rem; line-height: 1;">Xisaabtu waa Balanced</div>
+                    <div class="text-muted" style="font-size: 0.65rem; font-weight: 700;">Hantida = Daynta + Rasumaalka</div>
+                </div>
+            </div>
+            {% else %}
+            <div class="d-flex align-items-center gap-3 bg-white bg-opacity-50 px-4 py-2 rounded-pill shadow-sm border border-danger border-opacity-25">
+                <div class="bg-danger p-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                    <i class="fas fa-exclamation-triangle text-white small"></i>
+                </div>
+                <div>
+                    <div class="fw-bold text-danger" style="font-size: 0.85rem; line-height: 1;">Xisaabtu Not Balanced</div>
+                    <div class="text-danger opacity-75" style="font-size: 0.65rem; font-weight: 700;">Farqiga: ${{ "{:,.2f}".format(balance_diff) }}</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('accounting.export_balance_sheet_pdf') }}" class="btn btn-elite btn-light-elite" style="border-radius: 50px; font-weight: 600;">
+            <i class="fas fa-file-pdf me-2 text-danger"></i>Export PDF
+        </a>
+        <button class="btn btn-primary px-4 fw-bold rounded-pill shadow-sm" onclick="window.print()">
+            <i class="fas fa-print me-2"></i> Print Report
+        </button>
+    </div>
+</div>
+
+<!-- Summary Metric Cards -->
+<div class="row g-3 mb-4 no-print animate-up">
+    <div class="col-12 col-lg-4">
+        <div class="bs-metric-card assets">
+            <div class="metric-icon"><i class="fas fa-building"></i></div>
+            <div class="metric-label">Total Assets</div>
+            <div class="metric-value">${{ "{:,.2f}".format(total_assets) }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-4">
+        <div class="bs-metric-card liabilities">
+            <div class="metric-icon"><i class="fas fa-folder-open"></i></div>
+            <div class="metric-label">Total Liabilities</div>
+            <div class="metric-value">${{ "{:,.2f}".format(total_liabilities) }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-4">
+        <div class="bs-metric-card equity">
+            <div class="metric-icon"><i class="fas fa-plus-circle"></i></div>
+            <div class="metric-label">Total Equity</div>
+            <div class="metric-value">${{ "{:,.2f}".format(total_equity) }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Visual Balance Verification Bar -->
+<div class="animate-up no-print mb-4 px-1">
+    <div class="bg-white bg-opacity-50 backdrop-blur border border-light rounded-4 p-3 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-2 px-2">
+            <span class="small fw-bold text-muted uppercase" style="letter-spacing: 1px;">Barbardhiga Hantida iyo Daynta + Rasumaalka</span>
+            {% if balance_diff < 0.01 %}
+            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 fw-bold" style="font-size: 0.65rem;">
+                <i class="fas fa-balance-scale me-1"></i> Miisaanku waa siman yahay
+            </span>
+            {% else %}
+            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 fw-bold" style="font-size: 0.65rem;">
+                <i class="fas fa-exclamation-triangle me-1"></i> Miisaanku ma simana
+            </span>
+            {% endif %}
+        </div>
+        <div class="progress rounded-pill shadow-inner" style="height: 10px; background: rgba(0,0,0,0.05);">
+            {% set total_side = total_liabilities + total_equity %}
+            {% if total_assets > 0 or total_side > 0 %}
+                {% if balance_diff < 0.01 %}
+                <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                {% else %}
+                <div class="progress-bar bg-danger" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+
+<div class="row g-4 animate-up">
+    <!-- Assets Table -->
+    <div class="col-lg-6 col-12 mb-4">
+        <div class="bs-table-card w-100">
+            <div class="card-header">
+                <h6>Detailed Assets</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle border-0 d-print-table">
+                        <tbody style="font-size: 0.8rem;">
+                            <tr class="section-title">
+                                <td colspan="2">CURRENT ASSETS</td>
+                            </tr>
+                            <tr class="section-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#bank-details">
+                                <td class="ps-4 text-muted">
+                                    <i class="fas fa-university me-2 opacity-50"></i>
+                                    Cash & Bank Accounts
+                                    <i class="fas fa-chevron-down ms-2 small opacity-50 toggle-icon"></i>
+                                </td>
+                                <td class="text-end pe-4 fw-bold text-main">${{ "{:,.2f}".format(total_bank_balance) }}</td>
+                            </tr>
+                            <tr class="collapse show" id="bank-details">
+                                <td colspan="2" class="p-0 border-0">
+                                    <table class="table table-sm mb-0 w-100 border-0">
+                                        <tbody>
+                                            {% for item in bank_data %}
+                                            <tr class="bg-light bg-opacity-25" style="font-size: 0.7rem;">
+                                                <td class="ps-5 text-muted italic border-0">-- {{ item.obj.account_name }}</td>
+                                                <td class="text-end pe-4 text-muted border-0">${{ "{:,.2f}".format(item.balance) }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4 text-muted"><i class="fas fa-box me-2 opacity-50"></i> Inventory Assets
+                                </td>
+                                <td class="text-end pe-4 fw-bold text-main">${{ "{:,.2f}".format(inventory_value) }}
+                                </td>
+                            </tr>
+                            <tr class="section-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#ar-details">
+                                <td class="ps-4 text-muted">
+                                    <i class="fas fa-file-invoice-dollar me-2 opacity-50"></i>
+                                    Accounts Receivable
+                                    <i class="fas fa-chevron-down ms-2 small opacity-50 toggle-icon"></i>
+                                </td>
+                                <td class="text-end pe-4 fw-bold text-main">${{ "{:,.2f}".format(receivables) }}</td>
+                            </tr>
+                            <tr class="collapse show" id="ar-details">
+                                <td colspan="2" class="p-0 border-0">
+                                    <table class="table table-sm mb-0 w-100 border-0">
+                                        <tbody>
+                                            {% if detailed_receivables %}
+                                                {% for c in detailed_receivables %}
+                                                <tr class="bg-light bg-opacity-25" style="font-size: 0.7rem;">
+                                                    <td class="ps-5 text-muted italic border-0">-- {{ c.name }}</td>
+                                                    <td class="text-end pe-4 text-muted border-0">${{ "{:,.2f}".format(c.balance) }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr class="bg-light bg-opacity-25" style="font-size: 0.7rem;">
+                                                    <td class="ps-5 text-muted italic border-0" colspan="2">No outstanding receivables</td>
+                                                </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <tr class="total-row">
+                                <td class="ps-4">Total Current Assets</td>
+                                <td class="text-end pe-4">${{ "{:,.2f}".format(total_assets - other_assets_value) }}
+                                </td>
+                            </tr>
+
+                            <tr class="section-title">
+                                <td colspan="2">FIXED ASSETS</td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4 text-muted"><i class="fas fa-tools me-2 opacity-50"></i> Other Fixed
+                                    Assets
+                                </td>
+                                <td class="text-end pe-4 fw-bold text-main">${{ "{:,.2f}".format(other_assets_value) }}
+                                </td>
+                            </tr>
+                            <tr class="grand-total-row">
+                                <td class="ps-4">TOTAL ASSETS</td>
+                                <td class="text-end pe-4">${{ "{:,.2f}".format(total_assets) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liabilities & Equity Table -->
+    <div class="col-lg-6 col-12 mb-4">
+        <div class="bs-table-card w-100">
+            <div class="card-header">
+                <h6>Liabilities & Equity</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle border-0 d-print-table">
+                        <tbody style="font-size: 0.8rem;">
+                            <tr class="section-title">
+                                <td colspan="2">LIABILITIES</td>
+                            </tr>
+                            <tr class="section-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#ap-details">
+                                <td class="ps-4 text-muted">
+                                    <i class="fas fa-file-invoice me-2 opacity-50"></i>
+                                    Accounts Payable (AP)
+                                    <i class="fas fa-chevron-down ms-2 small opacity-50 toggle-icon"></i>
+                                </td>
+                                <td class="text-end pe-4 fw-bold text-main">${{ "{:,.2f}".format(payables) }}</td>
+                            </tr>
+                            <tr class="collapse show" id="ap-details">
+                                <td colspan="2" class="p-0 border-0">
+                                    <table class="table table-sm mb-0 w-100 border-0">
+                                        <tbody>
+                                            {% if detailed_payables %}
+                                                {% for v in detailed_payables %}
+                                                <tr class="bg-light bg-opacity-25" style="font-size: 0.7rem;">
+                                                    <td class="ps-5 text-muted italic border-0">-- {{ v.name }}</td>
+                                                    <td class="text-end pe-4 text-muted border-0">${{ "{:,.2f}".format(v.balance) }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr class="bg-light bg-opacity-25" style="font-size: 0.7rem;">
+                                                    <td class="ps-5 text-muted italic border-0" colspan="2">No outstanding payables</td>
+                                                </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <tr class="grand-total-row">
+                                <td class="ps-4">TOTAL LIABILITIES</td>
+                                <td class="text-end pe-4">${{ "{:,.2f}".format(total_liabilities) }}</td>
+                            </tr>
+
+                            <tr class="section-title">
+                                <td colspan="2">OWNER EQUITY</td>
+                            </tr>
+                            <tr class="section-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#equity-details">
+                                <td class="ps-4 text-muted">
+                                    <i class="fas fa-user-shield me-2 opacity-50"></i>
+                                    Shareholder Capital
+                                    <i class="fas fa-chevron-down ms-2 small opacity-50 toggle-icon"></i>
+                                </td>
+                                <td class="text-end pe-4 fw-bold text-main">${{ "{:,.2f}".format(equity_capital) }}</td>
+                            </tr>
+                            <tr class="collapse show" id="equity-details">
+                                <td colspan="2" class="p-0 border-0">
+                                    <table class="table table-sm mb-0 w-100 border-0">
+                                        <tbody>
+                                            {% if detailed_equity %}
+                                                {% for s in detailed_equity %}
+                                                <tr class="bg-light bg-opacity-25" style="font-size: 0.7rem;">
+                                                    <td class="ps-5 text-muted italic border-0">-- {{ s.name }}</td>
+                                                    <td class="text-end pe-4 text-muted border-0">${{ "{:,.2f}".format(s.balance) }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr class="bg-light bg-opacity-25" style="font-size: 0.7rem;">
+                                                    <td class="ps-5 text-muted italic border-0" colspan="2">No capital investment records</td>
+                                                </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4 text-muted"><i class="fas fa-chart-line me-2 opacity-50"></i> Net Profit
+                                    /
+                                    (Loss)</td>
+                                <td class="text-end pe-4 fw-bold text-primary">${{ "{:,.2f}".format(net_profit) }}</td>
+                            </tr>
+                            <tr class="grand-total-row">
+                                <td class="ps-4">TOTAL EQUITY</td>
+                                <td class="text-end pe-4">${{ "{:,.2f}".format(total_equity) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Signature Section -->
+<div class="signature-section">
+    <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="fw-bold">Prepared By</div>
+        <div class="text-muted small">Accountant Signature</div>
+    </div>
+    <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="fw-bold">Approved By</div>
+        <div class="text-muted small">Manager Signature</div>
+    </div>
+</div>
+
+<!-- Professional Print Footer -->
+<div class="print-only-section mt-5 pt-4 border-top border-dark">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="text-muted small">
+            <p class="mb-0 fw-bold">Warbixintan waxaa si toos ah looga soo saaray nidaamka Rays POS & Accounting.</p>
+        </div>
+        <div class="text-end text-muted small">
+            <p class="mb-0" id="footerTimestamp"></p>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const now = new Date();
+        const somaliDate = now.toLocaleDateString('so-SO', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        document.getElementById('currentDate').innerText = somaliDate;
+
+        // Footer Timestamp (Time included)
+        const timeStr = now.toLocaleTimeString('so-SO', { hour: '2-digit', minute: '2-digit' });
+        if (document.getElementById('footerTimestamp')) {
+            document.getElementById('footerTimestamp').innerText = `La soo saaray: ${somaliDate} | ${timeStr}`;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,897 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Advanced Business Settings - NorKisma{% endblock %}
+{% block page_title %}Settings-ka Ganacsiga (Enterprise){% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --settings-primary: #4ba3e3;
+        --settings-bg: #f8fafc;
+        --sidebar-width: 280px;
+    }
+
+    .settings-wrapper {
+        display: flex;
+        background: #fff;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        min-height: 80vh;
+    }
+
+    /* Sidebar Styling */
+    .settings-sidebar {
+        width: var(--sidebar-width);
+        background: #f1f5f9;
+        border-right: 1px solid #e2e8f0;
+        padding: 20px 0;
+    }
+
+    .settings-nav-item {
+        display: flex;
+        align-items: center;
+        padding: 14px 25px;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+        border-left: 4px solid transparent;
+        cursor: pointer;
+    }
+
+    .settings-nav-item i {
+        width: 24px;
+        margin-right: 12px;
+        font-size: 1.1rem;
+    }
+
+    .settings-nav-item:hover {
+        background: #e2e8f0;
+        color: var(--settings-primary);
+    }
+
+    .settings-nav-item.active {
+        background: #fff;
+        color: var(--settings-primary);
+        border-left-color: var(--settings-primary);
+    }
+
+    /* Content Styling */
+    .settings-content {
+        flex: 1;
+        padding: 40px;
+        background: #fff;
+    }
+
+    .section-header {
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 15px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .section-title {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #94a3b8;
+        font-weight: 800;
+    }
+
+    .form-label {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #334155;
+        margin-bottom: 8px;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 10px;
+        padding: 12px 15px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        font-size: 0.9rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        background: #fff;
+        border-color: var(--settings-primary);
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+
+    .help-icon {
+        color: #38bdf8;
+        cursor: pointer;
+        margin-left: 5px;
+    }
+
+    .btn-update {
+        background: linear-gradient(135deg, #50a5e6 0%, #4ba3e3 100%);
+        color: #fff;
+        padding: 16px 45px;
+        border-radius: 14px;
+        font-weight: 800;
+        border: none;
+        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 auto;
+    }
+
+    .btn-update:hover {
+        background: linear-gradient(135deg, #4ba3e3 0%, #318bce 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(79, 70, 229, 0.4);
+    }
+
+    .module-card {
+        padding: 15px;
+        border-radius: 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s;
+    }
+
+    .module-card:hover {
+        border-color: var(--settings-primary);
+        background: #fff;
+    }
+
+    .logo-upload-container {
+        background: #f8fafc;
+        border: 2px dashed #e2e8f0;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .logo-upload-container:hover {
+        border-color: var(--settings-primary);
+    }
+
+    .test-email-btn {
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 25px;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="settings-wrapper">
+        <!-- Sidebar -->
+        <div class="settings-sidebar">
+            <div class="nav flex-column nav-pills" id="settingsTabs" role="tablist">
+                <button class="settings-nav-item active border-0 w-100 text-start" data-bs-toggle="pill"
+                    data-bs-target="#tab-business" type="button">
+                    <i class="fas fa-building"></i> Business
+                </button>
+                <button class="settings-nav-item border-0 w-100 text-start" data-bs-toggle="pill"
+                    data-bs-target="#tab-tax" type="button">
+                    <i class="fas fa-percent"></i> Tax Settings
+                </button>
+                <button class="settings-nav-item border-0 w-100 text-start" data-bs-toggle="pill"
+                    data-bs-target="#tab-product" type="button">
+                    <i class="fas fa-box"></i> Product Settings
+                </button>
+                <button class="settings-nav-item border-0 w-100 text-start" data-bs-toggle="pill"
+                    data-bs-target="#tab-pos" type="button">
+                    <i class="fas fa-desktop"></i> POS Settings
+                </button>
+                <button class="settings-nav-item border-0 w-100 text-start" data-bs-toggle="pill"
+                    data-bs-target="#tab-purchases" type="button">
+                    <i class="fas fa-truck"></i> Purchases
+                </button>
+                <button class="settings-nav-item border-0 w-100 text-start" data-bs-toggle="pill"
+                    data-bs-target="#tab-modules" type="button">
+                    <i class="fas fa-th-large"></i> Modules (Switch)
+                </button>
+                <button class="settings-nav-item border-0 w-100 text-start" data-bs-toggle="pill"
+                    data-bs-target="#tab-email" type="button">
+                    <i class="fas fa-envelope"></i> Email (SMTP)
+                </button>
+                <button class="settings-nav-item border-0 w-100 text-start" data-bs-toggle="pill"
+                    data-bs-target="#tab-saas" type="button">
+                    <i class="fas fa-cloud text-primary"></i> SaaS Controls
+                </button>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="settings-content">
+            <form action="{{ url_for('settings.update') }}" method="POST" enctype="multipart/form-data">
+                <div class="tab-content" id="settingsTabContent">
+
+                    <!-- Business Tab -->
+                    <div class="tab-pane fade show active" id="tab-business" role="tabpanel">
+                        <div class="section-header"><span class="section-title">Business Information</span></div>
+                        <div class="row g-4 mb-5">
+                            <div class="col-md-4">
+                                <label class="form-label">Business Name:*</label>
+                                <input type="text" name="name" class="form-control" value="{{ company.name }}"
+                                    placeholder="Pharmacy Store" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Start Date:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i
+                                            class="far fa-calendar-alt text-muted"></i></span>
+                                    <input type="text" name="start_date_manual" class="form-control"
+                                        value="{{ company.start_date.strftime('%Y-%m-%d') }}" placeholder="YYYY-MM-DD">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Upload Logo:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control bg-light" placeholder="Browse.." readonly
+                                        onclick="$('#logoInput').click()">
+                                    <button class="btn btn-primary" type="button" onclick="$('#logoInput').click()"><i
+                                            class="fas fa-folder-open me-1"></i> Browse..</button>
+                                </div>
+                                <input type="file" name="logo" id="logoInput" class="d-none">
+                                <p class="text-muted extra-small mt-1" style="font-size: 0.75rem italic;">Previous logo
+                                    (if exists) will be replaced</p>
+                            </div>
+                        </div>
+
+                        <!-- Currency & Numbers -->
+                        <div class="section-header">
+                            <span class="section-title"><i class="far fa-money-bill-alt me-2"></i> Currency &
+                                Numbers</span>
+                        </div>
+                        <div class="row g-4 mb-5">
+                            <div class="col-md-4">
+                                <label class="form-label">Currency:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i
+                                            class="fas fa-money-bill-wave text-muted"></i></span>
+                                    <select name="currency" class="form-select">
+                                        <option value="USD" {% if company.currency=='USD' %}selected{% endif %}>United
+                                            States of America - Dollars(USD)</option>
+                                        <option value="SLSH" {% if company.currency=='SLSH' %}selected{% endif %}>Somali
+                                            Shilling (SLSH)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Currency Symbol Placement:</label>
+                                <select name="currency_symbol_placement" class="form-select">
+                                    <option value="before" {% if company.currency_symbol_placement=='before'
+                                        %}selected{% endif %}>Before amount</option>
+                                    <option value="after" {% if company.currency_symbol_placement=='after' %}selected{%
+                                        endif %}>After amount</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Currency precision:* <i
+                                        class="fas fa-info-circle help-icon"></i></label>
+                                <select name="currency_precision" class="form-select">
+                                    <option value="2" {% if company.currency_precision==2 %}selected{% endif %}>2
+                                    </option>
+                                    <option value="3" {% if company.currency_precision==3 %}selected{% endif %}>3
+                                    </option>
+                                    <option value="0" {% if company.currency_precision==0 %}selected{% endif %}>0
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Quantity precision:* <i
+                                        class="fas fa-info-circle help-icon"></i></label>
+                                <select name="quantity_precision" class="form-select">
+                                    <option value="2" {% if company.quantity_precision==2 %}selected{% endif %}>2
+                                    </option>
+                                    <option value="0" {% if company.quantity_precision==0 %}selected{% endif %}>0
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Number Display Format: <i
+                                        class="fas fa-info-circle help-icon"></i></label>
+                                <select name="number_display_format" class="form-select">
+                                    <option value="full" {% if company.number_display_format=='full' %}selected{% endif
+                                        %}>Full Number (1,500,000.00)</option>
+                                    <option value="abbreviated" {% if company.number_display_format=='abbreviated'
+                                        %}selected{% endif %}>Abbreviated (1.5M)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Default profit percent:* <i
+                                        class="fas fa-info-circle help-icon"></i></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-plus-circle text-muted"></i></span>
+                                    <input type="number" name="default_profit_percent" class="form-control"
+                                        value="{{ company.default_profit_percent }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Accounting & Fiscal -->
+                        <div class="section-header">
+                            <span class="section-title"><i class="fas fa-calculator me-2"></i> Accounting &
+                                Fiscal</span>
+                        </div>
+                        <div class="row g-4 mb-5">
+                            <div class="col-md-4">
+                                <label class="form-label">Stock Accounting Method:* <i
+                                        class="fas fa-info-circle help-icon"></i></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-calculator text-muted"></i></span>
+                                    <select name="stock_accounting_method" class="form-select">
+                                        <option value="FIFO" {% if company.stock_accounting_method=='FIFO' %}selected{%
+                                            endif %}>FIFO (First In First Out)</option>
+                                        <option value="LIFO" {% if company.stock_accounting_method=='LIFO' %}selected{%
+                                            endif %}>LIFO (Last In First Out)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Financial year start month: <i
+                                        class="fas fa-info-circle help-icon"></i></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="far fa-calendar-alt text-muted"></i></span>
+                                    <select name="financial_year_start_month" class="form-select">
+                                        <option value="January" {% if company.financial_year_start_month=='January'
+                                            %}selected{% endif %}>January</option>
+                                        <option value="April" {% if company.financial_year_start_month=='April'
+                                            %}selected{% endif %}>April</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Transaction Edit Days:* <i
+                                        class="fas fa-info-circle help-icon"></i></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-edit text-muted"></i></span>
+                                    <input type="number" name="transaction_edit_days" class="form-control"
+                                        value="{{ company.transaction_edit_days }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date & Time -->
+                        <div class="section-header">
+                            <span class="section-title"><i class="far fa-clock me-2"></i> Date & Time</span>
+                        </div>
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Time zone:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-globe text-muted"></i></span>
+                                    <select name="timezone" class="form-select">
+                                        <option value="Africa/Muqdisho" {% if company.timezone=='Africa/Muqdisho'
+                                            %}selected{% endif %}>Africa/Muqdisho</option>
+                                        <option value="UTC" {% if company.timezone=='UTC' %}selected{% endif %}>UTC
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Date Format:*</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="far fa-calendar-alt text-muted"></i></span>
+                                    <select name="date_format" class="form-select">
+                                        <option value="dd/mm/yyyy" {% if company.date_format=='dd/mm/yyyy' %}selected{%
+                                            endif %}>dd/mm/yyyy</option>
+                                        <option value="mm/dd/yyyy" {% if company.date_format=='mm/dd/yyyy' %}selected{%
+                                            endif %}>mm/dd/yyyy</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Time Format:*</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="far fa-clock text-muted"></i></span>
+                                    <select name="time_format" class="form-select">
+                                        <option value="24 hour" {% if company.time_format=='24 hour' %}selected{% endif
+                                            %}>24 Hour</option>
+                                        <option value="12 hour" {% if company.time_format=='12 hour' %}selected{% endif
+                                            %}>12 Hour</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tax Tab -->
+                    <div class="tab-pane fade" id="tab-tax" role="tabpanel">
+                        <div class="section-header"><span class="section-title">Tax Configuration</span></div>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Default Tax Rate (%)</label>
+                                <input type="number" step="0.01" name="tax_rate" class="form-control"
+                                    value="{{ company.tax_rate }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Tab -->
+                    <div class="tab-pane fade" id="tab-product" role="tabpanel">
+                        <div class="section-header"><span class="section-title">Product & Inventory Settings</span>
+                        </div>
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">SKU Prefix:</label>
+                                <input type="text" name="sku_prefix" class="form-control"
+                                    value="{{ company.sku_prefix }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">View Stock Expiry Alert For (Days):</label>
+                                <div class="input-group">
+                                    <input type="number" name="stock_expiry_alert_days" class="form-control"
+                                        value="{{ company.stock_expiry_alert_days }}">
+                                    <span class="input-group-text">Days</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" name="enable_batch_number"
+                                        id="enable_batch" {% if company.enable_batch_number %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="enable_batch">Enable Batch/Lot
+                                        Number</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label class="form-label">On Product Expiry:</label>
+                                <select name="expiry_action" class="form-select">
+                                    <option value="keep" {% if company.expiry_action=='keep' %}selected{% endif %}>Keep
+                                        in stock</option>
+                                    <option value="remove" {% if company.expiry_action=='remove' %}selected{% endif %}>
+                                        Remove from stock</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- POS Tab -->
+                    <div class="tab-pane fade" id="tab-pos" role="tabpanel">
+                        <div class="section-header"><span class="section-title"><i class="fas fa-desktop me-2"></i>
+                                Advanced POS Configuration</span></div>
+
+                        <div class="row g-4 mb-5">
+                            <div class="col-md-6">
+                                <label class="form-label">Order Number Prefix:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-tag text-muted"></i></span>
+                                    <input type="text" name="order_prefix" class="form-control"
+                                        value="{{ company.order_prefix }}" placeholder="ORD">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            {% set pos_switches = [
+                            ('pos_disable_multiple_pay', 'Disable Multiple Pay'),
+                            ('enable_drafts', 'Enable Draft'),
+                            ('pos_disable_express_checkout', 'Disable Express Checkout'),
+                            ('pos_dont_show_product_suggestion', "Don't show product suggestion"),
+                            ('pos_dont_show_recent_transactions', "Don't show recent transactions"),
+                            ('pos_disable_discount', 'Disable Discount'),
+                            ('pos_disable_tax', 'Disable order tax'),
+                            ('pos_subtotal_editable', 'Subtotal Editable'),
+                            ('pos_disable_suspend_sale', 'Disable Suspend Sale'),
+                            ('pos_enable_transaction_date', 'Enable transaction date on POS screen'),
+                            ('pos_is_service_staff_required', 'Is service staff required'),
+                            ('pos_disable_credit_sale_button', 'Disable credit sale button'),
+                            ('pos_enable_weighing_scale', 'Enable Weighing Scale'),
+                            ('disable_checkout_button', 'Disable Checkout Button')
+                            ] %}
+
+                            {% for field, label in pos_switches %}
+                            <div class="col-md-4">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="{{ field }}"
+                                        id="sw_{{ field }}" {% if company[field] %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold small" for="sw_{{ field }}">{{ label
+                                        }}</label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Purchases Tab -->
+                    <div class="tab-pane fade" id="tab-purchases" role="tabpanel">
+                        <div class="section-header"><span class="section-title">Purchase Settings</span></div>
+                        <p class="text-muted small">Configure how purchases behave in the system.</p>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="enable_purchase_order"
+                                        id="epo" checked>
+                                    <label class="form-check-label fw-bold" for="epo">Enable Purchase Order</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modules Tab -->
+                    <div class="tab-pane fade" id="tab-modules" role="tabpanel">
+                        <div class="section-header">
+                            <span class="section-title">Enable/Disable Modules</span>
+                        </div>
+
+                        <div class="row g-4">
+                            {% set modules = [
+                            ('module_purchases', 'Purchases', 'fa-truck', 'Manage vendor orders and stock inflows.'),
+                            ('module_pos', 'POS Terminal', 'fa-desktop', 'Fast-paced point of sale terminal for
+                            retail.'),
+                            ('module_add_sale', 'Add Sale', 'fa-plus-circle', 'Direct sales entry without POS
+                            interface.'),
+                            ('module_inventory', 'Inventory Management', 'fa-boxes', 'Track stock levels, categories,
+                            and products.'),
+                            ('module_sales', 'Sales Register', 'fa-file-invoice-dollar', 'Complete sales history and
+                            reporting.'),
+                            ('module_customers', 'Customer Relations', 'fa-user-friends', 'Manage customer database and
+                            balances.'),
+                            ('module_accounting', 'Accounting', 'fa-calculator', 'Financial ledgers, banks, and
+                            reporting.'),
+                            ('module_share', 'Shareholders', 'fa-handshake', 'Manage business partners and share
+                            capital.'),
+                            ('module_expenses', 'Expenses', 'fa-money-bill-wave', 'Track business overheads and daily
+                            costs.'),
+                            ('module_hrm', 'HRM / Staff', 'fa-users', 'Manage employee data, roles, and payroll.'),
+                            ('module_stock_transfer', 'Stock Transfers', 'fa-exchange-alt', 'Move inventory between
+                            branches/warehouses.'),
+                            ('module_stock_adjustment', 'Stock Adjustment', 'fa-adjust', 'Correct stock levels due to
+                            damage or loss.'),
+                            ('module_service_staff', 'Service Staff', 'fa-user-tie', 'Assign specific staff to
+                            sales/services.'),
+                            ('module_bookings', 'Bookings', 'fa-calendar-check', 'Handle reservations and scheduled
+                            services.'),
+                            ('module_tables', 'Tables', 'fa-chair', 'Manage restaurant tables and occupancy.'),
+                            ('module_modifiers', 'Modifiers', 'fa-plus-circle', 'Add extras or options to products (e.g.
+                            toppings).'),
+                            ('module_kitchen', 'Kitchen', 'fa-utensils', 'Kitchen Display System (KDS) for orders.'),
+                            ('module_subscription', 'Enable Subscription', 'fa-sync', 'Manage recurring billing and
+                            plans.'),
+                            ('module_types_of_service', 'Types of Service', 'fa-concierge-bell', 'Define service types
+                            (Dine-in, Takeaway).'),
+                            ('module_crm', 'CRM (Leads/Opps)', 'fa-handshake', 'Manage customer relationships, leads,
+                            and sales pipeline.'),
+                            ('module_manufacturing', 'Manufacturing', 'fa-industry', 'Bill of Materials (BOM),
+                            production tracking, and assembly.'),
+                            ('module_project', 'Project Management', 'fa-project-diagram', 'Track tasks, milestones, and
+                            project profitability.'),
+                            ('module_assets', 'Asset Management', 'fa-landmark', 'Track fixed assets, locations, and
+                            depreciation.'),
+                            ('module_repair', 'Repair Module', 'fa-tools', 'Manage equipment repairs, service orders,
+                            and warranties.')
+                            ] %}
+
+                            {% for field, label, icon, desc in modules %}
+                            <div class="col-md-4">
+                                <div class="module-card h-100 d-flex flex-column justify-content-between p-4"
+                                    style="background: #fff; border: 1px solid #eef2f6; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="icon-box me-3 d-flex align-items-center justify-content-center"
+                                                style="width: 45px; height: 45px; background: #f0f7ff; color: #4ba3e3; border-radius: 12px; font-size: 1.2rem;">
+                                                <i class="fas {{ icon }}"></i>
+                                            </div>
+                                            <h6 class="mb-0 fw-bold text-dark">{{ label }}</h6>
+                                        </div>
+                                        <div class="form-check form-switch p-0 m-0">
+                                            <input class="form-check-input ms-0" type="checkbox" name="{{ field }}"
+                                                id="{{ field }}" style="width: 42px; height: 21px; cursor: pointer;" {%
+                                                if company[field] %}checked{% endif %}>
+                                        </div>
+                                    </div>
+                                    <p class="text-muted small mb-0">{{ desc }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Email Tab -->
+                    <div class="tab-pane fade" id="tab-email" role="tabpanel">
+                        <div class="section-header">
+                            <span class="section-title">Email Settings (SMTP)</span>
+                            <button type="button" class="test-email-btn"><i class="fas fa-paper-plane me-2"></i> Send
+                                Test Email</button>
+                        </div>
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Mail Driver:</label>
+                                <select class="form-select">
+                                    <option>SMTP</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Host:</label>
+                                <input type="text" name="email_host" class="form-control"
+                                    value="{{ company.email_host }}" placeholder="e.g. smtp.gmail.com">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Port:</label>
+                                <input type="number" name="email_port" class="form-control"
+                                    value="{{ company.email_port }}" placeholder="587">
+                            </div>
+                        </div>
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Username:</label>
+                                <input type="text" name="email_user" class="form-control"
+                                    value="{{ company.email_user }}" placeholder="your@email.com">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Password:</label>
+                                <input type="password" name="email_pass" class="form-control"
+                                    value="{{ company.email_pass }}" placeholder="••••••••">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Encryption:</label>
+                                <select name="email_encryption" class="form-select">
+                                    <option value="tls" {% if company.email_encryption=='tls' %}selected{% endif %}>TLS
+                                    </option>
+                                    <option value="ssl" {% if company.email_encryption=='ssl' %}selected{% endif %}>SSL
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label">From Address:</label>
+                                <input type="email" name="email_from_address" class="form-control"
+                                    value="{{ company.email_from_address }}" placeholder="noreply@business.com">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">From Name:</label>
+                                <input type="text" name="email_from_name" class="form-control"
+                                    value="{{ company.email_from_name }}" placeholder="Your Business Name">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SaaS Controls Tab -->
+                    <div class="tab-pane fade" id="tab-saas" role="tabpanel">
+                        <div class="section-header">
+                            <span class="section-title"><i class="fas fa-cloud me-2"></i> SaaS & Payment Controls</span>
+                        </div>
+
+                        <!-- Sales Settings -->
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Default Sale Discount:*</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-percent text-muted"></i></span>
+                                    <input type="number" name="default_sale_discount" class="form-control"
+                                        value="{{ company.default_sale_discount }}" step="0.01">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Default Sale Tax:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-info-circle text-muted"></i></span>
+                                    <select name="default_sale_tax" class="form-select">
+                                        <option value="">None</option>
+                                        <option value="VAT" {% if company.default_sale_tax=='VAT' %}selected{% endif %}>
+                                            VAT</option>
+                                        <option value="Sales Tax" {% if company.default_sale_tax=='Sales Tax'
+                                            %}selected{% endif %}>Sales Tax</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Sales Item Addition Method:</label>
+                                <select name="sales_item_addition_method" class="form-select">
+                                    <option value="increase_qty" {% if
+                                        company.sales_item_addition_method=='increase_qty' %}selected{% endif %}>
+                                        Increase item quantity if it already exists</option>
+                                    <option value="add_new" {% if company.sales_item_addition_method=='add_new'
+                                        %}selected{% endif %}>Add item in a new row</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Amount rounding method: <i
+                                        class="fas fa-info-circle help-icon text-info"></i></label>
+                                <select name="amount_rounding_method" class="form-select">
+                                    <option value="none" {% if company.amount_rounding_method=='none' %}selected{% endif
+                                        %}>None</option>
+                                    <option value="round_to_nearest" {% if
+                                        company.amount_rounding_method=='round_to_nearest' %}selected{% endif %}>Round
+                                        to nearest whole number</option>
+                                    <option value="round_up" {% if company.amount_rounding_method=='round_up'
+                                        %}selected{% endif %}>Round up to nearest whole number</option>
+                                    <option value="round_down" {% if company.amount_rounding_method=='round_down'
+                                        %}selected{% endif %}>Round down to nearest whole number</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 pt-4">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="sales_price_is_minimum"
+                                        id="spm" {% if company.sales_price_is_minimum %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold small" for="spm">Sales price is minimum
+                                        selling price <i class="fas fa-info-circle help-icon text-info"></i></label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 pt-4">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="allow_overselling" id="ao" {%
+                                        if company.allow_overselling %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold small" for="ao">Allow Overselling <i
+                                            class="fas fa-info-circle help-icon text-info"></i></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-4 mb-5 pb-3 border-bottom">
+                            <div class="col-md-4">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="enable_sales_order" id="eso"
+                                        {% if company.enable_sales_order %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold small" for="eso">Enable Sales Order <i
+                                            class="fas fa-info-circle help-icon text-info"></i></label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="is_pay_term_required" id="ptr"
+                                        {% if company.is_pay_term_required %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold small" for="ptr">Is pay term required? <i
+                                            class="fas fa-info-circle help-icon text-info"></i></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Commission Agent -->
+                        <div class="section-header mt-4">
+                            <span class="section-title text-primary"><i class="fas fa-user-tie me-2"></i> Commission
+                                Agent Settings</span>
+                        </div>
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Sales Commission Agent:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-info-circle text-muted"></i></span>
+                                    <select name="sales_commission_agent" class="form-select">
+                                        <option value="disable" {% if company.sales_commission_agent=='disable'
+                                            %}selected{% endif %}>Disable</option>
+                                        <option value="logged_in_user" {% if
+                                            company.sales_commission_agent=='logged_in_user' %}selected{% endif %}>
+                                            Logged in user</option>
+                                        <option value="select_from_list" {% if
+                                            company.sales_commission_agent=='select_from_list' %}selected{% endif %}>
+                                            Select from list</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Commission Calculation Type:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-info-circle text-muted"></i></span>
+                                    <select name="commission_calculation_type" class="form-select">
+                                        <option value="percentage" {% if
+                                            company.commission_calculation_type=='percentage' %}selected{% endif %}>
+                                            Invoice value percentage</option>
+                                        <option value="fixed" {% if company.commission_calculation_type=='fixed'
+                                            %}selected{% endif %}>Fixed amount</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4 pt-4">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="is_commission_agent_required"
+                                        id="icar" {% if company.is_commission_agent_required %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold small" for="icar">Is commission agent
+                                        required?</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Link -->
+                        <div class="section-header mt-4">
+                            <span class="section-title text-success"><i class="fas fa-link me-2"></i> Payment Link &
+                                Gateways</span>
+                        </div>
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-12">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="enable_payment_link" id="epl"
+                                        {% if company.enable_payment_link %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold small" for="epl">Enable payment link <i
+                                            class="fas fa-info-circle help-icon text-info"></i></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm p-3 bg-light">
+                                    <h6 class="fw-bold mb-3"><i class="fas fa-credit-card me-2 text-primary"></i>
+                                        Razorpay (For INR India)</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">Key ID:</label>
+                                        <input type="text" name="razorpay_key_id" class="form-control form-control-sm"
+                                            value="{{ company.razorpay_key_id }}">
+                                    </div>
+                                    <div>
+                                        <label class="form-label small fw-bold">Key Secret:</label>
+                                        <input type="password" name="razorpay_key_secret"
+                                            class="form-control form-control-sm"
+                                            value="{{ company.razorpay_key_secret }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm p-3 bg-light">
+                                    <h6 class="fw-bold mb-3"><i class="fab fa-stripe me-2 text-indigo"></i> Stripe
+                                        Settings</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold">Stripe Public Key:</label>
+                                        <input type="text" name="stripe_public_key" class="form-control form-control-sm"
+                                            value="{{ company.stripe_public_key }}">
+                                    </div>
+                                    <div>
+                                        <label class="form-label small fw-bold">Stripe Secret Key:</label>
+                                        <input type="password" name="stripe_secret_key"
+                                            class="form-control form-control-sm"
+                                            value="{{ company.stripe_secret_key }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Update Button -->
+                    {% if current_user.role in ['developer'] or current_user.is_super_admin %}
+                    <div class="mt-5 text-center">
+                        <hr class="mb-5 opacity-10">
+                        <button type="submit" formnovalidate class="btn btn-update shadow-lg">
+                            <i class="fas fa-save me-2"></i> Save Business Configuration
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="mt-5 text-center">
+                        <div class="alert alert-warning border-0 rounded-4 shadow-sm py-4">
+                            <i class="fas fa-lock mb-3 fs-3 text-warning"></i>
+                            <h5 class="fw-bold">View Only Mode</h5>
+                            <p class="mb-0 text-muted small">You do not have permission to modify these settings.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Tab switching logic (Bootstrap 5)
+    $(document).ready(function () {
+        var triggerTabList = [].slice.call(document.querySelectorAll('#settingsTabs button'))
+        triggerTabList.forEach(function (triggerEl) {
+            var tabTrigger = new bootstrap.Tab(triggerEl)
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault()
+                tabTrigger.show()
+                // Update active state in sidebar
+                $('#settingsTabs button').removeClass('active');
+                $(this).addClass('active');
+            })
+        });
+    });
+</script>
+{% endblock %}

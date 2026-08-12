@@ -1,0 +1,257 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Vendor Payments - Antigravity POS{% endblock %}
+{% block page_title %}Lacag Bixinta Vendor-ka (Paid Settlements){% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up">
+    <h3 class="mb-0">Paid Settlements</h3>
+    <p class="text-white text-opacity-75 small mb-0">Liiska dhammaan lacagihii loo diray alaab-keenayaasha (Vendors).</p>
+</div>
+
+<div class="animate-up">
+    <div class="card border-0 shadow-premium rounded-4 mb-5 bg-white overflow-hidden">
+        <div class="card-header card-header-elite-blue d-flex justify-content-between align-items-center py-3">
+            <div class="d-flex align-items-center">
+                <h5 class="mb-0 text-white fw-bold me-3">Settlement History</h5>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-light rounded-pill px-4 fw-bold shadow-sm d-none d-md-block" data-bs-toggle="offcanvas" data-bs-target="#addPaymentOffcanvas">
+                    <i class="fas fa-plus me-1 text-primary"></i> Bixi Lacag
+                </button>
+                <button class="btn btn-sm btn-outline-light rounded-pill px-3 d-md-none" data-bs-toggle="offcanvas" data-bs-target="#addPaymentOffcanvas">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body px-0 pb-0">
+            <div class="table-responsive">
+                <table id="paymentsTable" class="table align-middle table-hover mb-0">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-4">Ref No</th>
+                            <th>Alaab-keenaha</th>
+                            <th class="text-center">Lacagta</th>
+                            <th class="text-center">Qaabka</th>
+                            <th>Taariikhda</th>
+                            <th class="pe-4 text-end">Action</th>
+                        </tr>
+                    </thead>
+                <tbody style="font-size: 0.9rem;">
+                    {% for p in payments %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark">{{ p.reference_no or '#' ~ p.id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm me-3 bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                    {{ p.vendor.name[0]|upper }}
+                                </div>
+                                <div class="text-dark fw-medium">{{ p.vendor.name }}</div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="text-primary fw-bold h6 mb-0">${{ "{:,.2f}".format(p.amount) }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-light text-muted border border-secondary border-opacity-10 px-3 py-2 rounded-pill small fw-normal">{{ p.payment_method }}</span>
+                        </td>
+                        <td class="text-muted small">{{ p.payment_date.strftime('%d/%m/%Y') }}</td>
+                        <td class="pe-4 text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-xs btn-light rounded-circle shadow-none" type="button" data-bs-toggle="dropdown" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-ellipsis-v text-muted"></i>
+                                </button>
+                                <ul class="dropdown-menu shadow-lg border-0 rounded-3">
+                                    <li><a class="dropdown-item view-btn" href="#" 
+                                        data-ref="{{ p.reference_no or '#' ~ p.id }}"
+                                        data-vendor="{{ p.vendor.name }}"
+                                        data-amount="${{ "{:,.2f}".format(p.amount) }}"
+                                        data-method="{{ p.payment_method }}"
+                                        data-date="{{ p.payment_date.strftime('%d/%m/%Y') }}">
+                                        <i class="far fa-eye me-2 text-primary"></i> View Details</a>
+                                    </li>
+                                    <li><a class="dropdown-item print-btn" href="#" data-id="{{ p.id }}">
+                                        <i class="fas fa-print me-2 text-success"></i> Print Receipt</a>
+                                    </li>
+                                    <li><hr class="dropdown-divider opacity-50"></li>
+                                    <li><a class="dropdown-item text-danger delete-btn" href="#" data-id="{{ p.id }}">
+                                        <i class="far fa-trash-alt me-2"></i> Delete Record</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas: Add Payment (Elite Redesign) -->
+<div class="offcanvas offcanvas-end shadow-premium border-0" tabindex="-1" id="addPaymentOffcanvas" style="width: 450px;">
+    <div class="offcanvas-header border-bottom border-light py-4 px-4" style="background: var(--surface);">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-primary bg-opacity-10 p-3 rounded-4 text-primary">
+                <i class="fas fa-hand-holding-usd fa-lg"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold mb-0 text-main">Diiwaangeli Lacag Bixin</h5>
+                <p class="text-muted small mb-0">U dir lacag alaab-keenaha aad doorato.</p>
+            </div>
+        </div>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-4" style="background-color: var(--bg-main);">
+        <form action="{{ url_for('vendor.paid') }}" method="POST">
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Alaab-keenaha <span class="text-danger">*</span></label>
+                <select name="vendor_id" class="form-select border-0 bg-white shadow-sm rounded-3 py-2" required>
+                    <option value="">Dooro Vendor</option>
+                    {% for v in vendors %}
+                    <option value="{{ v.id }}">{{ v.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Lacagta (Amount $) <span class="text-danger">*</span></label>
+                <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                    <span class="input-group-text border-0 bg-white text-primary fw-bold">$</span>
+                    <input type="number" step="0.01" name="amount" class="form-control border-0 py-2 fw-bold" placeholder="0.00" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Akoonka laga bixinayo <span class="text-danger">*</span></label>
+                <select name="payment_method" class="form-select border-0 bg-white shadow-sm rounded-3 py-2" required>
+                    <option value="">Dooro Akoonka</option>
+                    {% for acc in bank_accounts %}
+                    <option value="{{ acc.account_name }}">{{ acc.account_name }} {% if acc.account_code %}({{ acc.account_code }}){% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Reference No <span class="text-muted small fw-normal">(Optional)</span></label>
+                <input type="text" name="reference_no" class="form-control border-0 bg-white shadow-sm rounded-3 py-2" placeholder="e.g. V-TRX-123">
+            </div>
+
+            <div class="d-grid mt-5">
+                <button type="submit" class="btn btn-primary fw-bold py-3 rounded-3 shadow-lg border-0" style="background: linear-gradient(135deg, #4ba3e3 0%, #2563eb 100%);">
+                    <i class="fas fa-check-circle me-2"></i> Keydi Lacag Bixinta
+                </button>
+                <button type="button" class="btn btn-link text-muted fw-bold mt-2 text-decoration-none small" data-bs-dismiss="offcanvas">Jooji</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .btn-action-premium {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(0,0,0,0.05);
+        background: white;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+    .btn-action-premium:hover {
+        background: #f8fafc;
+        color: #4ba3e3;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .btn-action-premium.delete:hover {
+        color: #f94a4a;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        };
+
+        const table = $('#paymentsTable').DataTable({
+            "pageLength": 10,
+            "order": [[4, "desc"]],
+            "language": {
+                "search": "",
+                "searchPlaceholder": "Raadi payments...",
+                "dom": '<"d-flex justify-content-between align-items-center mb-4"f>rt<"d-flex justify-content-between align-items-center mt-4"ip>'
+            }
+        });
+
+        // View Logic (Delegated)
+        $(document).on('click', '.view-btn', function(e) {
+            e.preventDefault();
+            const data = $(this).data();
+            Swal.fire({
+                title: 'Payment Details',
+                html: `
+                    <div class="text-start p-2">
+                        <div class="mb-3 border-bottom pb-2"><strong>Reference:</strong> <span class="float-end text-muted">${data.ref}</span></div>
+                        <div class="mb-3 border-bottom pb-2"><strong>Vendor:</strong> <span class="float-end text-muted">${data.vendor}</span></div>
+                        <div class="mb-3 border-bottom pb-2"><strong>Amount:</strong> <span class="float-end text-primary fw-bold">${data.amount}</span></div>
+                        <div class="mb-3 border-bottom pb-2"><strong>Method:</strong> <span class="float-end text-muted">${data.method}</span></div>
+                        <div class="mb-0"><strong>Date:</strong> <span class="float-end text-muted">${data.date}</span></div>
+                    </div>
+                `,
+                icon: 'info',
+                confirmButtonText: 'Xir',
+                customClass: {
+                    confirmButton: 'btn btn-primary rounded-pill px-4'
+                }
+            });
+        });
+
+        // Delete Logic (Delegated)
+        $(document).on('click', '.delete-btn', function(e) {
+            e.preventDefault();
+            const id = $(this).data('id');
+            Swal.fire({
+                title: 'Ma hubtaa?',
+                text: "Lacag bixintan waa laga tirtirayaa nidaamka!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f94a4a',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Haa, tirtir!',
+                cancelButtonText: 'Jooji'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/vendor/payment/delete/${id}`, {
+                        method: 'DELETE',
+                        headers: headers
+                    })
+                    .then(res => res.json())
+                    .then(result => {
+                        if(result.success) {
+                            Swal.fire('La tirtiray!', result.message, 'success').then(() => location.reload());
+                        } else {
+                            Swal.fire('Cilad!', result.message, 'error');
+                        }
+                    });
+                }
+            });
+        });
+
+        // Print Logic (Delegated)
+        $(document).on('click', '.print-btn', function(e) {
+            e.preventDefault();
+            const id = $(this).data('id');
+            // Redirect to a specific print route if available, or just print window
+            window.open(`/vendor/payment/print/${id}`, '_blank');
+        });
+    });
+</script>
+{% endblock %}

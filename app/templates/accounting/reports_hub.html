@@ -1,0 +1,332 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Reports Hub – Financial Intelligence{% endblock %}
+
+{% block styles %}
+<style>
+.report-card {
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none !important;
+    display: block;
+    position: relative;
+    overflow: hidden;
+}
+[data-theme='dark'] .report-card {
+    background: rgba(15,23,42,0.8);
+    border-color: rgba(255,255,255,0.06);
+}
+.report-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--card-accent, #4ba3e3);
+    border-radius: 4px 0 0 4px;
+}
+.report-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.1);
+    border-color: var(--card-accent, #4ba3e3);
+}
+.report-icon {
+    width: 52px; height: 52px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
+.report-title {
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--text-main, #1e293b);
+    margin-bottom: 0.35rem;
+}
+[data-theme='dark'] .report-title { color: #f1f5f9; }
+.report-desc {
+    font-size: 0.8rem;
+    color: #64748b;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+}
+.report-link {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--card-accent, #4ba3e3);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: gap 0.2s;
+}
+.report-card:hover .report-link { gap: 10px; }
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+.section-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(0,0,0,0.06);
+}
+.section-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up mb-4">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h4 class="mb-0 fw-bold text-white">
+                <i class="fas fa-chart-pie me-2 text-primary"></i> Reports
+            </h4>
+            <p class="text-white text-opacity-50 small mb-0">All financial intelligence reports in one place.</p>
+        </div>
+        <a href="{{ url_for('accounting.transactions') }}" class="btn btn-primary-elite">
+            <i class="fas fa-exchange-alt me-2"></i> Transactions
+        </a>
+    </div>
+</div>
+
+<!-- ── FINANCIAL STATEMENTS ─────────────────────────────────────────────────── -->
+<div class="section-header animate-up">
+    <span class="section-label">Financial Statements</span>
+</div>
+
+<div class="row g-4 mb-5 animate-up">
+    <!-- Income Statement -->
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('accounting.dashboard') }}" class="report-card" style="--card-accent:#4ba3e3;">
+            <div class="report-icon bg-primary bg-opacity-10 text-primary">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+            <div class="report-title">Income Statement</div>
+            <div class="report-desc">Also called Profit &amp; Loss statement. Shows revenues, expenses and net income for a period.</div>
+            <div class="report-link">→ View Report</div>
+        </a>
+    </div>
+
+    <!-- Balance Sheet -->
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('accounting.balance_sheet') }}" class="report-card" style="--card-accent:#8b5cf6;">
+            <div class="report-icon bg-opacity-10 text-purple" style="background:rgba(139,92,246,0.1); color:#8b5cf6;">
+                <i class="fas fa-balance-scale"></i>
+            </div>
+            <div class="report-title">Balance Sheet</div>
+            <div class="report-desc">An immediate status of your accounts at a specified date — a "Snapshot" view of financial position.</div>
+            <div class="report-link" style="color:#8b5cf6;">→ View Report</div>
+        </a>
+    </div>
+
+    <!-- Trial Balance -->
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('accounting.trial_balance') }}" class="report-card" style="--card-accent:#10b981;">
+            <div class="report-icon" style="background:rgba(16,185,129,0.1); color:#10b981;">
+                <i class="fas fa-list-ol"></i>
+            </div>
+            <div class="report-title">Trial Balance</div>
+            <div class="report-desc">Displays a summary of all ledger balances, helping verify that transactions are correct and balanced.</div>
+            <div class="report-link" style="color:#10b981;">→ View Report</div>
+        </a>
+    </div>
+
+    <!-- General Ledger -->
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('accounting.general_ledger') }}" class="report-card" style="--card-accent:#f59e0b;">
+            <div class="report-icon" style="background:rgba(245,158,11,0.1); color:#f59e0b;">
+                <i class="fas fa-book"></i>
+            </div>
+            <div class="report-title">Ledger Report</div>
+            <div class="report-desc">Classified and detailed information of all individual accounts including debit and credit aspects.</div>
+            <div class="report-link" style="color:#f59e0b;">→ View Report</div>
+        </a>
+    </div>
+</div>
+
+<!-- ── SALES & PURCHASES ─────────────────────────────────────────────────────── -->
+<div class="section-header animate-up">
+    <span class="section-label">Sales &amp; Purchases</span>
+</div>
+
+<div class="row g-4 mb-5 animate-up">
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('accounting.sales_report') }}" class="report-card" style="--card-accent:#06b6d4;">
+            <div class="report-icon" style="background:rgba(6,182,212,0.1); color:#06b6d4;">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="report-title">Sales Report</div>
+            <div class="report-desc">Detailed breakdown of all sales transactions, revenue trends, and customer analytics.</div>
+            <div class="report-link" style="color:#06b6d4;">→ View Report</div>
+        </a>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('accounting.returns_sales') }}" class="report-card" style="--card-accent:#f94a4a;">
+            <div class="report-icon" style="background:rgba(239,68,68,0.1); color:#f94a4a;">
+                <i class="fas fa-undo-alt"></i>
+            </div>
+            <div class="report-title">Sales Returns</div>
+            <div class="report-desc">Track all items returned by customers, refund amounts, and impact on revenue.</div>
+            <div class="report-link" style="color:#f94a4a;">→ View Report</div>
+        </a>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('accounting.returns_purchases') }}" class="report-card" style="--card-accent:#f97316;">
+            <div class="report-icon" style="background:rgba(249,115,22,0.1); color:#f97316;">
+                <i class="fas fa-truck-loading"></i>
+            </div>
+            <div class="report-title">Purchase Returns</div>
+            <div class="report-desc">Items returned to suppliers, credit notes, and purchasing cost adjustments.</div>
+            <div class="report-link" style="color:#f97316;">→ View Report</div>
+        </a>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('accounting.cash_flow_report') }}" class="report-card" style="--card-accent:#84cc16;">
+            <div class="report-icon" style="background:rgba(132,204,22,0.1); color:#84cc16;">
+                <i class="fas fa-water"></i>
+            </div>
+            <div class="report-title">Cash Flow</div>
+            <div class="report-desc">Operating, investing, and financing cash flows — the lifeblood of your business.</div>
+            <div class="report-link" style="color:#84cc16;">→ View Report</div>
+        </a>
+    </div>
+</div>
+
+<!-- ── CONTACT & AGEING ─────────────────────────────────────────────────────── -->
+<div class="section-header animate-up">
+    <span class="section-label">Contact &amp; Ageing Reports</span>
+</div>
+
+<div class="row g-4 mb-5 animate-up">
+    <div class="col-md-6">
+        <a href="{{ url_for('accounting.contact_statement') }}" class="report-card" style="--card-accent:#0ea5e9;">
+            <div class="d-flex gap-3 align-items-start">
+                <div class="report-icon flex-shrink-0" style="background:rgba(14,165,233,0.1); color:#0ea5e9; margin-bottom:0;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div>
+                    <div class="report-title">Contact Account Statement</div>
+                    <div class="report-desc mb-1">Detailed ledger for any customer or supplier — invoices, payments, returns, and running balance. Printable.</div>
+                    <div class="report-link" style="color:#0ea5e9;">→ View Statement</div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-6">
+        <a href="{{ url_for('accounting.ageing_receivable_summary') }}" class="report-card" style="--card-accent:#a855f7;">
+            <div class="d-flex gap-3 align-items-start">
+                <div class="report-icon flex-shrink-0" style="background:rgba(168,85,247,0.1); color:#a855f7; margin-bottom:0;">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <div>
+                    <div class="report-title">Account Receivable Ageing (Summary)</div>
+                    <div class="report-desc mb-1">Shows summary of all sales pending invoices in mentioned days range as per the due date.</div>
+                    <div class="report-link" style="color:#a855f7;">→ View Report</div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-6">
+        <a href="{{ url_for('accounting.ageing_receivable_details') }}" class="report-card" style="--card-accent:#ec4899;">
+            <div class="d-flex gap-3 align-items-start">
+                <div class="report-icon flex-shrink-0" style="background:rgba(236,72,153,0.1); color:#ec4899; margin-bottom:0;">
+                    <i class="fas fa-table"></i>
+                </div>
+                <div>
+                    <div class="report-title">Account Receivable Ageing (Details)</div>
+                    <div class="report-desc mb-1">Shows details of all the sales pending invoices in mentioned days range as per the due date.</div>
+                    <div class="report-link" style="color:#ec4899;">→ View Report</div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-6">
+        <a href="{{ url_for('accounting.ageing_payable_summary') }}" class="report-card" style="--card-accent:#14b8a6;">
+            <div class="d-flex gap-3 align-items-start">
+                <div class="report-icon flex-shrink-0" style="background:rgba(20,184,166,0.1); color:#14b8a6; margin-bottom:0;">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div>
+                    <div class="report-title">Account Payable Ageing (Summary)</div>
+                    <div class="report-desc mb-1">Shows summary of all the purchase pending invoices in mentioned days range as per the due date.</div>
+                    <div class="report-link" style="color:#14b8a6;">→ View Report</div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- ── OTHER REPORTS ─────────────────────────────────────────────────────────── -->
+<div class="section-header animate-up">
+    <span class="section-label">Inventory &amp; Budget</span>
+</div>
+
+<div class="row g-4 mb-5 animate-up">
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('inventory.inventory_report') }}" class="report-card" style="--card-accent:#64748b;">
+            <div class="report-icon" style="background:rgba(100,116,139,0.1); color:#64748b;">
+                <i class="fas fa-boxes"></i>
+            </div>
+            <div class="report-title">Inventory Summary</div>
+            <div class="report-desc">Current stock levels, total inventory value, and product movement analysis.</div>
+            <div class="report-link" style="color:#64748b;">→ View Report</div>
+        </a>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('accounting.budget') }}" class="report-card" style="--card-accent:#4ba3e3;">
+            <div class="report-icon" style="background:rgba(59,130,246,0.1); color:#4ba3e3;">
+                <i class="fas fa-brain"></i>
+            </div>
+            <div class="report-title">AI Budget Planning</div>
+            <div class="report-desc">Set and track fiscal year budget targets with AI-powered recommendations and auto-fill.</div>
+            <div class="report-link" style="color:#4ba3e3;">→ Open Budget</div>
+        </a>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('accounting.transactions') }}" class="report-card" style="--card-accent:#10b981;">
+            <div class="report-icon" style="background:rgba(16,185,129,0.1); color:#10b981;">
+                <i class="fas fa-exchange-alt"></i>
+            </div>
+            <div class="report-title">All Transactions</div>
+            <div class="report-desc">Unified view of all business transactions — sales, purchases, payments, and expenses.</div>
+            <div class="report-link" style="color:#10b981;">→ View Transactions</div>
+        </a>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ url_for('accounting.expenses') }}" class="report-card" style="--card-accent:#f59e0b;">
+            <div class="report-icon" style="background:rgba(245,158,11,0.1); color:#f59e0b;">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <div class="report-title">Expenses Report</div>
+            <div class="report-desc">Categorized operating expenses, cost centers, and spending trends over time.</div>
+            <div class="report-link" style="color:#f59e0b;">→ View Report</div>
+        </a>
+    </div>
+</div>
+{% endblock %}

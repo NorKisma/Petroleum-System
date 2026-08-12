@@ -1,0 +1,140 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Branch Comparison — AI Insights{% endblock %}
+{% block page_title %}Branch Performance Analytics{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-5 animate-up">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-white border-0 py-4 px-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold mb-1 text-main">Multi-Branch Comparison</h5>
+                    <p class="text-muted small mb-0">Real-time performance metrics across all your business locations.</p>
+                </div>
+                <button class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                    <i class="fas fa-download me-2"></i> Export Data
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light bg-opacity-50">
+                            <tr class="text-muted small text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">
+                                <th class="ps-4 py-3">Branch Name</th>
+                                <th class="text-center py-3">Total Sales</th>
+                                <th class="text-end py-3">Total Revenue</th>
+                                <th class="text-end py-3">Avg Ticket</th>
+                                <th class="text-end pe-4 py-3">Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in stats %}
+                            <tr class="hover-bg">
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
+                                            <i class="fas fa-store"></i>
+                                        </div>
+                                        <div class="fw-bold text-main">{{ b.name }}</div>
+                                    </div>
+                                </td>
+                                <td class="text-center fw-medium text-muted">{{ b.total_sales or 0 }}</td>
+                                <td class="text-end fw-bold text-main">${{ "{:,.2f}".format(b.total_revenue or 0) }}</td>
+                                <td class="text-end text-muted small">${{ "{:,.2f}".format(b.avg_ticket or 0) }}</td>
+                                <td class="text-end pe-4" style="width: 200px;">
+                                    <div class="d-flex align-items-center justify-content-end gap-2">
+                                        {% set max_rev = stats|map(attribute='total_revenue')|select('number')|max or 1 %}
+                                        {% set pct = ((b.total_revenue or 0) / max_rev * 100)|round %}
+                                        <div class="progress flex-grow-1" style="height: 6px; width: 100px; border-radius: 10px;">
+                                            <div class="progress-bar bg-primary rounded-pill" style="width: {{ pct }}%"></div>
+                                        </div>
+                                        <span class="small fw-bold text-primary">{{ pct }}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <h6 class="fw-bold mb-4">Revenue Distribution</h6>
+            <div style="height: 300px;">
+                <canvas id="revenuePieChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+            <h6 class="fw-bold mb-4">Sales Volume Comparison</h6>
+            <div style="height: 300px;">
+                <canvas id="salesBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const labels = [{% for b in stats %}"{{ b.name }}",{% endfor %}];
+    const revenueData = [{% for b in stats %}{{ b.total_revenue or 0 }},{% endfor %}];
+    const salesData = [{% for b in stats %}{{ b.total_sales or 0 }},{% endfor %}];
+
+    // Revenue Pie Chart
+    new Chart(document.getElementById('revenuePieChart'), {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: revenueData,
+                backgroundColor: ['#50a5e6', '#10b981', '#f59e0b', '#f94a4a', '#8b5cf6'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // Sales Bar Chart
+    new Chart(document.getElementById('salesBarChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total Orders',
+                data: salesData,
+                backgroundColor: '#50a5e6',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, grid: { display: false } },
+                x: { grid: { display: false } }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

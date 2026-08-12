@@ -1,0 +1,312 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Maamulka Macaamiisha - POS{% endblock %}
+
+{% block page_title %}Maamulka Macaamiisha{% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up">
+    <h3 class="mb-0">Macaamiisha (Customers)</h3>
+    <p class="text-white text-opacity-75 small mb-0">Maamulka iyo diwaangalinta macaamiisha nidaamka.</p>
+</div>
+
+<div class="animate-up">
+    <div class="card border-0 shadow-premium rounded-4 mb-5 bg-white overflow-hidden">
+        <div class="card-header card-header-elite-blue d-flex justify-content-between align-items-center py-3">
+            <div class="d-flex align-items-center">
+                <h5 class="mb-0 text-white fw-bold me-3">Customer Register</h5>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-light rounded-pill px-3 fw-bold shadow-sm d-none d-md-block"
+                    data-bs-toggle="offcanvas" data-bs-target="#addCustomerOffcanvas">
+                    <i class="fas fa-plus me-1 text-primary"></i> Kudar Macmiil
+                </button>
+                <button class="btn btn-sm btn-outline-light rounded-pill px-3 d-md-none" data-bs-toggle="offcanvas"
+                    data-bs-target="#addCustomerOffcanvas">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body px-0 pb-0">
+            <div class="table-responsive">
+                <table id="customersTable" class="table align-middle table-hover mb-0">
+                    <thead class="thead-dark-elite">
+                        <tr>
+                            <th class="ps-4">Magaca</th>
+                            <th>Taleefanka</th>
+                            <th>Emailka</th>
+                            <th>Cinwaanka</th>
+                            <th class="pe-4 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody style="font-size: 0.9rem;">
+                        {% for customer in customers %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle me-3"
+                                        style="width: 32px; height: 32px; font-size: 0.8rem; background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%); color: white; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold;">
+                                        {{ customer.name[0]|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ customer.name }}</div>
+                                        {% if customer.customer_group %}
+                                        <span class="badge bg-primary bg-opacity-10 text-primary x-small rounded-pill px-2 py-0.5 mt-0.5" style="font-size: 0.75rem;">
+                                            {{ customer.customer_group.name }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-dark">{{ customer.phone or '-' }}</td>
+                            <td class="text-muted small">{{ customer.email or '-' }}</td>
+                            <td class="text-muted x-small">{{ customer.address or '-' }}</td>
+                            <td class="pe-4 text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button class="btn-action btn-edit edit-btn" data-id="{{ customer.id }}"
+                                        data-name="{{ customer.name }}" data-phone="{{ customer.phone or '' }}"
+                                        data-email="{{ customer.email or '' }}"
+                                        data-address="{{ customer.address or '' }}"
+                                        data-group-id="{{ customer.customer_group_id or '' }}" title="Edit Info">
+                                        <i class="far fa-edit"></i>
+                                    </button>
+                                    <button class="btn-action btn-delete delete-btn" data-id="{{ customer.id }}"
+                                        title="Delete">
+                                        <i class="far fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    {% endblock %}
+
+    {% block modals %}
+    <!-- Add Customer Offcanvas -->
+    <div class="offcanvas offcanvas-end border-0 shadow-premium" tabindex="-1" id="addCustomerOffcanvas"
+        style="width: 450px;">
+        <div class="offcanvas-header border-bottom border-light py-4 px-4" style="background-color: var(--surface);">
+            <h5 class="fw-bold mb-0 text-main">Add New Customer</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-4" style="background-color: var(--bg-main);">
+            <form id="addCustomerForm">
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Customer Name <span
+                            class="text-danger">*</span></label>
+                    <input type="text" class="form-control border-secondary border-opacity-25 rounded-3" name="name"
+                        placeholder="Full Name" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Customer Group</label>
+                    <select class="form-select border-secondary border-opacity-25 rounded-3" name="customer_group_id">
+                        <option value="">-- Door Kooxda --</option>
+                        {% for group in groups %}
+                        <option value="{{ group.id }}">{{ group.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Phone Number</label>
+                    <input type="text" class="form-control border-secondary border-opacity-25 rounded-3" name="phone"
+                        placeholder="e.g. 061XXXXXXX">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Email Address</label>
+                    <input type="email" class="form-control border-secondary border-opacity-25 rounded-3" name="email"
+                        placeholder="example@email.com">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Address / Location</label>
+                    <textarea class="form-control border-secondary border-opacity-25 rounded-3" name="address" rows="3"
+                        placeholder="Customer address details"></textarea>
+                </div>
+                <div class="offcanvas-footer-fixed">
+                    <button type="button" class="btn btn-light border shadow-sm"
+                        data-bs-dismiss="offcanvas">Cancel</button>
+                    <button type="submit" class="btn btn-primary shadow-sm">Save Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Customer Offcanvas -->
+    <div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="editCustomerOffcanvas" style="width: 450px;">
+        <div class="offcanvas-header border-bottom py-3">
+            <h5 class="fw-bold mb-0 text-dark">Edit Customer Details</h5>
+            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body" style="background-color: var(--bg-main);">
+            <form id="editCustomerForm">
+                <input type="hidden" id="editId">
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Customer Name <span
+                            class="text-danger">*</span></label>
+                    <input type="text" class="form-control border-secondary border-opacity-25 rounded-3" id="editName"
+                        required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Customer Group</label>
+                    <select class="form-select border-secondary border-opacity-25 rounded-3" id="editCustomerGroupId">
+                        <option value="">-- Door Kooxda --</option>
+                        {% for group in groups %}
+                        <option value="{{ group.id }}">{{ group.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Phone Number</label>
+                    <input type="text" class="form-control border-secondary border-opacity-25 rounded-3" id="editPhone">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Email Address</label>
+                    <input type="email" class="form-control border-secondary border-opacity-25 rounded-3"
+                        id="editEmail">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Address / Location</label>
+                    <textarea class="form-control border-secondary border-opacity-25 rounded-3" id="editAddress"
+                        rows="3"></textarea>
+                </div>
+                <div class="offcanvas-footer-fixed">
+                    <button type="button" class="btn btn-light border shadow-sm"
+                        data-bs-dismiss="offcanvas">Cancel</button>
+                    <button type="submit" class="btn btn-primary shadow-sm">Update Details</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endblock %}
+
+    {% block scripts %}
+    <script>
+        $(document).ready(function () {
+            $('#customersTable').DataTable({
+                "pageLength": 10,
+                "language": {
+                    "search": "",
+                    "searchPlaceholder": "Search customers...",
+                    "paginate": {
+                        "previous": "Previous",
+                        "next": "Next"
+                    },
+                    "info": "Showing _START_ to _END_ of _TOTAL_ customers"
+                },
+                "dom": '<"d-flex justify-content-between align-items-center mb-4"f>rt<"d-flex justify-content-between align-items-center mt-4"ip>',
+                "drawCallback": function () {
+                    $('.dataTables_filter input').addClass('form-control shadow-none');
+                }
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            $('#addCustomerForm').on('submit', function (e) {
+                e.preventDefault();
+
+                const btn = $(this).find('button[type="submit"]');
+                const origText = btn.html();
+
+                btn.html('<i class="fas fa-spinner fa-spin"></i> Fadlan sug...')
+                    .prop('disabled', true);
+
+                const data = {
+                    name: this.name.value,
+                    phone: this.phone.value,
+                    email: this.email.value,
+                    address: this.address.value,
+                    customer_group_id: this.customer_group_id.value
+                };
+
+                fetch("{{ url_for('customers.add_customer') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(res => res.json())
+                    .then(result => {
+                        if (result.success) {
+                            location.reload();
+                        } else {
+                            alert("Cilad: " + result.message);
+                            btn.html(origText).prop('disabled', false);
+                        }
+                    })
+                    .catch(() => {
+                        alert("Server error!");
+                        btn.html(origText).prop('disabled', false);
+                    });
+            });
+
+            $('.edit-btn').on('click', function (e) {
+                e.preventDefault();
+                const btn = $(this);
+                $('#editId').val(btn.data('id'));
+                $('#editName').val(btn.data('name'));
+                $('#editPhone').val(btn.data('phone'));
+                $('#editEmail').val(btn.data('email'));
+                $('#editAddress').val(btn.data('address'));
+                $('#editCustomerGroupId').val(btn.data('group-id'));
+
+                var editOffcanvas = new bootstrap.Offcanvas(document.getElementById('editCustomerOffcanvas'));
+                editOffcanvas.show();
+            });
+
+            // Submit Edit
+            $('#editCustomerForm').on('submit', function (e) {
+                e.preventDefault();
+                const id = $('#editId').val();
+                const data = {
+                    name: $('#editName').val(),
+                    phone: $('#editPhone').val(),
+                    email: $('#editEmail').val(),
+                    address: $('#editAddress').val(),
+                    customer_group_id: $('#editCustomerGroupId').val()
+                };
+
+                fetch(`/customers/edit/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                })
+                    .then(res => res.json())
+                    .then(result => {
+                        if (result.success) {
+                            location.reload();
+                        } else {
+                            alert("Cilad: " + result.message);
+                        }
+                    }).catch(err => alert("Server error!"));
+            });
+
+            // Delete Customer
+            $('.delete-btn').on('click', function (e) {
+                e.preventDefault();
+                const id = $(this).data('id');
+                if (confirm("Ma hubtaa inaad tirtirto macmiilkan?")) {
+                    fetch(`/customers/delete/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                        .then(res => res.json())
+                        .then(result => {
+                            if (result.success) {
+                                location.reload();
+                            } else {
+                                alert("Cilad: " + result.message);
+                            }
+                        }).catch(err => alert("Server error!"));
+                }
+            });
+
+        });
+    </script>
+    {% endblock %}

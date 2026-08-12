@@ -1,0 +1,246 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Sales Report - Rays Technology{% endblock %}
+{% block page_title %}Reports - Sales Overview{% endblock %}
+
+{% block styles %}
+<style>
+    /* Premium Wrapper */
+    .report-container {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 24px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    /* Header Section */
+    .report-header {
+        padding: 24px 30px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        background: rgba(255, 255, 255, 0.4);
+    }
+
+    /* Summary Card Styling */
+    .summary-card-premium {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        border-radius: 16px;
+        padding: 15px 25px;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    /* Table Styling */
+    #salesReportTable thead th {
+        background: #0f172a !important;
+        color: #f8fafc !important;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 18px 24px;
+        border: none !important;
+    }
+    #salesReportTable tbody td {
+        padding: 16px 24px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+        color: #334155;
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+    #salesReportTable tbody tr:hover {
+        background: rgba(99, 102, 241, 0.03) !important;
+    }
+
+    /* DataTable Customization */
+    .dataTables_wrapper .dataTables_info {
+        padding: 20px 30px;
+        font-size: 0.85rem;
+        color: #64748b;
+    }
+    .dataTables_wrapper .dataTables_paginate {
+        padding: 15px 30px;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        border-radius: 10px !important;
+        border: none !important;
+        padding: 6px 14px !important;
+        margin: 0 3px;
+    }
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #50a5e6 !important;
+        color: white !important;
+    }
+    .dataTables_filter { display: none !important; }
+
+    @media print {
+        #sidebar, .navbar, .btn, .no-print, .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate {
+            display: none !important;
+        }
+        .report-container { border: none !important; box-shadow: none !important; background: white !important; }
+        .print-header { display: block !important; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+        #salesReportTable thead th { background: #f8fafc !important; color: #000 !important; border-bottom: 2px solid #000 !important; }
+    }
+    .print-header { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Professional Print Header -->
+<div class="print-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            {% if current_user.tenant.logo %}
+                <img src="{{ url_for('static', filename=current_user.tenant.logo) }}" height="60" class="me-3">
+            {% endif %}
+            <div>
+                <h3 class="fw-bold mb-0 text-dark">{{ current_user.tenant.name }}</h3>
+                <small class="text-muted">{{ current_user.tenant.address or '' }} | {{ current_user.tenant.phone or '' }}</small>
+            </div>
+        </div>
+        <div class="text-end">
+            <h4 class="fw-bold text-dark mb-1">SALES REPORT</h4>
+            <div class="small">Date: <span id="currentDateHeader"></span></div>
+        </div>
+    </div>
+</div>
+
+<div class="report-container animate-up">
+    <!-- Premium Header -->
+    <div class="report-header">
+        <div class="row align-items-center g-4">
+            <div class="col-md-5">
+                <h3 class="fw-bold text-dark mb-1">Sales <span class="text-primary">Overview</span></h3>
+                <p class="text-muted small mb-0">Track and analyze your business revenue and transactions.</p>
+            </div>
+            <div class="col-md-7">
+                <div class="d-flex align-items-center justify-content-md-end gap-3 flex-wrap">
+                    <div class="summary-card-premium">
+                        <small class="text-white-50 fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Total Revenue</small>
+                        <h4 class="fw-bold mb-0">${{ "{:,.2f}".format(total_sales) }}</h4>
+                    </div>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-light border shadow-sm px-3 py-2 fw-bold" type="button" data-bs-toggle="dropdown" style="border-radius: 12px;">
+                            <i class="fas fa-file-export me-2 text-primary"></i> Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 p-2">
+                            <li>
+                                <a class="dropdown-item rounded-3 py-2" href="{{ url_for('accounting.export_sales_pdf') }}">
+                                    <i class="fas fa-file-pdf text-danger me-2"></i> PDF Report
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item rounded-3 py-2" href="{{ url_for('accounting.export_sales_excel') }}">
+                                    <i class="fas fa-file-excel text-success me-2"></i> Excel List
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item rounded-3 py-2" href="javascript:void(0)" onclick="window.print()">
+                                    <i class="fas fa-print text-primary me-2"></i> Print View
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-responsive">
+        <table id="salesReportTable" class="table align-middle mb-0 w-100">
+            <thead>
+                <tr>
+                    <th class="ps-5">Date & Time</th>
+                    <th>Invoice No</th>
+                    <th>Customer</th>
+                    <th>Payment Method</th>
+                    <th>Total Amount</th>
+                    <th class="text-end pe-5 no-print">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in sales %}
+                <tr>
+                    <td class="ps-5">
+                        <div class="fw-bold text-dark">{{ sale.created_at.strftime('%Y-%m-%d') }}</div>
+                        <div class="text-muted x-small">{{ sale.created_at.strftime('%H:%M %p') }}</div>
+                    </td>
+                    <td class="fw-bold text-primary">{{ sale.invoice_no }}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <span class="fw-bold text-dark">{{ sale.customer.name if sale.customer else 'General Customer' }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge-premium" style="background: rgba(16, 185, 129, 0.1); color: #059669;">
+                            <i class="fas fa-money-bill-wave"></i> {{ sale.payment_method }}
+                        </span>
+                    </td>
+                    <td class="fw-bold text-dark">${{ "{:,.2f}".format(sale.total_amount) }}</td>
+                    <td class="text-end pe-5 no-print">
+                        <a href="/invoice/{{ sale.invoice_no }}" class="btn-action-premium">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Professional Print Footer -->
+<div class="print-only-section mt-5 pt-4 border-top border-light">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="text-muted small w-100">
+            <p class="mb-0 fw-bold" style="font-size: 0.65rem;">© 2026 <span class="text-primary">Rays Technology Center</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Warbixintan waxaa diyaariyay Rays Sales Report</p>
+        </div>
+        <div class="text-end text-muted small flex-shrink-0">
+            <p class="mb-0" id="footerTimestamp" style="font-size: 0.6rem;"></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    if (!$.fn.DataTable.isDataTable('#salesReportTable')) {
+        $('#salesReportTable').DataTable({
+            "order": [[0, "desc"]],
+            "pageLength": 25,
+            "dom": 'lrtip',
+            "language": {
+                "lengthMenu": "Muuji _MENU_ diiwaan",
+                "info": "Waxaa la muujiyay _START_ ilaa _END_ oo ka mid ah _TOTAL_ diiwaan",
+                "paginate": {
+                    "previous": "<i class='fas fa-chevron-left'></i>",
+                    "next": "<i class='fas fa-chevron-right'></i>"
+                },
+                "emptyTable": "Ma jirto xog laga helay jadwalkan",
+                "zeroRecords": "Ma jiraan wax natiijo ah oo la helay"
+            }
+        });
+    }
+
+    const now = new Date();
+    const somaliDate = now.toLocaleDateString('so-SO', { year: 'numeric', month: 'long', day: 'numeric' });
+    
+    if(document.getElementById('currentDateHeader')) document.getElementById('currentDateHeader').innerText = somaliDate;
+    
+    const timeStr = now.toLocaleTimeString('so-SO', { hour: '2-digit', minute: '2-digit' });
+    if(document.getElementById('footerTimestamp')) {
+        document.getElementById('footerTimestamp').innerText = `La soo saaray: ${somaliDate} | ${timeStr}`;
+    }
+});
+</script>
+{% endblock %}

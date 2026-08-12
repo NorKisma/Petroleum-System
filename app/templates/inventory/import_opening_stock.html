@@ -1,0 +1,106 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Import Opening Stock - POS{% endblock %}
+
+{% block page_title %}Import Opening Stock{% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up mb-4">
+    <h3 class="mb-0">Import Opening Stock</h3>
+    <p class="text-white text-opacity-75 small mb-0">Soo geli xogta hordhaca ah ee alaabta adoo isticmaalaya fayl CSV ah.</p>
+</div>
+
+<div class="animate-up">
+    <!-- Import Form Card -->
+    <div class="card border-0 shadow-premium rounded-4 mb-4 bg-white">
+        <div class="card-body p-4">
+            <form action="{{ url_for('inventory.import_opening_stock') }}" method="POST" enctype="multipart/form-data">
+                <div class="row align-items-end">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label class="form-label fw-bold text-dark small mb-2 d-flex align-items-center">
+                            File To Import: 
+                            <i class="fas fa-info-circle ms-1 text-info" data-bs-toggle="tooltip" title="Kaliya geli faylal qaabka CSV wata."></i>
+                        </label>
+                        <div class="input-group">
+                            <input type="file" name="file" class="form-control border-secondary border-opacity-25 rounded-3" accept=".csv" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm rounded-3">
+                            <i class="fas fa-upload me-1"></i> Submit
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            <hr class="my-4 border-light">
+            
+            <div>
+                <a href="{{ url_for('inventory.download_opening_stock_template') }}" class="btn btn-success fw-bold px-4 shadow-sm rounded-3">
+                    <i class="fas fa-download me-1"></i> Download template file
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions Card -->
+    <div class="card border-0 shadow-premium rounded-4 bg-white mb-5">
+        <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+            <h5 class="fw-bold text-dark mb-1"><i class="fas fa-info-circle me-1 text-primary"></i> Instructions</h5>
+            <p class="text-muted small mb-0">Carefully follow the instructions before importing the file. The columns of the CSV file should be in the following order.</p>
+        </div>
+        <div class="card-body p-4">
+            <div class="table-responsive border rounded-3">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-dark fw-bold small">
+                        <tr>
+                            <th class="ps-4 py-3" style="width: 15%;">Column Number</th>
+                            <th class="py-3" style="width: 35%;">Column Name</th>
+                            <th class="pe-4 py-3" style="width: 50%;">Instruction</th>
+                        </tr>
+                    </thead>
+                    <tbody class="small">
+                        <tr>
+                            <td class="ps-4 fw-bold">1</td>
+                            <td class="fw-bold">SKU <span class="text-danger">(Required)</span></td>
+                            <td>Barcode ama SKU ga alaabta u gaarka ah.</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4 fw-bold">2</td>
+                            <td>
+                                <div class="fw-bold">Location <span class="text-muted">(Optional)</span></div>
+                                <div class="text-muted x-small">If blank first business location will be used</div>
+                            </td>
+                            <td>Name of the business location.</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4 fw-bold">3</td>
+                            <td class="fw-bold">Quantity <span class="text-danger">(Required)</span></td>
+                            <td>Tirada alaabta ee la rabo in la soo geliyo.</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4 fw-bold">4</td>
+                            <td class="fw-bold">Unit Cost (Before Tax) <span class="text-danger">(Required)</span></td>
+                            <td>Qiimaha iibka (Cost price) halkii xabbo ee canshuurta ka hor.</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4 fw-bold">5</td>
+                            <td class="fw-bold">Lot / batch number <span class="text-muted">(Optional)</span></td>
+                            <td>Lambarka dufcada (Batch number) alaabta.</td>
+                        </tr>
+                        <tr>
+                            <td class="ps-4 fw-bold">6</td>
+                            <td>
+                                <div class="fw-bold">Expiry Date <span class="text-muted">(Optional)</span></div>
+                            </td>
+                            <td class="pe-4">
+                                Stock expiry date in <strong>Business date format dd/mm/yyyy</strong>. Type: <strong>text</strong>. Example: <strong>18/05/2026</strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+
+  # ── Flask Web Application ──────────────────────────────────────────────────
+  web:
+    build: .
+    container_name: rays_pos_web
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - SECRET_KEY=change-this-in-production
+      - DATABASE_URL=mysql+pymysql://pos_user:pos_pass@db:3306/pos_accounting
+      - FLASK_ENV=production
+    volumes:
+      - ./app/static/uploads:/app/app/static/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ── MySQL Database ─────────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: rays_pos_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: pos_accounting
+      MYSQL_USER: pos_user
+      MYSQL_PASSWORD: pos_pass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "pos_user", "-ppos_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── phpMyAdmin (Optional DB UI) ───────────────────────────────────────────
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: rays_pos_pma
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: pos_user
+      PMA_PASSWORD: pos_pass
+    depends_on:
+      - db
+
+volumes:
+  mysql_data:

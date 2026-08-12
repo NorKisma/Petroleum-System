@@ -1,0 +1,512 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Bar-kulan (POS) - NorKisma{% endblock %}
+{% block page_title %}Bar-kulan (POS Terminal){% endblock %}
+
+{% block styles %}
+<style>
+    #sidebar, .navbar { display: none !important; }
+    #page-content-wrapper { margin-left: 0 !important; padding-left: 0 !important; width: 100% !important; height: 100vh !important; padding-top: 0 !important; background: transparent !important; }
+    .container-fluid.mt-4 { margin-top: 0 !important; padding: 0 !important; }
+    .main-wrapper { padding: 0 !important; }
+    body { height: 100vh; overflow: hidden; font-family: 'Outfit', 'Inter', sans-serif; color: #0f172a; -webkit-font-smoothing: antialiased; }
+    .content-body { height: 100vh; padding: 0 !important; margin-top: 0 !important; }
+
+    .pos-left { height: 100vh; overflow-y: auto; padding: 22px 28px; background: transparent; }
+    .pos-left::-webkit-scrollbar { width: 4px; }
+    .pos-left::-webkit-scrollbar-thumb { background: rgba(52, 152, 219, 0.2); border-radius: 10px; }
+
+    .tools-bar-premium { background: rgba(255, 255, 255, 0.65); background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(224, 242, 254, 0.5)); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 12px 20px; border-radius: 22px; margin-bottom: 14px; box-shadow: 0 8px 32px rgba(186, 230, 253, 0.15); display: flex; align-items: center; gap: 14px; border: 1px solid rgba(224, 242, 254, 0.8); }
+    .input-group.shadow-sm { background: rgba(255, 255, 255, 0.9) !important; border: 1.5px solid rgba(52, 152, 219, 0.35) !important; border-radius: 16px !important; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.08) !important; }
+    #barcodeInput { font-weight: 600; color: #0369a1 !important; background: transparent !important; }
+    .input-group-text { background: transparent !important; border: none !important; }
+    .input-group-text i { color: #0284c7 !important; }
+
+    .btn-back-system { background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff !important; border: none; width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(14, 165, 233, 0.4); transition: all 0.3s ease; flex-shrink: 0; }
+    .btn-back-system:hover { transform: translateX(-4px); box-shadow: 0 12px 25px rgba(14, 165, 233, 0.55); color: #fff !important; }
+    .btn-hold-pos { background: rgba(255, 251, 235, 0.9) !important; color: #d97706 !important; border: 1px solid rgba(253, 230, 138, 0.8) !important; border-radius: 12px !important; backdrop-filter: blur(10px); }
+    .btn-history-pos { background: rgba(224, 242, 254, 0.9) !important; color: #0369a1 !important; border: 1px solid rgba(186, 230, 253, 0.8) !important; border-radius: 12px !important; backdrop-filter: blur(10px); }
+
+    .filter-pills { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 16px; }
+    .filter-pills::-webkit-scrollbar { height: 0; }
+    .cat-pill { white-space: nowrap; padding: 9px 22px; border-radius: 50px; background: rgba(255, 255, 255, 0.65); background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(224, 242, 254, 0.4)); backdrop-filter: blur(12px); border: 1px solid rgba(224, 242, 254, 0.8); font-weight: 700; cursor: pointer; font-size: 0.82rem; transition: all 0.25s ease; box-shadow: 0 2px 8px rgba(186, 230, 253, 0.08); }
+    .cat-pill:hover { background: rgba(224, 242, 254, 0.6); border-color: rgba(14, 165, 233, 0.3); color: #0284c7; }
+    .cat-pill.active { background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; border-color: transparent; box-shadow: 0 6px 18px rgba(14, 165, 233, 0.35); }
+
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; padding-bottom: 60px; }
+    .product-card { border-radius: 8px; background: #fff; border: 1px solid #e2e8f0; cursor: pointer; display: flex; flex-direction: column; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; transition: all 0.2s; text-align: center; }
+    .product-card:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); border-color: #cbd5e1; }
+    .product-card:active { transform: scale(0.98); }
+    .product-img { height: 70px; background: #e8eef3; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #8ba1b5; transition: all 0.2s; border-bottom: 1px solid #f1f5f9; }
+    .product-card:hover .product-img { background: #dce4eb; color: #73889c; }
+    .p-details { padding: 12px 8px; text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 85px; }
+    .p-details .name { font-weight: 600; color: #1e293b; font-size: 0.85rem; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .p-details .price { color: #025ca1; font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; }
+    .p-details .stock { color: #059669; font-size: 0.75rem; font-weight: 500; }
+
+    .pos-right { background: rgba(255, 255, 255, 0.75); background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.85), rgba(224, 242, 254, 0.5)); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-left: 1px solid rgba(224, 242, 254, 0.7); height: 100vh; display: flex; flex-direction: column; box-shadow: -8px 0 30px rgba(186, 230, 253, 0.1); }
+    .cart-header { padding: 18px 22px; background: rgba(255, 255, 255, 0.5); border-bottom: 1px solid rgba(224, 242, 254, 0.8); flex-shrink: 0; }
+    .cart-header h5 { font-weight: 800; color: #0284c7; font-size: 1.05rem; }
+    .cart-items-container { flex: 1; overflow-y: auto; padding: 14px 18px; background: rgba(224, 242, 254, 0.3); }
+    .cart-item { display: flex; align-items: center; padding: 11px 14px; border-radius: 16px; margin-bottom: 10px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); border: 1px solid rgba(224, 242, 254, 0.8); box-shadow: 0 2px 8px rgba(186, 230, 253, 0.05); transition: all 0.25s ease; }
+    .cart-item:hover { border-color: rgba(14, 165, 233, 0.3); transform: translateX(-4px); }
+    .qty-btn { width: 30px; height: 30px; border-radius: 9px; border: 1px solid rgba(186, 230, 253, 0.8); background: rgba(255, 255, 255, 0.9); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+    .qty-btn:hover { background: #0284c7; color: white; border-color: #0284c7; }
+
+    .cart-summary { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); padding: 14px 18px; border-top: 1px solid rgba(224, 242, 254, 0.8); box-shadow: 0 -10px 30px rgba(186, 230, 253, 0.08); flex-shrink: 0; }
+    .summary-row { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.83rem; color: #475569; font-weight: 600; }
+    .summary-row.subtotal-label { color: #0284c7; }
+    .summary-row.tax-label { color: #d97706; }
+    .summary-row.discount-label { color: #dc2626; }
+    .total-row { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 2px dashed rgba(186, 230, 253, 0.8); font-size: 1.7rem; font-weight: 900; color: #1e293b; }
+    .total-price { color: #059669 !important; }
+    .calculation-input { background: rgba(255, 255, 255, 0.9); border: 1px solid rgba(186, 230, 253, 0.8); color: #1e293b; text-align: right; border-radius: 9px; padding: 4px 9px; width: 80px; font-weight: 800; }
+
+    #payBtn { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); border: none; border-radius: 16px; box-shadow: 0 8px 24px rgba(14, 165, 233, 0.4); transition: all 0.3s ease; letter-spacing: 0.5px; }
+    #payBtn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(14, 165, 233, 0.55); }
+
+    .mobile-cart-toggle { display: none; position: fixed; bottom: 28px; right: 28px; width: 65px; height: 65px; border-radius: 50%; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; border: none; box-shadow: 0 12px 28px rgba(14, 165, 233, 0.5); z-index: 1500; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+    .mobile-cart-toggle:hover { transform: scale(1.1) translateY(-4px); }
+    .mobile-cart-toggle .badge { position: absolute; top: 0; right: 0; transform: translate(25%,-25%); background: #f94a4a; border: 3px solid #fff; font-size: 0.75rem; }
+    .mobile-cart-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); z-index: 2040; }
+    .mobile-cart-overlay.show { display: block; }
+
+    @media (max-width: 991.98px) {
+        #page-content-wrapper { overflow-x: hidden; }
+        .mobile-cart-toggle { display: flex; }
+        .pos-left { padding: 14px; height: 100vh; width: 100% !important; }
+        .pos-right { position: fixed; top: 0; right: -100%; width: 85% !important; height: 100vh !important; z-index: 2050; transition: all 0.4s cubic-bezier(0.4,0,0.2,1); box-shadow: -15px 0 40px rgba(14, 165, 233, 0.2); border-left: 2px solid rgba(14, 165, 233, 0.3); }
+        .pos-right.show-mobile { right: 0; }
+        .tools-bar-premium { flex-direction: column; align-items: stretch; padding: 12px; gap: 10px; }
+        .product-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+    }
+</style>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="row g-0 h-100">
+    <div class="col-lg-9 pos-left">
+        <div class="tools-bar-premium">
+            <a href="{{ url_for('main.dashboard') }}" class="btn-back-system"><i class="fas fa-arrow-left"></i></a>
+            <div class="flex-grow-1">
+                <div class="input-group shadow-sm">
+                    <span class="input-group-text bg-transparent border-0"><i class="fas fa-search"></i></span>
+                    <input type="text" id="barcodeInput" class="form-control border-0 shadow-none bg-transparent" placeholder="Raadi alaab halkan...">
+                </div>
+            </div>
+            <div class="d-none d-md-block" style="width: 220px;">
+                <select id="customerSelect" class="form-select shadow-sm">
+                    <option value="">-- Macmiilka --</option>
+                    {% for customer in customers %}
+                        <option value="{{ customer.id }}">{{ customer.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-hold-pos shadow-sm" onclick="holdSale()"><i class="fas fa-pause"></i></button>
+                <button class="btn btn-history-pos shadow-sm position-relative" onclick="quickRestoreOrShow()">
+                    <i class="fas fa-history"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="holdCounter" style="display:none;">0</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="filter-pills">
+            <div class="cat-pill active" onclick="filterCategory('all', this)">Dhamaan</div>
+            {% for cat in categories %}
+                <div class="cat-pill" onclick="filterCategory('{{ cat.id }}', this)">{{ cat.name }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="product-grid" id="productGrid">
+            {% for product in products %}
+            <div class="product-item"
+                 data-id="{{ product.id }}"
+                 data-name="{{ product.name | lower | replace("'", '') }}"
+                 data-price="{{ product.sell_price }}"
+                 data-barcode="{{ (product.barcode or '') | lower }}"
+                 data-category="{{ product.category_id }}">
+                <div class="product-card" id="prod-card-{{ product.id }}">
+                    <div class="product-img"><i class="fas fa-box"></i></div>
+                    <div class="p-details">
+                        <div class="name" title="{{ product.name }}">{{ product.name }}</div>
+                        <div class="price">{{ company_settings.currency if company_settings else '$' }} {{ "%.2f"|format(product.sell_price) }}</div>
+                        <div class="stock">{{ product.stock_quantity | default(0) | int }} Pcs in stock</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-lg-3 pos-right" id="cartSidebar">
+        <div class="d-lg-none p-3 text-end">
+            <button class="btn-close" onclick="toggleMobileCart()"></button>
+        </div>
+        <div class="cart-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">Dalabka</h5>
+            <button class="btn btn-sm btn-outline-danger" onclick="clearCart()">Tirtir</button>
+        </div>
+        <div class="cart-items-container" id="cart-items"></div>
+        <div class="cart-summary">
+            <div class="summary-row subtotal-label"><span>Subtotal</span><span id="subtotalLabel">{{ company_settings.currency if company_settings else '$' }}0.00</span></div>
+            
+            {% if not company_settings or not company_settings.pos_disable_tax %}
+            <div class="summary-row tax-label"><span>Tax (%)</span><input type="number" id="taxInput" class="calculation-input" value="{{ company_settings.tax_rate if company_settings else 0 }}"></div>
+            {% else %}
+            <input type="hidden" id="taxInput" value="0">
+            {% endif %}
+
+            {% if not company_settings or not company_settings.pos_disable_discount %}
+            <div class="summary-row discount-label"><span>Dhimis ({{ company_settings.currency if company_settings else '$' }})</span><input type="number" id="discountInput" class="calculation-input" value="0"></div>
+            {% else %}
+            <input type="hidden" id="discountInput" value="0">
+            {% endif %}
+
+            <div class="total-row"><span>Total</span><span id="grandTotalLabel" class="total-price">{{ company_settings.currency if company_settings else '$' }}0.00</span></div>
+            <div class="summary-row mt-3">
+                <span>Lacag Bixin (Method)</span>
+                <select id="paymentMethod" class="calculation-input w-100 mt-1" style="text-align: left;">
+                    <option value="Cash">Cash (Lacag Cadaan)</option>
+                    <option value="Credit">Credit (Deymasha)</option>
+                    <option value="Bank">Bank / Mobile Money</option>
+                </select>
+            </div>
+            <div id="accountGroup" class="summary-row mt-2">
+                <span>Akoonka (Account)</span>
+                <select id="paymentAccount" class="calculation-input w-100 mt-1" style="text-align: left;">
+                    {% for acc in asset_accounts %}
+                        <option value="{{ acc.account_code }}" data-category="{{ acc.category }}" data-sub="{{ acc.sub_category or '' }}">
+                            {{ acc.account_code }} - {{ acc.account_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="summary-row mt-3"><span>La Dhiibay</span><input type="number" id="tenderedInput" class="calculation-input"></div>
+            <div class="summary-row fw-bold"><span>Haraa</span><span id="changeLabel">{{ company_settings.currency if company_settings else '$' }}0.00</span></div>
+            {% if not company_settings or not company_settings.disable_checkout_button %}
+            <button class="btn btn-primary w-100 mt-3 py-3 fw-bold" onclick="processCheckout()" id="payBtn">DIWAANGELI IIBKA</button>
+            {% else %}
+            <div class="alert alert-warning small py-2 mt-3 text-center fw-bold">Checkout is disabled in settings.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Recent Adjustments Modal -->
+<div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 25px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-primary"><i class="fas fa-history me-2"></i> Recent Adjustments</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light border-0">
+                            <tr>
+                                <th class="border-0 text-muted small fw-bold">Product / Action</th>
+                                <th class="border-0 text-muted small fw-bold">Details</th>
+                                <th class="border-0 text-muted small fw-bold">Date</th>
+                                <th class="border-0 text-end text-muted small fw-bold">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyLogBody"></tbody>
+                    </table>
+                </div>
+                <div id="noHistoryMsg" class="text-center py-5 d-none">
+                    <i class="fas fa-clipboard-list fa-3x text-muted opacity-25 mb-3"></i>
+                    <h6 class="text-muted">Ma jiraan wax taariikh ah oo hadda muuqda.</h6>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Cart Toggle Button -->
+<button class="mobile-cart-toggle" onclick="toggleMobileCart()">
+    <i class="fas fa-shopping-cart"></i>
+    <span class="badge rounded-pill" id="mobileCartBadge" style="display:none;">0</span>
+</button>
+<!-- Mobile Cart Overlay -->
+<div class="mobile-cart-overlay" id="mobileOverlay" onclick="toggleMobileCart()"></div>
+{% endblock %}
+
+
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    let cart = [];
+    let subtotal = 0;
+    let grandTotal = 0;
+
+    function toggleMobileCart() {
+        $('#cartSidebar').toggleClass('show-mobile');
+        $('#mobileOverlay').toggleClass('show');
+    }
+
+    function logAdjustment(action, details) {
+        let logs = JSON.parse(localStorage.getItem('adjustment_logs') || '[]');
+        const now = new Date();
+        logs.push({ action, details, time: now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), date: now.toLocaleDateString() });
+        if(logs.length > 50) logs.shift();
+        localStorage.setItem('adjustment_logs', JSON.stringify(logs));
+    }
+
+    function addToCart(id, name, price) {
+        const item = cart.find(i => i.id === id);
+        if (item) { item.qty += 1; logAdjustment('Update Qty', `${name} increased to ${item.qty}`); }
+        else { cart.push({ id, name, price: parseFloat(price), qty: 1 }); logAdjustment('Add Item', `${name} added to cart`); }
+        renderCart();
+    }
+
+    const currencySymbol = "{{ company_settings.currency if company_settings else '$' }}";
+
+    function renderCart() {
+        const container = $('#cart-items');
+        container.empty();
+        subtotal = 0;
+        if (cart.length === 0) {
+            container.append(`<div class="text-center py-5 text-muted"><i class="fas fa-shopping-cart fa-3x mb-3 opacity-25"></i><p class="small fw-bold">Dalabku waa faaruq</p></div>`);
+        } else {
+            cart.forEach(item => {
+                subtotal += item.price * item.qty;
+                const priceDisplay = {% if company_settings.pos_subtotal_editable %}
+                    `<input type="number" step="0.01" class="calculation-input p-0 px-1 border-0 bg-transparent text-primary fw-bold" style="width:60px" value="${item.price.toFixed(2)}" onchange="updatePrice(${item.id}, this.value)">`
+                    {% else %}
+                    `${currencySymbol}${item.price.toFixed(2)}`
+                    {% endif %};
+                
+                container.append(`
+                    <div class="cart-item">
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-dark" style="font-size:0.85rem;">${item.name}</div>
+                            <div class="text-primary fw-bold small">${priceDisplay} x ${item.qty}</div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 ms-2">
+                            <div class="qty-btn" onclick="updateQty(${item.id}, ${item.qty - 1})"><i class="fas fa-minus" style="font-size:0.6rem;"></i></div>
+                            <span class="fw-bold text-dark" style="min-width:22px;text-align:center;">${item.qty}</span>
+                            <div class="qty-btn" onclick="updateQty(${item.id}, ${item.qty + 1})"><i class="fas fa-plus" style="font-size:0.6rem;"></i></div>
+                        </div>
+                    </div>`);
+            });
+        }
+        $('#subtotalLabel').text(`${currencySymbol}${subtotal.toFixed(2)}`);
+        const totalQty = cart.reduce((sum, i) => sum + i.qty, 0);
+        $('#mobileCartBadge').text(totalQty).toggle(totalQty > 0);
+        calculateGrandTotal();
+    }
+
+    function updatePrice(id, newPrice) {
+        const item = cart.find(i => i.id === id);
+        if(!item) return;
+        item.price = parseFloat(newPrice) || 0;
+        renderCart();
+    }
+
+    function updateQty(id, qty) {
+        const item = cart.find(i => i.id === id);
+        if(!item) return;
+        if (qty <= 0) { logAdjustment('Remove Item', `${item.name} removed`); cart = cart.filter(i => i.id !== id); }
+        else { logAdjustment('Update Qty', `${item.name} changed: ${item.qty} -> ${qty}`); item.qty = qty; }
+        renderCart();
+    }
+
+    function calculateGrandTotal() {
+        const tax = parseFloat($('#taxInput').val()) || 0;
+        const discount = parseFloat($('#discountInput').val()) || 0;
+        grandTotal = Math.max(0, subtotal + subtotal * (tax / 100) - discount);
+        $('#grandTotalLabel').text(`${currencySymbol}${grandTotal.toFixed(2)}`);
+        const tendered = parseFloat($('#tenderedInput').val()) || 0;
+        $('#changeLabel').text(`${currencySymbol}${Math.max(0, tendered - grandTotal).toFixed(2)}`);
+    }
+
+    $(document).on('input', '#taxInput, #discountInput, #tenderedInput', calculateGrandTotal);
+
+    function clearCart() {
+        if(confirm("Ma hubtaa inaad tirtirto dalabkan?")) { logAdjustment('Clear Cart', 'Cart cleared'); cart = []; renderCart(); }
+    }
+
+    function holdSale() {
+        if (cart.length === 0) return alert('Dalabku waa faaruq!');
+        let held = JSON.parse(localStorage.getItem('held_orders') || '[]');
+        const now = new Date();
+        held.push({ id: Date.now(), cart, time: now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), date: now.toLocaleDateString(), items_count: cart.length, total: grandTotal });
+        localStorage.setItem('held_orders', JSON.stringify(held));
+        logAdjustment('Hold Sale', `Order suspended`);
+        cart = []; renderCart(); updateHoldCounter();
+        alert("Dalabka waa la hakiyay!");
+    }
+
+    function quickRestoreOrShow() {
+        let held = JSON.parse(localStorage.getItem('held_orders') || '[]');
+        if (held.length > 0) {
+            // Restore the most recent held order directly, no modal
+            restoreOrder(held[held.length - 1].id);
+        } else {
+            alert("Ma jiraan dalabaad la hakiyay.");
+        }
+    }
+
+    function restoreOrder(orderId) {
+        orderId = Number(orderId); // fix type mismatch: string vs number
+        if(cart.length > 0 && !confirm('Dalabka hadda furan waa la bedeli doonaa. Ma sii wadaa?')) return;
+        let held = JSON.parse(localStorage.getItem('held_orders') || '[]');
+        const order = held.find(o => Number(o.id) === orderId);
+        if(order) {
+            cart = order.cart;
+            localStorage.setItem('held_orders', JSON.stringify(held.filter(o => Number(o.id) !== orderId)));
+            renderCart();
+            updateHoldCounter();
+            // On mobile, auto-open cart
+            setTimeout(() => {
+                if (window.innerWidth < 992) {
+                    $('#cartSidebar').addClass('show-mobile');
+                    $('#mobileOverlay').addClass('show');
+                }
+            }, 50);
+        } else {
+            console.warn('Order not found:', orderId, held);
+        }
+    }
+
+    function updateHoldCounter() {
+        let held = JSON.parse(localStorage.getItem('held_orders') || '[]');
+        $('#holdCounter').text(held.length).toggle(held.length > 0);
+    }
+
+    function filterCategory(id, el) {
+        $('.cat-pill').removeClass('active'); $(el).addClass('active');
+        if(id === 'all') $('.product-item').show();
+        else { $('.product-item').hide(); $(`.product-item[data-category="${id}"]`).show(); }
+    }
+
+    $('#barcodeInput').on('input', function() {
+        const val = $(this).val().toLowerCase();
+        $('.product-item').each(function() {
+            const name = $(this).data('name').toString().toLowerCase();
+            const barcode = $(this).data('barcode').toString().toLowerCase();
+            $(this).toggle(name.includes(val) || barcode.includes(val));
+        });
+    });
+
+    // ── Checkout Logic ───────────────────────────────────────────────────────
+    function processCheckout() {
+        if (cart.length === 0) return;
+        
+        const method = $('#paymentMethod').val();
+        const accountCode = $('#paymentAccount').val();
+        const customerId = $('#customerSelect').val();
+
+        if (method === 'Credit' && !customerId) {
+            alert('Fadlan dooro macmiilka haddii ay tahay deyn.');
+            return;
+        }
+
+        const data = {
+            items: cart,
+            total_amount: grandTotal,
+            payment_method: accountCode || method,
+            customer_id: customerId
+        };
+
+        const btn = $('#payBtn');
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Processing...');
+
+        $.ajax({
+            url: "{{ url_for('sales.checkout') }}",
+            type: "POST",
+            contentType: "application/json",
+            headers: { 'X-CSRFToken': csrfToken },
+            data: JSON.stringify(data),
+            success: function(res) {
+                if (res.success) {
+                    window.location.href = "/invoice/" + res.invoice_no;
+                } else {
+                    alert(res.message);
+                    btn.prop('disabled', false).text('DIWAANGELI IIBKA');
+                }
+            },
+            error: function() {
+                alert('Cilad ayaa dhacday xiligii la kaydinayay iibka.');
+                btn.prop('disabled', false).text('DIWAANGELI IIBKA');
+            }
+        });
+    }
+
+    // ── Dynamic Account Filtering ─────────────────────────────────────────────
+    $('#paymentMethod').on('change', function() {
+        const method = $(this).val();
+        const $accSelect = $('#paymentAccount');
+        
+        if (method === 'Credit') {
+            // Show Accounts Receivable (Accounts usually starting with 1200 or defined as receivable)
+            $accSelect.find('option').each(function() {
+                const sub = $(this).data('sub');
+                $(this).toggle(sub === 'Accounts Receivable');
+            });
+            $accSelect.val($accSelect.find('option[data-sub="Accounts Receivable"]:first').val());
+        } else {
+            // Show Cash & Bank
+            $accSelect.find('option').each(function() {
+                const sub = $(this).data('sub');
+                $(this).toggle(sub === 'Cash & Bank');
+            });
+            $accSelect.val($accSelect.find('option[data-sub="Cash & Bank"]:first').val());
+        }
+    });
+
+    // Initialize filter
+    $(document).ready(function() {
+        $('#paymentMethod').trigger('change');
+    });
+
+    $(document).ready(function() {
+        $('#customerSelect').select2({ width: '100%' });
+        updateHoldCounter();
+        renderCart();
+        
+        // Auto-focus on barcode input
+        $('#barcodeInput').focus();
+        
+        // Keep focus on barcode input for fast scanning (optional)
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('.summary-row, .modal, .select2-container, #customerSelect').length) {
+                $('#barcodeInput').focus();
+            }
+        });
+
+        $(document).on('click', '.product-item', function() {
+            addToCart($(this).data('id'), $(this).data('name'), $(this).data('price'));
+            $('#barcodeInput').focus();
+        });
+
+        // Barcode Scanner Logic (Enter key)
+        $('#barcodeInput').on('keypress', function(e) {
+            if (e.which === 13) {
+                const val = $(this).val().trim().toLowerCase();
+                if (val === '') return;
+                
+                // Find product by EXACT barcode match
+                let found = false;
+                $('.product-item').each(function() {
+                    if ($(this).data('barcode').toString().toLowerCase() === val) {
+                        addToCart($(this).data('id'), $(this).data('name'), $(this).data('price'));
+                        found = true;
+                        return false; // break
+                    }
+                });
+                
+                if (found) {
+                    $(this).val('');
+                    e.preventDefault();
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

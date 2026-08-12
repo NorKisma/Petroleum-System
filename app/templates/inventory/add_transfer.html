@@ -1,0 +1,276 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Add Stock Transfer - Antigravity POS{% endblock %}
+{% block page_title %}Inventory - New Stock Transfer{% endblock %}
+
+{% block styles %}
+<style>
+    .form-section-premium {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 35px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+        margin-bottom: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .section-title-elite {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 12px;
+    }
+
+    .input-group-elite {
+        border-radius: 12px;
+        border: 1.5px solid #e2e8f0;
+        padding: 12px 16px;
+        background-color: #f8fafc;
+        transition: all 0.3s ease;
+    }
+
+    .input-group-elite:focus {
+        border-color: #4ba3e3;
+        background-color: #ffffff;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        outline: none;
+    }
+
+    .transfer-table thead th {
+        background: #0f172a;
+        color: white;
+        border: none;
+        padding: 15px;
+        font-size: 0.85rem;
+    }
+
+    .transfer-table tbody td {
+        padding: 15px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .qty-input {
+        width: 80px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        text-align: center;
+        padding: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header-elite animate-up mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="mb-1">Add Stock Transfer</h3>
+            <p class="text-white text-opacity-75 small mb-0">Transfer inventory between business locations.</p>
+        </div>
+        <a href="{{ url_for('inventory.list_transfers') }}" class="btn btn-light rounded-pill px-4 fw-bold shadow-sm">
+            <i class="fas fa-arrow-left me-2"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<div class="animate-up">
+    <div class="form-section-premium">
+        <div class="section-title-elite">
+            <i class="fas fa-map-marker-alt text-primary"></i> Transfer Locations
+        </div>
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <label class="form-label fw-bold small text-uppercase text-muted">Date:*</label>
+                <input type="text" class="form-control input-group-elite" value="{{ now_str or '' }}" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold small text-uppercase text-muted">Location (From):*</label>
+                <select id="from_branch" class="form-select input-group-elite searchable-select">
+                    <option value="">Select Source</option>
+                    {% for b in branches %}
+                    <option value="{{ b.id }}">{{ b.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold small text-uppercase text-muted">Location (To):*</label>
+                <select id="to_branch" class="form-select input-group-elite searchable-select">
+                    <option value="">Select Destination</option>
+                    {% for b in branches %}
+                    <option value="{{ b.id }}">{{ b.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section-premium">
+        <div class="section-title-elite">
+            <i class="fas fa-box text-primary"></i> Select Products
+        </div>
+        <div class="mb-4">
+            <div class="input-group input-group-lg shadow-sm rounded-4 overflow-hidden border">
+                <span class="input-group-text bg-white border-0"><i class="fas fa-search text-primary"></i></span>
+                <select id="productSearch" class="form-select border-0 shadow-none">
+                    <option value="">Search products for stock transfer...</option>
+                    {% for p in products %}
+                    <option value="{{ p.id }}" data-name="{{ p.name }}" data-price="{{ p.sell_price }}" data-stock="{{ p.stock_quantity }}">
+                        {{ p.name }} (Stock: {{ p.stock_quantity }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="table-responsive rounded-4 border overflow-hidden">
+            <table class="table transfer-table mb-0" id="itemsTable">
+                <thead>
+                    <tr>
+                        <th width="50%">Product</th>
+                        <th width="20%">Current Stock</th>
+                        <th width="20%">Quantity</th>
+                        <th width="10%"><i class="fas fa-trash"></i></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Items will be added here -->
+                    <tr id="emptyRow">
+                        <td colspan="4" class="text-center py-5 text-muted italic">No products added yet. Use the search bar above.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="form-section-premium">
+        <div class="section-title-elite">
+            <i class="fas fa-truck text-primary"></i> Additional Info
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <label class="form-label fw-bold small text-uppercase text-muted">Shipping Charges:</label>
+                <input type="number" id="shipping_charges" class="form-control input-group-elite" value="0">
+            </div>
+            <div class="col-md-8">
+                <label class="form-label fw-bold small text-uppercase text-muted">Additional Notes:</label>
+                <textarea id="notes" class="form-control input-group-elite" rows="1" placeholder="Add any details about this transfer..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-3 mb-5">
+        <button type="button" class="btn btn-light rounded-pill px-5 fw-bold border py-3 shadow-sm" onclick="window.history.back()">Cancel</button>
+        <button type="button" id="saveTransferBtn" class="btn btn-primary rounded-pill px-5 fw-bold py-3 shadow-lg" style="background: linear-gradient(135deg, #4ba3e3, #2563eb); border: none; min-width: 250px;">
+            <i class="fas fa-check-circle me-2"></i> Complete Transfer
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    $(document).ready(function() {
+        $('.searchable-select').select2({ theme: 'bootstrap-5', width: '100%' });
+        $('#productSearch').select2({ theme: 'bootstrap-5', width: '100%' });
+
+        $('#productSearch').on('select2:select', function(e) {
+            const data = e.params.data;
+            const option = $(this).find(':selected');
+            const id = data.id;
+            const name = option.data('name');
+            const stock = option.data('stock');
+            
+            if(!id) return;
+            
+            $('#emptyRow').hide();
+            
+            // Check if already added
+            if($(`#row-${id}`).length) {
+                const qtyInput = $(`#row-${id} .qty-input`);
+                qtyInput.val(parseInt(qtyInput.val()) + 1);
+            } else {
+                const rowHtml = `
+                    <tr id="row-${id}" class="animate-fade">
+                        <td>
+                            <div class="fw-bold text-dark">${name}</div>
+                            <small class="text-muted">ID: ${id}</small>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">${stock}</span></td>
+                        <td><input type="number" class="qty-input" value="1" min="1" max="${stock}"></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger border-0 rounded-3" onclick="removeItem(${id})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                $('#itemsTable tbody').append(rowHtml);
+            }
+            
+            $(this).val('').trigger('change');
+        });
+
+        $('#saveTransferBtn').on('click', function() {
+            const from = $('#from_branch').val();
+            const to = $('#to_branch').val();
+            const items = [];
+            
+            if(!from || !to) return Swal.fire('Error', 'Fadlan dooro Source iyo Destination sxb!', 'error');
+            if(from === to) return Swal.fire('Error', 'Source iyo Destination isku mid ma noqon karaan!', 'error');
+            
+            $('#itemsTable tbody tr:not(#emptyRow)').each(function() {
+                const id = $(this).attr('id').split('-')[1];
+                const qty = $(this).find('.qty-input').val();
+                items.push({ product_id: id, quantity: qty });
+            });
+            
+            if(items.length === 0) return Swal.fire('Error', 'Fadlan ku dar ugu yaraan hal alaab!', 'error');
+            
+            const btn = $(this);
+            btn.html('<i class="fas fa-spinner fa-spin me-2"></i> Processing...').prop('disabled', true);
+            
+            const data = {
+                from_branch_id: from,
+                to_branch_id: to,
+                shipping_charges: $('#shipping_charges').val(),
+                additional_notes: $('#notes').val(),
+                items: items
+            };
+            
+            fetch("{{ url_for('inventory.add_transfer') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    Swal.fire({ icon: 'success', title: 'Guul!', text: data.message, showConfirmButton: false, timer: 2000 })
+                    .then(() => window.location.href = "{{ url_for('inventory.list_transfers') }}");
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                    btn.html('<i class="fas fa-check-circle me-2"></i> Complete Transfer').prop('disabled', false);
+                }
+            })
+            .catch(err => {
+                Swal.fire('Error', 'System error occurred!', 'error');
+                btn.html('<i class="fas fa-check-circle me-2"></i> Complete Transfer').prop('disabled', false);
+            });
+        });
+    });
+
+    function removeItem(id) {
+        $(`#row-${id}`).remove();
+        if($('#itemsTable tbody tr:not(#emptyRow)').length === 0) {
+            $('#emptyRow').show();
+        }
+    }
+</script>
+{% endblock %}

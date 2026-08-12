@@ -1,0 +1,211 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Share Investments - Antigravity POS{% endblock %}
+{% block page_title %}Maalgashiga (Share Investments){% endblock %}
+
+{% block content %}
+<div class="card border border-light shadow-sm rounded-4 mb-5">
+    <div class="card-header bg-white py-3 px-4 border-bottom border-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-arrow-up me-2 text-success"></i> Taariikhda Maalgashiga</h5>
+        <button class="btn btn-success rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="offcanvas" data-bs-target="#addInvOffcanvas">
+            <i class="fas fa-plus me-2"></i> Maalgashi Cusub
+        </button>
+    </div>
+    <div class="card-body p-4">
+        <div class="table-responsive">
+            <table id="invTable" class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Saamilayda</th>
+                        <th>Lacagta</th>
+                        <th>Account</th>
+                        <th>Description</th>
+                        <th>Taariikhda</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in investments %}
+                    <tr>
+                        <td class="text-muted small">#{{ i.id }}</td>
+                        <td class="fw-bold text-dark">{{ i.shareholder.name }}</td>
+                        <td class="fw-bold text-success">${{ "{:,.2f}".format(i.amount) }}</td>
+                        <td>
+                            {% if i.account %}
+                                <span class="badge bg-info text-dark">{{ i.account.account_name }}</span>
+                            {% else %}
+                                <span class="text-muted small">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ i.description or '-' }}</td>
+                        <td class="text-muted">{{ i.investment_date.strftime('%d/%m/%Y') }}</td>
+                        <td class="text-end">
+                            <button class="btn btn-link text-primary p-0 me-3 edit-inv-btn" 
+                                    data-id="{{ i.id }}"
+                                    data-sid="{{ i.shareholder_id }}"
+                                    data-amount="{{ i.amount }}"
+                                    data-account_id="{{ i.account_id or '' }}"
+                                    data-desc="{{ i.description or '' }}">
+                                <i class="fas fa-edit fs-6"></i>
+                            </button>
+                            <button class="btn btn-link text-danger p-0 delete-inv-btn" data-id="{{ i.id }}">
+                                <i class="far fa-trash-alt fs-6"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas: Add Investment -->
+<div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="addInvOffcanvas" style="width: 450px;">
+    <div class="offcanvas-header border-bottom py-3">
+        <h5 class="fw-bold mb-0 text-dark">Diiwaangeli Maalgashi Cusub</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body" style="background-color: #fafafa;">
+        <form action="{{ url_for('share.investment') }}" method="POST">
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Saamilayda <span class="text-danger">*</span></label>
+                <select name="shareholder_id" class="form-select border-secondary border-opacity-25 rounded-3" required>
+                    <option value="">Dooro Saamilayda</option>
+                    {% for s in shareholders %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Lacagta (Amount $) <span class="text-danger">*</span></label>
+                <input type="number" step="0.01" name="amount" class="form-control border-secondary border-opacity-25 rounded-3" placeholder="0.00" required>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Account-ka lagu shubay <span class="text-danger">*</span></label>
+                <select name="account_id" class="form-select border-secondary border-opacity-25 rounded-3" required>
+                    <option value="">Dooro Account</option>
+                    {% for acc in bank_accounts %}
+                    <option value="{{ acc.id }}">{{ acc.account_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Faahfaahin (Description)</label>
+                <textarea name="description" class="form-control border-secondary border-opacity-25 rounded-3" rows="3" placeholder="Description..."></textarea>
+            </div>
+
+            <div class="d-flex gap-2 mt-5">
+                <button type="button" class="btn btn-light border fw-bold px-4 rounded-3" data-bs-dismiss="offcanvas">Jooji</button>
+                <button type="submit" class="btn btn-success fw-bold px-4 rounded-3 shadow-sm">Keydi Maalgashiga</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+<!-- Offcanvas: Edit Investment -->
+<div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="editInvOffcanvas" style="width: 450px;">
+    <div class="offcanvas-header border-bottom py-3">
+        <h5 class="fw-bold mb-0 text-dark">Wax ka bedel Maalgashiga</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body" style="background-color: #fafafa;">
+        <form id="editInvForm" method="POST">
+            <input type="hidden" name="id" id="edit_inv_id">
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Saamilayda <span class="text-danger">*</span></label>
+                <select name="shareholder_id" id="edit_inv_sid" class="form-select border-secondary border-opacity-25 rounded-3" required>
+                    {% for s in shareholders %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Lacagta (Amount $) <span class="text-danger">*</span></label>
+                <input type="number" step="0.01" name="amount" id="edit_inv_amount" class="form-control border-secondary border-opacity-25 rounded-3" required>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Account-ka lagu shubay <span class="text-danger">*</span></label>
+                <select name="account_id" id="edit_inv_account_id" class="form-select border-secondary border-opacity-25 rounded-3" required>
+                    {% for acc in bank_accounts %}
+                    <option value="{{ acc.id }}">{{ acc.account_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold text-dark small">Faahfaahin (Description)</label>
+                <textarea name="description" id="edit_inv_desc" class="form-control border-secondary border-opacity-25 rounded-3" rows="3"></textarea>
+            </div>
+
+            <div class="d-flex gap-2 mt-5">
+                <button type="button" class="btn btn-light border fw-bold px-4 rounded-3" data-bs-dismiss="offcanvas">Jooji</button>
+                <button type="submit" class="btn btn-primary fw-bold px-4 rounded-3 shadow-sm">Cusboonaysii Maalgashiga</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#invTable').DataTable({
+            "pageLength": 10,
+            "order": [[4, "desc"]],
+            "language": {
+                "search": "Raadi:",
+                "lengthMenu": "Muuji _MENU_ saf",
+                "info": "Waxaa la muujiyay _START_ ilaa _END_ oo ka mid ah _TOTAL_ maalgashi",
+                "paginate": {
+                    "previous": "Dib",
+                    "next": "Xiga"
+                }
+            }
+        });
+
+        // Edit Button Click
+        $('.edit-inv-btn').on('click', function() {
+            const id = $(this).data('id');
+            const sid = $(this).data('sid');
+            const amount = $(this).data('amount');
+            const account_id = $(this).data('account_id');
+            const desc = $(this).data('desc');
+            
+            $('#edit_inv_id').val(id);
+            $('#edit_inv_sid').val(sid);
+            $('#edit_inv_amount').val(amount);
+            $('#edit_inv_account_id').val(account_id);
+            $('#edit_inv_desc').val(desc);
+            $('#editInvForm').attr('action', `/share/investment/edit/${id}`);
+
+            new bootstrap.Offcanvas(document.getElementById('editInvOffcanvas')).show();
+        });
+
+        // Delete Button Click
+        $('.delete-inv-btn').on('click', function() {
+            const id = $(this).data('id');
+            if(confirm("Ma hubtaa inaad tirtid maalgashigan?")) {
+                fetch(`/share/investment/delete/${id}`, {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'}
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if(result.success) {
+                        location.reload();
+                    } else {
+                        alert("Cilad: " + result.message);
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}
