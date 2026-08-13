@@ -178,10 +178,172 @@
     .btn-action-premium.delete:hover {
         color: #f94a4a;
     }
+    /* Roles Guide Card */
+    .roles-guide-card {
+        background: rgba(255,255,255,0.7);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 24px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+        padding: 28px 30px;
+        margin-bottom: 1.5rem;
+    }
+    .role-card {
+        border-radius: 16px;
+        padding: 18px;
+        border: 1.5px solid transparent;
+        transition: all 0.25s ease;
+        cursor: default;
+        height: 100%;
+    }
+    .role-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+    }
+    .role-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        margin-bottom: 12px;
+    }
+    .perm-tag {
+        display: inline-block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 6px;
+        margin: 2px 2px;
+    }
+    .perm-yes  { background: rgba(16,185,129,0.1); color: #059669; }
+    .perm-no   { background: rgba(239,68,68,0.08); color: #dc2626; text-decoration: line-through; opacity: 0.5; }
 </style>
 {% endblock %}
 
 {% block content %}
+
+<!-- ══ Roles Guide Card ══════════════════════════════════════════════════ -->
+<div class="roles-guide-card animate-up">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h5 class="fw-bold text-dark mb-1"><i class="fas fa-shield-alt text-primary me-2"></i>System Roles & Permissions</h5>
+            <p class="text-muted small mb-0">Mid kastaa waxaa laga xukumayaa meelaha uu geli karo nidaamka.</p>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill" type="button" data-bs-toggle="collapse" data-bs-target="#rolesGuideBody">
+            <i class="fas fa-chevron-down me-1"></i> Muuji / Hid
+        </button>
+    </div>
+    <div class="collapse show" id="rolesGuideBody">
+    <div class="row g-3">
+        <!-- Developer -->
+        <div class="col-md-6 col-lg-2">
+            <div class="role-card" style="background:rgba(15,23,42,0.05); border-color:rgba(15,23,42,0.12);">
+                <div class="role-icon-box" style="background:rgba(15,23,42,0.1); color:#0f172a;"><i class="fas fa-code"></i></div>
+                <div class="fw-bold text-dark mb-2" style="font-size:.85rem;">Developer</div>
+                <div>
+                    <span class="perm-tag perm-yes">Full Access</span>
+                    <span class="perm-tag perm-yes">System Config</span>
+                    <span class="perm-tag perm-yes">All Modules</span>
+                    <span class="perm-tag perm-yes">User Mgmt</span>
+                    <span class="perm-tag perm-yes">Petroleum</span>
+                    <span class="perm-tag perm-yes">Audit Logs</span>
+                </div>
+            </div>
+        </div>
+        <!-- Admin -->
+        <div class="col-md-6 col-lg-2">
+            <div class="role-card" style="background:rgba(30,96,163,0.05); border-color:rgba(30,96,163,0.15);">
+                <div class="role-icon-box" style="background:rgba(30,96,163,0.1); color:#1e60a3;"><i class="fas fa-user-shield"></i></div>
+                <div class="fw-bold text-dark mb-2" style="font-size:.85rem;">Admin</div>
+                <div>
+                    <span class="perm-tag perm-yes">Dashboard</span>
+                    <span class="perm-tag perm-yes">Sales</span>
+                    <span class="perm-tag perm-yes">Purchases</span>
+                    <span class="perm-tag perm-yes">Inventory</span>
+                    <span class="perm-tag perm-yes">Accounting</span>
+                    <span class="perm-tag perm-yes">Staff Mgmt</span>
+                    <span class="perm-tag perm-yes">Settings</span>
+                    <span class="perm-tag perm-yes">Petroleum</span>
+                    <span class="perm-tag perm-yes">Audit Logs</span>
+                    <span class="perm-tag perm-no">Sys Config</span>
+                </div>
+            </div>
+        </div>
+        <!-- Manager -->
+        <div class="col-md-6 col-lg-2">
+            <div class="role-card" style="background:rgba(245,158,11,0.05); border-color:rgba(245,158,11,0.2);">
+                <div class="role-icon-box" style="background:rgba(245,158,11,0.1); color:#d97706;"><i class="fas fa-user-tie"></i></div>
+                <div class="fw-bold text-dark mb-2" style="font-size:.85rem;">Manager</div>
+                <div>
+                    <span class="perm-tag perm-yes">Dashboard</span>
+                    <span class="perm-tag perm-yes">Sales</span>
+                    <span class="perm-tag perm-yes">Inventory</span>
+                    <span class="perm-tag perm-yes">Customers</span>
+                    <span class="perm-tag perm-yes">Expenses</span>
+                    <span class="perm-tag perm-yes">Reports</span>
+                    <span class="perm-tag perm-yes">Petroleum</span>
+                    <span class="perm-tag perm-no">Settings</span>
+                    <span class="perm-tag perm-no">Accounting</span>
+                </div>
+            </div>
+        </div>
+        <!-- Accountant -->
+        <div class="col-md-6 col-lg-2">
+            <div class="role-card" style="background:rgba(16,185,129,0.05); border-color:rgba(16,185,129,0.15);">
+                <div class="role-icon-box" style="background:rgba(16,185,129,0.1); color:#059669;"><i class="fas fa-calculator"></i></div>
+                <div class="fw-bold text-dark mb-2" style="font-size:.85rem;">Accountant</div>
+                <div>
+                    <span class="perm-tag perm-yes">Dashboard</span>
+                    <span class="perm-tag perm-yes">Accounting</span>
+                    <span class="perm-tag perm-yes">Reports</span>
+                    <span class="perm-tag perm-yes">Expenses</span>
+                    <span class="perm-tag perm-yes">Purchases</span>
+                    <span class="perm-tag perm-yes">Payroll View</span>
+                    <span class="perm-tag perm-no">POS</span>
+                    <span class="perm-tag perm-no">Settings</span>
+                    <span class="perm-tag perm-no">Staff Mgmt</span>
+                </div>
+            </div>
+        </div>
+        <!-- Cashier -->
+        <div class="col-md-6 col-lg-2">
+            <div class="role-card" style="background:rgba(139,92,246,0.05); border-color:rgba(139,92,246,0.15);">
+                <div class="role-icon-box" style="background:rgba(139,92,246,0.1); color:#7c3aed;"><i class="fas fa-cash-register"></i></div>
+                <div class="fw-bold text-dark mb-2" style="font-size:.85rem;">Cashier</div>
+                <div>
+                    <span class="perm-tag perm-yes">POS Terminal</span>
+                    <span class="perm-tag perm-yes">Sales Entry</span>
+                    <span class="perm-tag perm-yes">Fuel Sales</span>
+                    <span class="perm-tag perm-yes">Customers View</span>
+                    <span class="perm-tag perm-no">Reports</span>
+                    <span class="perm-tag perm-no">Accounting</span>
+                    <span class="perm-tag perm-no">Inventory Edit</span>
+                    <span class="perm-tag perm-no">Settings</span>
+                </div>
+            </div>
+        </div>
+        <!-- Staff -->
+        <div class="col-md-6 col-lg-2">
+            <div class="role-card" style="background:rgba(100,116,139,0.05); border-color:rgba(100,116,139,0.12);">
+                <div class="role-icon-box" style="background:rgba(100,116,139,0.1); color:#475569;"><i class="fas fa-user"></i></div>
+                <div class="fw-bold text-dark mb-2" style="font-size:.85rem;">Staff</div>
+                <div>
+                    <span class="perm-tag perm-yes">Dashboard</span>
+                    <span class="perm-tag perm-yes">Module Toggles</span>
+                    <span class="perm-tag" style="background:rgba(245,158,11,0.1);color:#d97706;">Custom Per User</span>
+                    <span class="perm-tag perm-no">Settings</span>
+                    <span class="perm-tag perm-no">Staff Mgmt</span>
+                    <span class="perm-tag perm-no">Accounting</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
 <div class="staff-container animate-up">
     <!-- Premium Header -->
     <div class="staff-header">
@@ -196,6 +358,10 @@
                         <i class="fas fa-search"></i>
                         <input type="text" id="staffSearch" placeholder="Search team members...">
                     </div>
+
+                    <button class="btn btn-outline-info px-3 py-2 fw-bold" style="border-radius:12px;" data-bs-toggle="collapse" data-bs-target="#rolesGuideBody">
+                        <i class="fas fa-shield-alt me-1"></i> Roles Guide
+                    </button>
 
                     <a href="{{ url_for('staff.list_payroll') }}" class="btn btn-outline-primary px-4 py-2 fw-bold"
                         style="border-radius: 12px;">
@@ -250,20 +416,17 @@
                     </td>
                     <td>
                         {% if member.role == 'developer' %}
-                        <span class="badge-premium" style="background: rgba(15, 23, 42, 0.1); color: #0f172a;"><i
-                                class="fas fa-code"></i> Developer</span>
+                        <span class="badge-premium" style="background: rgba(15,23,42,0.1); color: #0f172a;"><i class="fas fa-code"></i> Developer</span>
                         {% elif member.role == 'admin' %}
-                        <span class="badge-premium" style="background: rgba(99, 102, 241, 0.1); color: #4ba3e3;"><i
-                                class="fas fa-user-shield"></i> Admin</span>
+                        <span class="badge-premium" style="background: rgba(30,96,163,0.1); color: #1e60a3;"><i class="fas fa-user-shield"></i> Admin</span>
                         {% elif member.role == 'manager' %}
-                        <span class="badge-premium" style="background: rgba(245, 158, 11, 0.1); color: #d97706;"><i
-                                class="fas fa-user-tie"></i> Manager</span>
+                        <span class="badge-premium" style="background: rgba(245,158,11,0.1); color: #d97706;"><i class="fas fa-user-tie"></i> Manager</span>
                         {% elif member.role == 'accountant' %}
-                        <span class="badge-premium" style="background: rgba(16, 185, 129, 0.1); color: #059669;"><i
-                                class="fas fa-calculator"></i> Accountant</span>
+                        <span class="badge-premium" style="background: rgba(16,185,129,0.1); color: #059669;"><i class="fas fa-calculator"></i> Accountant</span>
+                        {% elif member.role == 'cashier' %}
+                        <span class="badge-premium" style="background: rgba(139,92,246,0.1); color: #7c3aed;"><i class="fas fa-cash-register"></i> Cashier</span>
                         {% else %}
-                        <span class="badge-premium" style="background: rgba(100, 116, 139, 0.1); color: #475569;"><i
-                                class="fas fa-user"></i> Staff</span>
+                        <span class="badge-premium" style="background: rgba(100,116,139,0.1); color: #475569;"><i class="fas fa-user"></i> Staff</span>
                         {% endif %}
                     </td>
                     <td class="fw-bold text-primary">${{ "{:,.2f}".format(member.salary or 0) }}</td>
@@ -552,12 +715,12 @@
                             class="fas fa-user-tag me-1 text-primary"></i> System Role <span
                             class="text-danger">*</span></label>
                     <select id="editStaffRole" class="form-select rounded-3 py-2" required>
-                        <option value="staff">Cashier (Staff)</option>
-                        <option value="accountant">Accountant (Finance Only)</option>
-                        <option value="manager">Manager</option>
-                        <option value="admin">Administrator</option>
-                        <option value="developer" hidden>Developer (System Access)</option>
-
+                        <option value="staff">⬜ Staff (Custom Permissions)</option>
+                        <option value="cashier">🟣 Cashier (POS Only)</option>
+                        <option value="accountant">🟢 Accountant (Finance Only)</option>
+                        <option value="manager">🟡 Manager</option>
+                        <option value="admin">🔵 Administrator</option>
+                        <option value="developer" hidden>⚫ Developer (Full Access)</option>
                     </select>
                 </div>
             </div>
@@ -628,13 +791,13 @@
                             class="fas fa-user-shield me-1 text-primary"></i> Assign Role <span
                             class="text-danger">*</span></label>
                     <select name="role" class="form-select rounded-3 py-2" required>
-                        <option value="">Select Role</option>
-                        <option value="staff">Cashier (Staff)</option>
-                        <option value="accountant">Accountant (Finance Only)</option>
-                        <option value="manager">Manager</option>
-                        <option value="admin">Administrator</option>
-                        <option value="developer" hidden>Developer (System Access)</option>
-
+                        <option value="">-- Select Role --</option>
+                        <option value="staff">⬜ Staff (Custom Permissions)</option>
+                        <option value="cashier">🟣 Cashier (POS Only)</option>
+                        <option value="accountant">🟢 Accountant (Finance Only)</option>
+                        <option value="manager">🟡 Manager</option>
+                        <option value="admin">🔵 Administrator</option>
+                        <option value="developer" hidden>⚫ Developer (Full Access)</option>
                     </select>
                 </div>
             </div>

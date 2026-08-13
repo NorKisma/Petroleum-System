@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rays Technology Solutions</title>
+    <title>Rays Petroleum Software</title>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <!-- Bootstrap 5 CSS -->
@@ -11,9 +11,15 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --brand-blue: #1e60a3;
+            --brand-red: #e3342f;
+            --dark-bg: #0f172a;
+        }
+
         body {
             font-family: 'Outfit', sans-serif;
-            background: #0f172a;
+            background: var(--dark-bg);
             color: white;
             overflow-x: hidden;
             scroll-behavior: smooth;
@@ -26,7 +32,7 @@
             left: -10%;
             width: 500px;
             height: 500px;
-            background: radial-gradient(circle, rgba(79, 70, 229, 0.4) 0%, rgba(79, 70, 229, 0) 70%);
+            background: radial-gradient(circle, rgba(30, 96, 163, 0.4) 0%, rgba(30, 96, 163, 0) 70%);
             border-radius: 50%;
             z-index: -1;
             filter: blur(40px);
@@ -37,7 +43,7 @@
             right: -10%;
             width: 600px;
             height: 600px;
-            background: radial-gradient(circle, rgba(56, 189, 248, 0.3) 0%, rgba(56, 189, 248, 0) 70%);
+            background: radial-gradient(circle, rgba(227, 52, 47, 0.3) 0%, rgba(227, 52, 47, 0) 70%);
             border-radius: 50%;
             z-index: -1;
             filter: blur(40px);
@@ -45,7 +51,7 @@
 
         /* Navbar */
         .navbar {
-            background: rgba(15, 23, 42, 0.8) !important;
+            background: rgba(15, 23, 42, 0.9) !important;
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -56,11 +62,13 @@
         .navbar-brand {
             font-weight: 800;
             font-size: 1.5rem;
-            color: white !important;
             display: flex;
             align-items: center;
         }
         
+        .brand-rays { color: var(--brand-blue); }
+        .brand-petro { color: var(--brand-red); }
+
         .nav-link {
             color: rgba(255,255,255,0.8) !important;
             font-weight: 600;
@@ -69,23 +77,23 @@
         }
         
         .nav-link:hover {
-            color: #38bdf8 !important;
+            color: var(--brand-blue) !important;
         }
 
         .btn-login {
-            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-red) 100%);
             color: white !important;
             border: none;
             padding: 10px 25px;
             border-radius: 50px;
             font-weight: 600;
             transition: 0.3s;
-            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 10px 20px rgba(227, 52, 47, 0.3);
         }
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 15px 25px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 15px 25px rgba(227, 52, 47, 0.4);
         }
 
         /* Hero Section */
@@ -93,25 +101,28 @@
             min-height: 100vh;
             display: flex;
             align-items: center;
-            padding-top: 80px;
+            padding-top: 100px;
             position: relative;
+            background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95)), url("{{ url_for('static', filename='img/hero_bg.png') }}") center/cover fixed;
         }
 
         .hero-title {
-            font-size: 4rem;
+            font-size: 3.5rem;
             font-weight: 800;
-            background: linear-gradient(to right, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: white;
             line-height: 1.2;
             margin-bottom: 20px;
             animation: slideUp 0.8s ease forwards;
             opacity: 0;
         }
 
+        .hero-title span {
+            color: var(--brand-red);
+        }
+
         .hero-subtitle {
             font-size: 1.2rem;
-            color: #94a3b8;
+            color: #cbd5e1;
             margin-bottom: 30px;
             animation: slideUp 0.8s ease 0.2s forwards;
             opacity: 0;
@@ -127,6 +138,21 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
+        /* Mockup Image Styling */
+        .dashboard-img {
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            animation: slideUp 1s ease 0.3s forwards;
+            opacity: 0;
+            transform: perspective(1000px) rotateY(-5deg);
+            transition: transform 0.5s ease;
+        }
+
+        .dashboard-img:hover {
+            transform: perspective(1000px) rotateY(0deg) scale(1.02);
+        }
+
         /* Glass Cards */
         .glass-panel {
             background: rgba(255, 255, 255, 0.03);
@@ -136,25 +162,31 @@
             border-radius: 20px;
             padding: 40px;
             transition: all 0.3s ease;
+            height: 100%;
         }
 
         .glass-panel:hover {
             transform: translateY(-5px);
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(30, 96, 163, 0.3);
         }
 
         .icon-box {
-            width: 60px;
-            height: 60px;
-            background: rgba(56, 189, 248, 0.1);
-            color: #38bdf8;
-            border-radius: 15px;
+            width: 70px;
+            height: 70px;
+            background: rgba(30, 96, 163, 0.1);
+            color: var(--brand-blue);
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 20px;
+            font-size: 2rem;
+            margin-bottom: 25px;
+        }
+
+        .icon-box.red-theme {
+            background: rgba(227, 52, 47, 0.1);
+            color: var(--brand-red);
         }
 
         /* Sections */
@@ -169,7 +201,7 @@
         }
 
         .section-subtitle {
-            color: #38bdf8;
+            color: var(--brand-red);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -201,7 +233,7 @@
             align-items: center;
             justify-content: center;
             margin-right: 15px;
-            color: #38bdf8;
+            color: var(--brand-blue);
         }
         
         .contact-item a {
@@ -213,25 +245,24 @@
         .contact-item a:hover {
             color: white;
         }
-        
+
         /* Light Mode Styles */
         body.light-mode {
             background: #f8fafc;
             color: #0f172a;
         }
         body.light-mode .navbar {
-            background: rgba(255, 255, 255, 0.9) !important;
+            background: rgba(255, 255, 255, 0.95) !important;
             border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-        body.light-mode .navbar-brand {
-            color: #0f172a !important;
         }
         body.light-mode .nav-link {
             color: #475569 !important;
         }
         body.light-mode .hero-title {
-            background: linear-gradient(to right, #0f172a, #334155);
-            -webkit-background-clip: text;
+            color: #0f172a;
+        }
+        body.light-mode .hero-subtitle {
+            color: #475569;
         }
         body.light-mode .glass-panel {
             background: rgba(255, 255, 255, 0.8);
@@ -242,7 +273,7 @@
             background: white;
             border-color: rgba(0,0,0,0.1);
         }
-        body.light-mode #about {
+        body.light-mode #features {
             background: rgba(241, 245, 249, 0.8) !important;
         }
         body.light-mode .text-muted {
@@ -253,18 +284,17 @@
             border-top: 1px solid rgba(0,0,0,0.05);
         }
         body.light-mode .bg-shape-1 {
-            background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, rgba(79, 70, 229, 0) 70%);
+            background: radial-gradient(circle, rgba(30, 96, 163, 0.15) 0%, rgba(30, 96, 163, 0) 70%);
         }
         body.light-mode .bg-shape-2 {
-            background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0) 70%);
-        }
-        body.light-mode .navbar-toggler i {
-            color: #0f172a !important;
+            background: radial-gradient(circle, rgba(227, 52, 47, 0.15) 0%, rgba(227, 52, 47, 0) 70%);
         }
         body.light-mode .contact-item a:hover {
             color: #0f172a;
         }
-
+        body.light-mode .hero-section {
+            background: linear-gradient(rgba(248, 250, 252, 0.8), rgba(248, 250, 252, 0.95)), url("{{ url_for('static', filename='img/hero_bg.png') }}") center/cover fixed;
+        }
     </style>
 </head>
 <body>
@@ -277,7 +307,8 @@
     <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <i class="fas fa-rocket text-info me-2"></i> Rays Technology Solutions
+                <i class="fas fa-gas-pump text-danger me-2"></i> 
+                <span class="brand-rays">RAYS</span>&nbsp;<span class="brand-petro">PETROLEUM SOFTWARE</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" style="border-color: rgba(255,255,255,0.1);">
                 <i class="fas fa-bars text-white"></i>
@@ -288,10 +319,10 @@
                         <a class="nav-link" href="#home">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#about">About</a>
+                        <a class="nav-link" href="#about">About System</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#services">Services</a>
+                        <a class="nav-link" href="#features">Features</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#contact">Contact</a>
@@ -300,7 +331,7 @@
                 <button id="themeToggle" class="btn btn-outline-secondary rounded-circle ms-3 me-3" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:none;">
                     <i class="fas fa-sun text-warning" id="themeIcon"></i>
                 </button>
-                <a href="{{ url_for('auth.login') }}" class="btn btn-login px-4">Login System</a>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-login px-4"><i class="fas fa-sign-in-alt me-2"></i> System Login</a>
             </div>
         </div>
     </nav>
@@ -309,142 +340,96 @@
     <section id="home" class="hero-section">
         <div class="container">
             <div class="row align-items-center">
-                <div class="col-lg-6">
-                    <span class="section-subtitle">Welcome to Rays Technology Solutions</span>
-                    <h1 class="hero-title">Empowering Your Business with Smart Technology</h1>
-                    <p class="hero-subtitle">Advanced Software Solutions designed to streamline your operations. From Enterprise POS to complete Petroleum Management Systems, we build platforms that scale.</p>
+                <div class="col-lg-5 mb-5 mb-lg-0">
+                    <span class="section-subtitle">Intelligent Gas Station Management</span>
+                    <h1 class="hero-title">Revolutionize Your <span>Petroleum</span> Business</h1>
+                    <p class="hero-subtitle">The ultimate all-in-one software solution for modern gas stations. Track tanks, automate shifts, manage fleet sales, and gain real-time insights.</p>
                     <div class="hero-buttons">
-                        <a href="#services" class="btn btn-login me-3 py-3 px-4">Explore Services</a>
-                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light rounded-pill py-3 px-4 fw-bold">Sign In to Dashboard</a>
+                        <a href="#features" class="btn btn-login me-3 py-3 px-4">Explore Features</a>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light rounded-pill py-3 px-4 fw-bold">Login Dashboard</a>
                     </div>
                 </div>
-                <div class="col-lg-6 mt-5 mt-lg-0 text-center position-relative">
-                    <!-- Dashboard Mockup Abstract -->
-                    <div class="glass-panel" style="animation: slideUp 1s ease 0.3s forwards; opacity: 0; transform: perspective(1000px) rotateY(-10deg);">
-                        <div class="d-flex justify-content-between border-bottom border-secondary pb-3 mb-4">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-secondary rounded-circle" style="width:12px; height:12px; margin-right:6px;"></div>
-                                <div class="bg-secondary rounded-circle" style="width:12px; height:12px; margin-right:6px;"></div>
-                                <div class="bg-secondary rounded-circle" style="width:12px; height:12px;"></div>
-                            </div>
-                            <div class="fw-bold small text-muted">Dashboard Preview</div>
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-6">
-                                <div class="p-3 rounded-3" style="background: rgba(56, 189, 248, 0.1);">
-                                    <i class="fas fa-chart-line fs-3 text-info mb-2"></i>
-                                    <h4 class="mb-0 fw-bold">$24,500</h4>
-                                    <small class="text-muted">Total Sales</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="p-3 rounded-3" style="background: rgba(16, 185, 129, 0.1);">
-                                    <i class="fas fa-users fs-3 text-success mb-2"></i>
-                                    <h4 class="mb-0 fw-bold">1,240</h4>
-                                    <small class="text-muted">Active Users</small>
-                                </div>
-                            </div>
-                            <div class="col-12 mt-3">
-                                <div class="p-4 rounded-3" style="background: rgba(255,255,255,0.05); height: 120px; display: flex; align-items: flex-end;">
-                                    <!-- Fake Graph -->
-                                    <div class="bg-primary rounded-top me-2" style="width: 15%; height: 40%;"></div>
-                                    <div class="bg-primary rounded-top me-2" style="width: 15%; height: 70%;"></div>
-                                    <div class="bg-primary rounded-top me-2" style="width: 15%; height: 50%;"></div>
-                                    <div class="bg-primary rounded-top me-2" style="width: 15%; height: 90%;"></div>
-                                    <div class="bg-primary rounded-top me-2" style="width: 15%; height: 60%;"></div>
-                                    <div class="bg-primary rounded-top" style="width: 15%; height: 100%;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-lg-7 text-center position-relative">
+                    <img src="{{ url_for('static', filename='img/dashboard_mockup.png') }}" class="img-fluid dashboard-img" alt="Petroleum Dashboard Mockup">
                 </div>
             </div>
         </div>
     </section>
 
     <!-- About Section -->
-    <section id="about" class="section-padding" style="background: rgba(0,0,0,0.2);">
+    <section id="about" class="section-padding">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-6 mb-5 mb-lg-0">
-                    <div class="position-relative">
-                        <div class="glass-panel text-center p-5" style="border-radius: 30px;">
-                            <i class="fas fa-code text-primary mb-4" style="font-size: 5rem;"></i>
-                            <h3 class="fw-bold">Innovation meets Reliability</h3>
-                            <p class="text-muted mt-3">We specialize in building robust enterprise solutions tailored for local businesses.</p>
-                        </div>
-                    </div>
+                    <img src="{{ url_for('static', filename='img/hero_bg.png') }}" class="img-fluid rounded-4 shadow-lg" alt="Modern Gas Station" style="border: 2px solid rgba(255,255,255,0.1);">
                 </div>
                 <div class="col-lg-5 offset-lg-1">
-                    <span class="section-subtitle">About Us</span>
-                    <h2 class="section-title">Rays Technology Solutions</h2>
+                    <span class="section-subtitle">Why Choose Us</span>
+                    <h2 class="section-title">Built for the Energy Sector</h2>
                     <p class="text-muted mb-4" style="line-height: 1.8;">
-                        At Rays Technology Solutions, we are dedicated to transforming how businesses operate. 
-                        Our comprehensive software suites provide seamless point-of-sale, advanced inventory tracking, 
-                        and specialized modules like Petroleum Management.
+                        Rays Petroleum Software is engineered specifically for gas stations and fuel distribution companies. We understand the complexity of managing fuel inventory, dip readings, and employee shifts.
                     </p>
                     <p class="text-muted mb-4" style="line-height: 1.8;">
-                        With cutting-edge technology, user-centric design, and reliable support, we ensure your enterprise 
-                        has the digital foundation it needs to thrive in a competitive landscape.
+                        Our robust platform provides seamless integration between hardware and software, ensuring that every drop of fuel is accounted for and your profits are maximized.
                     </p>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2"><i class="fas fa-check-circle text-info me-2"></i> Advanced SaaS Architecture</li>
-                        <li class="mb-2"><i class="fas fa-check-circle text-info me-2"></i> Secure & Scalable Platform</li>
-                        <li><i class="fas fa-check-circle text-info me-2"></i> Dedicated Customer Support</li>
+                    <ul class="list-unstyled mb-0 text-white">
+                        <li class="mb-3"><i class="fas fa-check-circle text-danger me-2"></i> Real-time Stock Tracking</li>
+                        <li class="mb-3"><i class="fas fa-check-circle text-primary me-2"></i> Accurate Shift Reconciliations</li>
+                        <li><i class="fas fa-check-circle text-danger me-2"></i> Fleet & Corporate Customer Management</li>
                     </ul>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Services Section -->
-    <section id="services" class="section-padding">
+    <!-- Features Section -->
+    <section id="features" class="section-padding" style="background: rgba(0,0,0,0.2);">
         <div class="container">
             <div class="text-center mb-5">
-                <span class="section-subtitle">Our Capabilities</span>
-                <h2 class="section-title">Core Services</h2>
+                <span class="section-subtitle">System Capabilities</span>
+                <h2 class="section-title">Core Features</h2>
             </div>
             <div class="row g-4">
                 <div class="col-md-6 col-lg-4">
-                    <div class="glass-panel h-100">
-                        <div class="icon-box"><i class="fas fa-desktop"></i></div>
-                        <h4 class="fw-bold mb-3">Enterprise POS</h4>
-                        <p class="text-muted small">Fast, reliable Point of Sale system designed for retail, pharmacy, and supermarkets. Manage sales, shifts, and cash effortlessly.</p>
+                    <div class="glass-panel">
+                        <div class="icon-box"><i class="fas fa-gas-pump"></i></div>
+                        <h4 class="fw-bold mb-3">Pump Management</h4>
+                        <p class="text-muted small">Monitor real-time sales across all nozzles. Map pumps to tanks seamlessly and track opening/closing meter readings per shift.</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
-                    <div class="glass-panel h-100">
-                        <div class="icon-box" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="fas fa-boxes"></i></div>
-                        <h4 class="fw-bold mb-3">Inventory Management</h4>
-                        <p class="text-muted small">Track stock in real-time. Manage purchases, stock transfers, adjustments, and receive alerts for low stock or expiring items.</p>
+                    <div class="glass-panel">
+                        <div class="icon-box red-theme"><i class="fas fa-database"></i></div>
+                        <h4 class="fw-bold mb-3">Tank & Dip Readings</h4>
+                        <p class="text-muted small">Maintain precise fuel levels. Log physical dip readings and automatically calculate variations (gain/loss) against theoretical stock.</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
-                    <div class="glass-panel h-100">
-                        <div class="icon-box" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;"><i class="fas fa-gas-pump"></i></div>
-                        <h4 class="fw-bold mb-3">Petroleum System</h4>
-                        <p class="text-muted small">Specialized module for gas stations. Track tank dips, meter readings, automated shifts, and manage fleet credit sales securely.</p>
+                    <div class="glass-panel">
+                        <div class="icon-box"><i class="fas fa-truck-moving"></i></div>
+                        <h4 class="fw-bold mb-3">Fleet Sales (Credit)</h4>
+                        <p class="text-muted small">Manage corporate clients with ease. Track vehicle plates, driver details, and issue consolidated invoices for post-paid fuel sales.</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
-                    <div class="glass-panel h-100">
-                        <div class="icon-box" style="background: rgba(236, 72, 153, 0.1); color: #ec4899;"><i class="fas fa-calculator"></i></div>
-                        <h4 class="fw-bold mb-3">Accounting & Finance</h4>
-                        <p class="text-muted small">Comprehensive financial tracking including expenses, ledgers, profit & loss reports, and business partner shares.</p>
+                    <div class="glass-panel">
+                        <div class="icon-box red-theme"><i class="fas fa-user-clock"></i></div>
+                        <h4 class="fw-bold mb-3">Shift Reconciliation</h4>
+                        <p class="text-muted small">Automated shift closing. Compare pump sales, credit sales, expense deductions, and actual cash collected by the attendant.</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
-                    <div class="glass-panel h-100">
-                        <div class="icon-box" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;"><i class="fas fa-users"></i></div>
-                        <h4 class="fw-bold mb-3">HRM & Staff</h4>
-                        <p class="text-muted small">Manage your employees, attendance, payroll, and define granular roles and permissions for system access.</p>
+                    <div class="glass-panel">
+                        <div class="icon-box"><i class="fas fa-chart-line"></i></div>
+                        <h4 class="fw-bold mb-3">Analytics & Reports</h4>
+                        <p class="text-muted small">Generate comprehensive daily, weekly, and monthly reports. Visualize your revenue, profit margins, and inventory trends.</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
-                    <div class="glass-panel h-100">
-                        <div class="icon-box" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;"><i class="fas fa-chart-pie"></i></div>
-                        <h4 class="fw-bold mb-3">Advanced Reporting</h4>
-                        <p class="text-muted small">Make data-driven decisions with detailed analytical reports covering every aspect of your business operations.</p>
+                    <div class="glass-panel">
+                        <div class="icon-box red-theme"><i class="fas fa-file-invoice-dollar"></i></div>
+                        <h4 class="fw-bold mb-3">Financial Accounting</h4>
+                        <p class="text-muted small">Built-in double entry accounting. Manage expenses, vendor payments, chart of accounts, and monitor overall business financial health.</p>
                     </div>
                 </div>
             </div>
@@ -456,22 +441,21 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-5 mb-4 mb-lg-0">
-                    <h4 class="fw-bold mb-3"><i class="fas fa-rocket text-info me-2"></i> Rays Technology Solutions</h4>
+                    <h4 class="fw-bold mb-3"><i class="fas fa-gas-pump text-danger me-2"></i> <span class="brand-rays">RAYS</span> <span class="brand-petro">PETROLEUM</span></h4>
                     <p class="text-muted small w-75 mb-4">
-                        Delivering cutting-edge software solutions to streamline operations and accelerate business growth.
+                        Delivering cutting-edge software solutions to streamline operations and accelerate business growth for gas stations globally.
                     </p>
                     <div class="d-flex">
-                        <a href="#" class="btn btn-outline-secondary rounded-circle me-2" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="btn btn-outline-secondary rounded-circle me-2" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="btn btn-outline-secondary rounded-circle" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" class="btn btn-outline-secondary rounded-circle me-2" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center; border-color: rgba(255,255,255,0.1);"><i class="fab fa-facebook-f text-white"></i></a>
+                        <a href="#" class="btn btn-outline-secondary rounded-circle" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center; border-color: rgba(255,255,255,0.1);"><i class="fab fa-twitter text-white"></i></a>
                     </div>
                 </div>
                 <div class="col-lg-3 offset-lg-1 mb-4 mb-lg-0">
                     <h5 class="fw-bold mb-4">Quick Links</h5>
                     <ul class="list-unstyled">
                         <li class="mb-2"><a href="#home" class="text-muted text-decoration-none hover-white">Home</a></li>
-                        <li class="mb-2"><a href="#about" class="text-muted text-decoration-none hover-white">About Us</a></li>
-                        <li class="mb-2"><a href="#services" class="text-muted text-decoration-none hover-white">Services</a></li>
+                        <li class="mb-2"><a href="#about" class="text-muted text-decoration-none hover-white">About System</a></li>
+                        <li class="mb-2"><a href="#features" class="text-muted text-decoration-none hover-white">Features</a></li>
                         <li class="mb-2"><a href="{{ url_for('auth.login') }}" class="text-muted text-decoration-none hover-white">System Login</a></li>
                     </ul>
                 </div>
@@ -527,8 +511,7 @@
     </script>
     <style>
         .hover-white { transition: 0.3s; }
-        .hover-white:hover { color: white !important; padding-left: 5px; }
-        body.light-mode .hover-white:hover { color: #0f172a !important; }
+        .hover-white:hover { color: var(--brand-blue) !important; padding-left: 5px; }
     </style>
 </body>
 </html>

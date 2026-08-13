@@ -317,13 +317,30 @@ def add_role():
 @settings.route('/settings/logs')
 @login_required
 def system_logs():
-    if current_user.role not in ['developer'] and not getattr(current_user, 'is_super_admin', False):
+    if current_user.role not in ['developer', 'admin'] and not getattr(current_user, 'is_super_admin', False):
         flash('Ma haysatid ogolaansho.', 'danger')
         return redirect(url_for('main.dashboard'))
     
     from app.models import AuditLog
-    logs = AuditLog.query.filter_by(tenant_id=current_user.tenant_id).order_by(AuditLog.created_at.desc()).limit(500).all()
-    return render_template('settings/logs.html', logs=logs)
+    module_filter = request.args.get('module', '')
+    action_filter = request.args.get('action', '')
+
+    query = AuditLog.query.filter_by(tenant_id=current_user.tenant_id)
+    if module_filter:
+        query = query.filter(AuditLog.module == module_filter)
+    if action_filter:
+        query = query.filter(AuditLog.action.ilike(f'%{action_filter}%'))
+
+    logs = query.order_by(AuditLog.created_at.desc()).limit(1000).all()
+
+    # Stats
+    from app.models import AuditLog as AL
+    total = AL.query.filter_by(tenant_id=current_user.tenant_id).count()
+    modules = db.session.query(AL.module).filter_by(tenant_id=current_user.tenant_id).distinct().all()
+    modules = [m[0] for m in modules if m[0]]
+
+    return render_template('settings/logs.html', logs=logs, total=total,
+                           modules=modules, module_filter=module_filter, action_filter=action_filter)
 
 @settings.route('/settings/backup')
 @login_required

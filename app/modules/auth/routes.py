@@ -206,8 +206,7 @@ def verify_otp():
         else:
             flash('Code-ka aad qortay waa khalad. Fadlan iska hubi.', 'danger')
             
-    # For testing: If email fails, you can see the code here
-    return render_template('auth/verify_otp.html', email=email, debug_otp=user.otp_code if user else None)
+    return render_template('auth/verify_otp.html', email=email)
 
 @auth.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():

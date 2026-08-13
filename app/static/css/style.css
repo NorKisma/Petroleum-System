@@ -1826,41 +1826,258 @@ body.sidebar-toggled #page-content-wrapper {
     }
 }
 
-/* ===== PREMIUM MOBILE OVERRIDES & UX FIXES ===== */
+
+
+/* ===================================================
+   COMPREHENSIVE MOBILE RESPONSIVE FIXES
+   Rays Petroleum Software — All screen sizes
+=================================================== */
+
+/* ---- Hide floating logs button on mobile (bottom nav handles it) ---- */
 @media (max-width: 991.98px) {
-    /* Auto wrap & scroll all table containers on mobile */
-    .table-container-elite, .table-responsive, .card-body {
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch;
+    #floatingLogsBtn {
+        display: none !important;
     }
+}
+
+/* ---- Bottom Nav improved spacing & sizing ---- */
+@media (max-width: 991.98px) {
+    .bottom-nav {
+        display: flex;
+        height: 64px;
+        padding: 0 6px;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.10);
+    }
+
+    /* Prevent page content from hiding behind bottom nav */
+    #page-content-wrapper {
+        padding-bottom: 72px !important;
+    }
+
+    /* Bottom nav items */
+    .bottom-nav-item {
+        font-size: 0.65rem;
+        gap: 0;
+        padding: 4px 0;
+    }
+    .bottom-nav-item i {
+        font-size: 1.15rem;
+        margin-bottom: 3px;
+    }
+}
+
+/* ---- Navbar fixes on mobile ---- */
+@media (max-width: 767.98px) {
+    .navbar-elite {
+        padding: 0.3rem 0.75rem !important;
+        min-height: 54px;
+    }
+    /* Hide date box & notifications on very small screens */
+    .nav-date-box { display: none !important; }
     
-    /* Elegant stacking for card headers containing multiple buttons on mobile */
-    .card-header {
+    /* Shrink company name */
+    .navbar-elite h5 {
+        font-size: 0.8rem !important;
+        max-width: 30vw !important;
+    }
+
+    /* Shrink nav buttons */
+    .nav-btn-elite {
+        width: 34px !important;
+        height: 34px !important;
+        padding: 0 !important;
+        font-size: 0.9rem !important;
+    }
+
+    /* User dropdown avatar */
+    .navbar-elite .img-wrapper img {
+        width: 28px !important;
+        height: 28px !important;
+    }
+    .navbar-elite .text-end.d-none.d-lg-block {
+        display: none !important;
+    }
+}
+
+/* ---- Cards: disable hover lift on mobile (causes layout jump) ---- */
+@media (max-width: 991.98px) {
+    .card:hover {
+        transform: none !important;
+        box-shadow: var(--shadow-sm) !important;
+    }
+    .table tbody tr:hover {
+        transform: none !important;
+    }
+}
+
+/* ---- Page header responsive ---- */
+@media (max-width: 767.98px) {
+    .page-header-elite {
+        padding: 14px 16px !important;
+        border-radius: 10px !important;
         flex-direction: column !important;
         align-items: flex-start !important;
-        gap: 12px !important;
-        padding: 1rem 1.25rem !important;
+        gap: 10px !important;
     }
-    .card-header > div, .card-header .btn-group, .card-header .btn {
+    .page-header-elite h4, .page-header-elite h3 {
+        font-size: 1rem !important;
+    }
+    .page-header-elite .header-actions {
         width: 100% !important;
         display: flex !important;
-        justify-content: flex-start !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
     }
-    
-    /* Make custom forms and form-groups display neatly */
-    .form-group, .mb-3 {
-        margin-bottom: 1rem !important;
-    }
-    
-    /* Optimize page headers */
-    .page-header-elite {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 12px !important;
-        padding: 15px 20px !important;
-    }
-    .page-header-elite .btn {
-        width: 100% !important;
+    .page-header-elite .header-actions .btn {
+        flex: 1 !important;
+        min-width: 120px !important;
+        font-size: 0.8rem !important;
         justify-content: center !important;
     }
 }
+
+/* ---- Container padding on phones ---- */
+@media (max-width: 575.98px) {
+    .container-fluid {
+        padding: 0.75rem !important;
+    }
+    .card-body {
+        padding: 1rem !important;
+    }
+    .card-header {
+        padding: 0.75rem 1rem !important;
+    }
+}
+
+/* ---- Table: horizontal scroll on mobile ---- */
+@media (max-width: 991.98px) {
+    .table-responsive, .dataTables_scroll, .dataTables_scrollBody {
+        -webkit-overflow-scrolling: touch;
+        overflow-x: auto !important;
+    }
+    .table thead th {
+        font-size: 0.68rem !important;
+        padding: 0.75rem 0.85rem !important;
+        letter-spacing: 0.5px !important;
+    }
+    .table tbody td {
+        padding: 0.85rem 0.85rem !important;
+        font-size: 0.82rem !important;
+    }
+}
+
+/* ---- DataTables search box full-width on mobile ---- */
+@media (max-width: 575.98px) {
+    .dataTables_wrapper .dataTables_filter input {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .dataTables_wrapper .dataTables_filter {
+        width: 100% !important;
+    }
+}
+
+/* ---- Form controls on mobile ---- */
+@media (max-width: 767.98px) {
+    .form-control, .form-select {
+        font-size: 0.875rem !important;
+        padding: 0.5rem 0.75rem !important;
+    }
+    .input-group-text {
+        padding: 0.5rem 0.65rem !important;
+    }
+    .btn {
+        font-size: 0.85rem !important;
+    }
+}
+
+/* ---- Modal full screen on mobile ---- */
+@media (max-width: 575.98px) {
+    .modal-dialog {
+        margin: 0.5rem !important;
+    }
+    .modal-content {
+        border-radius: 14px !important;
+    }
+}
+
+/* ---- Roles guide cards wrap nicely on small screens ---- */
+@media (max-width: 767.98px) {
+    .roles-guide-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
+}
+@media (max-width: 480px) {
+    .roles-guide-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ---- Petroleum sub-nav on mobile ---- */
+@media (max-width: 767.98px) {
+    .petro-nav {
+        padding: 8px 10px !important;
+    }
+    .petro-link {
+        font-size: 0.78rem !important;
+        padding: 6px 10px !important;
+    }
+}
+
+/* ---- Offcanvas full width on mobile ---- */
+@media (max-width: 575.98px) {
+    .offcanvas {
+        width: 100% !important;
+    }
+}
+
+/* ---- Stat/summary cards: 2 per row on phones ---- */
+@media (max-width: 575.98px) {
+    .col-6.col-md-3 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+}
+
+/* ---- Badge & permission tags wrap ---- */
+@media (max-width: 767.98px) {
+    .perm-tag {
+        font-size: 0.65rem !important;
+        padding: 3px 8px !important;
+    }
+}
+
+/* ---- Staff module toggle buttons ---- */
+@media (max-width: 575.98px) {
+    .module-toggle-wrap {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* ---- Floating button: adjust position on tablets ---- */
+@media (min-width: 992px) and (max-width: 1199px) {
+    #floatingLogsBtn {
+        bottom: 20px !important;
+        right: 20px !important;
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 1.1rem !important;
+    }
+}
+
+/* ---- Dark mode bottom nav ---- */
+[data-theme='dark'] .bottom-nav {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-top: 1px solid rgba(255,255,255,0.06) !important;
+}
+[data-theme='dark'] .bottom-nav-item {
+    color: #94a3b8;
+}
+[data-theme='dark'] .bottom-nav-item.active {
+    color: #3b82f6;
+}
+[data-theme='dark'] .bottom-nav-item:hover {
+    color: #f8fafc;
+}
+
