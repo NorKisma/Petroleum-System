@@ -228,6 +228,10 @@
                     data-bs-target="#tab-saas" type="button">
                     <i class="fas fa-cloud text-primary"></i> SaaS Controls
                 </button>
+                <button class="settings-nav-item border-0 w-100 text-start" data-bs-toggle="pill"
+                    data-bs-target="#tab-backup" type="button">
+                    <i class="fas fa-database text-danger"></i> Backup & Restore
+                </button>
             </div>
         </div>
 
@@ -968,6 +972,37 @@
                         </div>
                     </div>
 
+                    <!-- Backup Tab -->
+                    <div class="tab-pane fade" id="tab-backup" role="tabpanel">
+                        <div class="section-header">
+                            <span class="section-title"><i class="fas fa-database me-2"></i> Database Backup & Restore</span>
+                        </div>
+                        
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm p-4 h-100 bg-light">
+                                    <h5 class="fw-bold mb-3"><i class="fas fa-download text-primary me-2"></i> Backup Database</h5>
+                                    <p class="text-muted small mb-4">Download a complete copy of your database. This includes all settings, transactions, and user data. Keep this file secure.</p>
+                                    <a href="{{ url_for('settings.backup_db') }}" class="btn btn-primary w-100 mt-auto">
+                                        <i class="fas fa-download me-2"></i> Generate & Download Backup
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm p-4 h-100 bg-light">
+                                    <h5 class="fw-bold mb-3 text-danger"><i class="fas fa-upload me-2"></i> Restore Database</h5>
+                                    <p class="text-muted small mb-4">Upload a previously generated .sql backup file. <strong>Warning:</strong> This will overwrite the current database.</p>
+                                    <div class="input-group mt-auto">
+                                        <input type="file" class="form-control" id="restoreFile" accept=".sql">
+                                        <button class="btn btn-danger" type="button" onclick="restoreDatabase()">
+                                            <i class="fas fa-undo me-2"></i> Restore
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Update Button -->
                     {% if current_user.role in ['developer'] or current_user.is_super_admin %}
                     <div class="mt-5 text-center">
@@ -1090,6 +1125,47 @@
         el.addEventListener('change', syncPetroleumMorningHourWrap);
     });
     syncPetroleumMorningHourWrap();
+
+    // Database Restore
+    function restoreDatabase() {
+        const fileInput = document.getElementById('restoreFile');
+        if (!fileInput.files.length) {
+            alert('Fadlan dooro file-ka (SQL) aad rabto in aad soo celiso.');
+            return;
+        }
+        if (!confirm('DIGNIIN: Tani waxay tirtiri doontaa xogta hadda jirta waxayna ku bedeli doontaa xogta backup-ka. Ma hubtaa inaad sii waddo?')) {
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('backup_file', fileInput.files[0]);
+        
+        const btn = document.querySelector('button[onclick="restoreDatabase()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Restoring...';
+        btn.disabled = true;
+        
+        fetch('{{ url_for("settings.restore_db") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Database-ka si guul leh ayaa loo soo celiyay!');
+                window.location.reload();
+            } else {
+                alert('Khalad ayaa dhacay: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Khalad ayaa dhacay: ' + error);
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
 
     // Tab switching logic (Bootstrap 5)
     $(document).ready(function () {

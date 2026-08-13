@@ -1,8 +1,11 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, send_file
 from flask_login import login_required, current_user
 from app import db
 from app.models import Tenant, User
 import os
+import subprocess
+import tempfile
+from urllib.parse import urlparse
 from werkzeug.utils import secure_filename
 from app import bcrypt
 from datetime import datetime
@@ -321,3 +324,97 @@ def system_logs():
     from app.models import AuditLog
     logs = AuditLog.query.filter_by(tenant_id=current_user.tenant_id).order_by(AuditLog.created_at.desc()).limit(500).all()
     return render_template('settings/logs.html', logs=logs)
+
+@settings.route('/settings/backup')
+@login_required
+def backup_db():
+    if current_user.role not in ['developer'] and not getattr(current_user, 'is_super_admin', False):
+        flash('Ma haysatid ogolaansho.', 'danger')
+        return redirect(url_for('main.dashboard'))
+        
+    db_url = os.environ.get('DATABASE_URL') or current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    if 'sqlite' in db_url:
+        flash('SQLite backups are not supported via this interface.', 'danger')
+        return redirect(url_for('settings.index'))
+        
+    parsed = urlparse(db_url)
+    user = parsed.username
+    password = parsed.password or ''
+    host = parsed.hostname
+    port = parsed.port or 3306
+    database = parsed.path.lstrip('/')
+    
+    backup_dir = os.path.join(current_app.instance_path, 'backups')
+    os.makedirs(backup_dir, exist_ok=True)
+    
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"backup_{database}_{timestamp}.sql"
+    filepath = os.path.join(backup_dir, filename)
+    
+    cmd = ['mysqldump', '-h', host, '-P', str(port), '-u', user]
+    if password:
+        cmd.append(f'-p{password}')
+    cmd.append(database)
+    
+    try:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, check=True, text=True)
+        return send_file(filepath, as_attachment=True, download_name=filename)
+    except subprocess.CalledProcessError as e:
+        flash(f'Cilad ayaa dhacday xiligii la samaynayay backup-ka: {e.stderr}', 'danger')
+        return redirect(url_for('settings.index'))
+    except Exception as e:
+        flash(f'Cilad aan la garanayn: {str(e)}', 'danger')
+        return redirect(url_for('settings.index'))
+
+@settings.route('/settings/restore', methods=['POST'])
+@login_required
+def restore_db():
+    if current_user.role not in ['developer'] and not getattr(current_user, 'is_super_admin', False):
+        return jsonify({'success': False, 'message': 'Ma haysatid ogolaansho.'}), 403
+        
+    if 'backup_file' not in request.files:
+        return jsonify({'success': False, 'message': 'Fadlan dooro file.'}), 400
+        
+    file = request.files['backup_file']
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'Fadlan dooro file.'}), 400
+        
+    if not file.filename.endswith('.sql'):
+        return jsonify({'success': False, 'message': 'Keliya file-yada .sql ayaa la ogol yahay.'}), 400
+        
+    backup_dir = os.path.join(current_app.instance_path, 'backups')
+    os.makedirs(backup_dir, exist_ok=True)
+    
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(backup_dir, f"restore_temp_{filename}")
+    file.save(filepath)
+    
+    db_url = os.environ.get('DATABASE_URL') or current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    parsed = urlparse(db_url)
+    user = parsed.username
+    password = parsed.password or ''
+    host = parsed.hostname
+    port = parsed.port or 3306
+    database = parsed.path.lstrip('/')
+    
+    cmd = ['mysql', '-h', host, '-P', str(port), '-u', user]
+    if password:
+        cmd.append(f'-p{password}')
+    cmd.append(database)
+    
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            subprocess.run(cmd, stdin=f, stderr=subprocess.PIPE, check=True, text=True)
+        
+        # Clean up temp file
+        try:
+            os.remove(filepath)
+        except:
+            pass
+            
+        return jsonify({'success': True, 'message': 'Database si guul leh ayaa loo soo celiyay!'})
+    except subprocess.CalledProcessError as e:
+        return jsonify({'success': False, 'message': f'Cilad dhinaca database-ka ah: {e.stderr}'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Cilad: {str(e)}'}), 500

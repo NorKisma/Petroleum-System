@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rays Technology Solutions</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0f172a;
+            color: white;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Abstract Background Elements */
+        .bg-shape-1 {
+            position: absolute;
+            top: -20%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.4) 0%, rgba(79, 70, 229, 0) 70%);
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(40px);
+        }
+        .bg-shape-2 {
+            position: absolute;
+            bottom: -20%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.3) 0%, rgba(56, 189, 248, 0) 70%);
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(40px);
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(15, 23, 42, 0.8) !important;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 15px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: white !important;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.8) !important;
+            font-weight: 600;
+            margin: 0 10px;
+            transition: 0.3s;
+        }
+        
+        .nav-link:hover {
+            color: #38bdf8 !important;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            color: white !important;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: 0.3s;
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Hero Section */
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding-top: 80px;
+            position: relative;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            animation: slideUp 0.8s ease forwards;
+            opacity: 0;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            margin-bottom: 30px;
+            animation: slideUp 0.8s ease 0.2s forwards;
+            opacity: 0;
+        }
+        
+        .hero-buttons {
+            animation: slideUp 0.8s ease 0.4s forwards;
+            opacity: 0;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Glass Cards */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .icon-box {
+            width: 60px;
+            height: 60px;
+            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        /* Sections */
+        .section-padding {
+            padding: 100px 0;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .section-subtitle {
+            color: #38bdf8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* Footer */
+        footer {
+            background: #0b1121;
+            padding: 60px 0 30px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #94a3b8;
+        }
+
+        .contact-item i {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: #38bdf8;
+        }
+        
+        .contact-item a {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        
+        .contact-item a:hover {
+            color: white;
+        }
+        
+        /* Light Mode Styles */
+        body.light-mode {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+        body.light-mode .navbar {
+            background: rgba(255, 255, 255, 0.9) !important;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        body.light-mode .navbar-brand {
+            color: #0f172a !important;
+        }
+        body.light-mode .nav-link {
+            color: #475569 !important;
+        }
+        body.light-mode .hero-title {
+            background: linear-gradient(to right, #0f172a, #334155);
+            -webkit-background-clip: text;
+        }
+        body.light-mode .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        body.light-mode .glass-panel:hover {
+            background: white;
+            border-color: rgba(0,0,0,0.1);
+        }
+        body.light-mode #about {
+            background: rgba(241, 245, 249, 0.8) !important;
+        }
+        body.light-mode .text-muted {
+            color: #64748b !important;
+        }
+        body.light-mode footer {
+            background: #ffffff;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        body.light-mode .bg-shape-1 {
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, rgba(79, 70, 229, 0) 70%);
+        }
+        body.light-mode .bg-shape-2 {
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0) 70%);
+        }
+        body.light-mode .navbar-toggler i {
+            color: #0f172a !important;
+        }
+        body.light-mode .contact-item a:hover {
+            color: #0f172a;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Background Elements -->
+    <div class="bg-shape-1"></div>
+    <div class="bg-shape-2"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-rocket text-info me-2"></i> Rays Technology Solutions
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" style="border-color: rgba(255,255,255,0.1);">
+                <i class="fas fa-bars text-white"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#services">Services</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contact">Contact</a>
+                    </li>
+                </ul>
+                <button id="themeToggle" class="btn btn-outline-secondary rounded-circle ms-3 me-3" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:none;">
+                    <i class="fas fa-sun text-warning" id="themeIcon"></i>
+                </button>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-login px-4">Login System</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <span class="section-subtitle">Welcome to Rays Technology Solutions</span>
+                    <h1 class="hero-title">Empowering Your Business with Smart Technology</h1>
+                    <p class="hero-subtitle">Advanced Software Solutions designed to streamline your operations. From Enterprise POS to complete Petroleum Management Systems, we build platforms that scale.</p>
+                    <div class="hero-buttons">
+                        <a href="#services" class="btn btn-login me-3 py-3 px-4">Explore Services</a>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light rounded-pill py-3 px-4 fw-bold">Sign In to Dashboard</a>
+                    </div>
+                </div>
+                <div class="col-lg-6 mt-5 mt-lg-0 text-center position-relative">
+                    <!-- Dashboard Mockup Abstract -->
+                    <div class="glass-panel" style="animation: slideUp 1s ease 0.3s forwards; opacity: 0; transform: perspective(1000px) rotateY(-10deg);">
+                        <div class="d-flex justify-content-between border-bottom border-secondary pb-3 mb-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-secondary rounded-circle" style="width:12px; height:12px; margin-right:6px;"></div>
+                                <div class="bg-secondary rounded-circle" style="width:12px; height:12px; margin-right:6px;"></div>
+                                <div class="bg-secondary rounded-circle" style="width:12px; height:12px;"></div>
+                            </div>
+                            <div class="fw-bold small text-muted">Dashboard Preview</div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="p-3 rounded-3" style="background: rgba(56, 189, 248, 0.1);">
+                                    <i class="fas fa-chart-line fs-3 text-info mb-2"></i>
+                                    <h4 class="mb-0 fw-bold">$24,500</h4>
+                                    <small class="text-muted">Total Sales</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 rounded-3" style="background: rgba(16, 185, 129, 0.1);">
+                                    <i class="fas fa-users fs-3 text-success mb-2"></i>
+                                    <h4 class="mb-0 fw-bold">1,240</h4>
+                                    <small class="text-muted">Active Users</small>
+                                </div>
+                            </div>
+                            <div class="col-12 mt-3">
+                                <div class="p-4 rounded-3" style="background: rgba(255,255,255,0.05); height: 120px; display: flex; align-items: flex-end;">
+                                    <!-- Fake Graph -->
+                                    <div class="bg-primary rounded-top me-2" style="width: 15%; height: 40%;"></div>
+                                    <div class="bg-primary rounded-top me-2" style="width: 15%; height: 70%;"></div>
+                                    <div class="bg-primary rounded-top me-2" style="width: 15%; height: 50%;"></div>
+                                    <div class="bg-primary rounded-top me-2" style="width: 15%; height: 90%;"></div>
+                                    <div class="bg-primary rounded-top me-2" style="width: 15%; height: 60%;"></div>
+                                    <div class="bg-primary rounded-top" style="width: 15%; height: 100%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="section-padding" style="background: rgba(0,0,0,0.2);">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-5 mb-lg-0">
+                    <div class="position-relative">
+                        <div class="glass-panel text-center p-5" style="border-radius: 30px;">
+                            <i class="fas fa-code text-primary mb-4" style="font-size: 5rem;"></i>
+                            <h3 class="fw-bold">Innovation meets Reliability</h3>
+                            <p class="text-muted mt-3">We specialize in building robust enterprise solutions tailored for local businesses.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-5 offset-lg-1">
+                    <span class="section-subtitle">About Us</span>
+                    <h2 class="section-title">Rays Technology Solutions</h2>
+                    <p class="text-muted mb-4" style="line-height: 1.8;">
+                        At Rays Technology Solutions, we are dedicated to transforming how businesses operate. 
+                        Our comprehensive software suites provide seamless point-of-sale, advanced inventory tracking, 
+                        and specialized modules like Petroleum Management.
+                    </p>
+                    <p class="text-muted mb-4" style="line-height: 1.8;">
+                        With cutting-edge technology, user-centric design, and reliable support, we ensure your enterprise 
+                        has the digital foundation it needs to thrive in a competitive landscape.
+                    </p>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="fas fa-check-circle text-info me-2"></i> Advanced SaaS Architecture</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-info me-2"></i> Secure & Scalable Platform</li>
+                        <li><i class="fas fa-check-circle text-info me-2"></i> Dedicated Customer Support</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="section-padding">
+        <div class="container">
+            <div class="text-center mb-5">
+                <span class="section-subtitle">Our Capabilities</span>
+                <h2 class="section-title">Core Services</h2>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4">
+                    <div class="glass-panel h-100">
+                        <div class="icon-box"><i class="fas fa-desktop"></i></div>
+                        <h4 class="fw-bold mb-3">Enterprise POS</h4>
+                        <p class="text-muted small">Fast, reliable Point of Sale system designed for retail, pharmacy, and supermarkets. Manage sales, shifts, and cash effortlessly.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="glass-panel h-100">
+                        <div class="icon-box" style="background: rgba(16, 185, 129, 0.1); color: #10b981;"><i class="fas fa-boxes"></i></div>
+                        <h4 class="fw-bold mb-3">Inventory Management</h4>
+                        <p class="text-muted small">Track stock in real-time. Manage purchases, stock transfers, adjustments, and receive alerts for low stock or expiring items.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="glass-panel h-100">
+                        <div class="icon-box" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;"><i class="fas fa-gas-pump"></i></div>
+                        <h4 class="fw-bold mb-3">Petroleum System</h4>
+                        <p class="text-muted small">Specialized module for gas stations. Track tank dips, meter readings, automated shifts, and manage fleet credit sales securely.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="glass-panel h-100">
+                        <div class="icon-box" style="background: rgba(236, 72, 153, 0.1); color: #ec4899;"><i class="fas fa-calculator"></i></div>
+                        <h4 class="fw-bold mb-3">Accounting & Finance</h4>
+                        <p class="text-muted small">Comprehensive financial tracking including expenses, ledgers, profit & loss reports, and business partner shares.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="glass-panel h-100">
+                        <div class="icon-box" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;"><i class="fas fa-users"></i></div>
+                        <h4 class="fw-bold mb-3">HRM & Staff</h4>
+                        <p class="text-muted small">Manage your employees, attendance, payroll, and define granular roles and permissions for system access.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="glass-panel h-100">
+                        <div class="icon-box" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;"><i class="fas fa-chart-pie"></i></div>
+                        <h4 class="fw-bold mb-3">Advanced Reporting</h4>
+                        <p class="text-muted small">Make data-driven decisions with detailed analytical reports covering every aspect of your business operations.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-5 mb-4 mb-lg-0">
+                    <h4 class="fw-bold mb-3"><i class="fas fa-rocket text-info me-2"></i> Rays Technology Solutions</h4>
+                    <p class="text-muted small w-75 mb-4">
+                        Delivering cutting-edge software solutions to streamline operations and accelerate business growth.
+                    </p>
+                    <div class="d-flex">
+                        <a href="#" class="btn btn-outline-secondary rounded-circle me-2" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="btn btn-outline-secondary rounded-circle me-2" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="btn btn-outline-secondary rounded-circle" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-3 offset-lg-1 mb-4 mb-lg-0">
+                    <h5 class="fw-bold mb-4">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#home" class="text-muted text-decoration-none hover-white">Home</a></li>
+                        <li class="mb-2"><a href="#about" class="text-muted text-decoration-none hover-white">About Us</a></li>
+                        <li class="mb-2"><a href="#services" class="text-muted text-decoration-none hover-white">Services</a></li>
+                        <li class="mb-2"><a href="{{ url_for('auth.login') }}" class="text-muted text-decoration-none hover-white">System Login</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3">
+                    <h5 class="fw-bold mb-4">Contact Info</h5>
+                    <div class="contact-item">
+                        <i class="fas fa-phone-alt"></i>
+                        <span><a href="tel:252771990022">+252 771 990022</a></span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span><a href="mailto:raystechcenter@gmail.com">raystechcenter@gmail.com</a></span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-globe"></i>
+                        <span><a href="https://rayssolution.com" target="_blank">rayssolution.com</a></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-5 pt-4" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                <div class="col-12 text-center text-muted small">
+                    &copy; 2026 Rays Technology Solutions. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-mode');
+            themeIcon.classList.remove('fa-sun', 'text-warning');
+            themeIcon.classList.add('fa-moon', 'text-dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            if (document.body.classList.contains('light-mode')) {
+                localStorage.setItem('theme', 'light');
+                themeIcon.classList.remove('fa-sun', 'text-warning');
+                themeIcon.classList.add('fa-moon', 'text-dark');
+            } else {
+                localStorage.setItem('theme', 'dark');
+                themeIcon.classList.remove('fa-moon', 'text-dark');
+                themeIcon.classList.add('fa-sun', 'text-warning');
+            }
+        });
+    </script>
+    <style>
+        .hover-white { transition: 0.3s; }
+        .hover-white:hover { color: white !important; padding-left: 5px; }
+        body.light-mode .hover-white:hover { color: #0f172a !important; }
+    </style>
+</body>
+</html>
