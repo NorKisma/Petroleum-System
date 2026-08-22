@@ -1,0 +1,4 @@
+Pump P1 (Petrol) price on 2026-08-14: 1.6
+Pump P2 (Petrol) price on 2026-08-14: 1.6
+Pump P3 (Petrol) price on 2026-08-14: 1.6
+Pump P4 (Diesel) price on 2026-08-14: 1.0

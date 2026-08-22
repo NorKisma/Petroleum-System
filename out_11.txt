@@ -1,0 +1,4 @@
+Pump P1 price on 2026-08-11: 1.6
+Pump P2 price on 2026-08-11: 1.45
+Pump P3 price on 2026-08-11: 1.45
+Pump P4 price on 2026-08-11: 1.35

@@ -8,6 +8,42 @@ from app.utils.audit import log_audit
 
 staff = Blueprint('staff', __name__)
 
+
+# ── Role-based default module permissions ─────────────────────────────────────
+RESTRICTED_ROLES = ('cashier', 'staff', 'casheir')
+
+def _apply_role_defaults(user, role):
+    """Set module flags based on role. Cashier/Staff get petroleum only.
+    Admin can then use Manage Modules to adjust per-user."""
+    if role.lower() in RESTRICTED_ROLES:
+        # Restricted roles: petroleum ONLY
+        user.module_pos        = False
+        user.module_inventory  = False
+        user.module_accounting = False
+        user.module_share      = False
+        user.module_sales      = False
+        user.module_purchases  = False
+        user.module_customers  = False
+        user.module_staff      = False
+        user.module_settings   = False
+        user.module_expenses   = False
+        user.module_petroleum  = True   # ← only this
+    else:
+        # All other roles: full access (admin controls via Manage Modules)
+        user.module_pos        = True
+        user.module_inventory  = True
+        user.module_accounting = True
+        user.module_share      = True
+        user.module_sales      = True
+        user.module_purchases  = True
+        user.module_customers  = True
+        user.module_staff      = True
+        user.module_settings   = True
+        user.module_expenses   = True
+        user.module_petroleum  = True
+# ─────────────────────────────────────────────────────────────────────────────
+
+
 @staff.route('/staff')
 @login_required
 @roles_required('admin', 'developer')
@@ -46,6 +82,11 @@ def add_member():
         salary=salary,
         tenant_id=current_user.tenant_id
     )
+    
+    # ── Default module permissions based on role ──────────────────────────────
+    _apply_role_defaults(new_user, role)
+    # ─────────────────────────────────────────────────────────────────────────
+    
     db.session.add(new_user)
     db.session.commit()
     
@@ -53,6 +94,7 @@ def add_member():
     
     flash('Shaqaalaha waa la daray!', 'success')
     return redirect(url_for('staff.list_staff'))
+
 
 @staff.route('/staff/edit/<int:id>', methods=['POST'])
 @login_required
@@ -63,19 +105,18 @@ def edit_member(id):
     if user.tenant_id != current_user.tenant_id:
         return jsonify({'success': False, 'message': 'Access denied'}), 403
         
-    # Allow full edit for admin and developer
-        
     data = request.get_json()
     try:
         user.username = data.get('username', user.username)
         # Prevent logged-in user from changing their own role on the backend
         if user.id != current_user.id:
-            user.role = data.get('role', user.role)
+            new_role = data.get('role', user.role)
+            # If role changed to cashier/staff, reset modules to restricted defaults
+            if new_role != user.role:
+                _apply_role_defaults(user, new_role)
+            user.role = new_role
         user.phone = data.get('phone', user.phone)
         user.salary = float(data.get('salary', user.salary))
-        
-        # Don't change email or password from here to keep it simple, 
-        # unless explicitly needed.
         
         db.session.commit()
         
@@ -85,6 +126,7 @@ def edit_member(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)})
+
 
 @staff.route('/staff/suspend/<int:id>', methods=['POST'])
 @login_required

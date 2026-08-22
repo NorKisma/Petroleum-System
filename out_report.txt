@@ -1,0 +1,4 @@
+Pump P1: opening=782821.11, closing=782837.11, price=1.6, amount=25.6
+Pump P2: opening=None, closing=None, price=1.45, amount=0
+Pump P3: opening=None, closing=None, price=1.45, amount=0
+Pump P4: opening=None, closing=None, price=1.35, amount=0

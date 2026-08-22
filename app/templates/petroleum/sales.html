@@ -124,8 +124,13 @@
                     </div>
                     <input type="hidden" id="salePayment" value="Cash">
                 </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">4. Taariikhda (Xilliga Iibka)</label>
+                    <input type="datetime-local" id="saleDate" class="form-control rounded-3">
+                    <small class="text-muted" style="font-size: 0.75rem;">Ka tag haddii ay tahay hadda. Geli haddii aad rabto inaad dib u diiwaangeliso iib hore.</small>
+                </div>
                 <div class="mb-3 d-none" id="fleetSection">
-                    <label class="form-label fw-bold small">4. Macmiilka & Taarikada</label>
+                    <label class="form-label fw-bold small">5. Macmiilka & Taarikada</label>
                     <div class="row g-2">
                         <div class="col-8">
                             <select id="saleFleet" class="form-select rounded-3">
@@ -214,8 +219,9 @@
             </div>
         </div>
     </div>
-</div>
+{% endblock %}
 
+{% block modals %}
 {% if is_admin %}
 <div class="modal fade" id="editSaleModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -303,7 +309,8 @@
                 unit_price: document.getElementById('salePrice').value,
                 payment_method: document.getElementById('salePayment').value,
                 fleet_profile_id: document.getElementById('salePayment').value === 'Credit' ? document.getElementById('saleFleet').value : null,
-                vehicle_plate: document.getElementById('salePayment').value === 'Credit' ? document.getElementById('salePlate').value : null
+                vehicle_plate: document.getElementById('salePayment').value === 'Credit' ? document.getElementById('salePlate').value : null,
+                sale_date: document.getElementById('saleDate') ? document.getElementById('saleDate').value : null
             })
         }).then(r => r.json()).then(d => {
             btn.disabled = false;

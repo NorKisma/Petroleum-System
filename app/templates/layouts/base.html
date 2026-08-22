@@ -599,12 +599,15 @@
             <!-- Petroleum Sub Navigation Bar (Best Style) -->
             <div class="container-fluid no-print">
                 <nav class="petro-nav mb-4 p-2 d-none d-md-flex align-items-center gap-2">
+                    {% if current_user.is_authenticated and current_user.role.lower() not in ['cashier', 'staff', 'casheir'] %}
                     <a href="{{ url_for('petroleum.dashboard') }}"
                         class="petro-link {{ 'active' if ep == 'petroleum.dashboard' else '' }}"><i
                             class="fas fa-home"></i> Dashboard</a>
+                    {% endif %}
                     <a href="{{ url_for('petroleum.sales') }}"
                         class="petro-link {{ 'active' if ep == 'petroleum.sales' else '' }}"><i
                             class="fas fa-gas-pump"></i> Iibka (Sales)</a>
+                    {% if current_user.is_authenticated and current_user.role.lower() not in ['cashier', 'staff', 'casheir'] %}
                     <a href="{{ url_for('petroleum.deliveries') }}"
                         class="petro-link {{ 'active' if ep == 'petroleum.deliveries' else '' }}"><i
                             class="fas fa-truck-loading"></i> Soo-dejin (Deliveries)</a>
@@ -659,6 +662,7 @@
                                         class="fas fa-magic me-2 text-primary"></i> Dejinta (Setup Wizard)</a></li>
                         </ul>
                     </div>
+                    {% endif %}
                 </nav>
 
                 <div class="d-block d-md-none mb-4 pt-3" style="position: relative; z-index: 1020 !important;">
@@ -684,12 +688,15 @@
                         </button>
                         <ul class="dropdown-menu w-100 shadow border-0 petro-mobile-menu py-2 mt-2"
                             style="z-index: 10000;">
+                            {% if current_user.is_authenticated and current_user.role.lower() not in ['cashier', 'staff', 'casheir'] %}
                             <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.dashboard' %}active{% endif %}"
                                     href="{{ url_for('petroleum.dashboard') }}"><i class="fas fa-home me-2"></i>
                                     dashboard</a></li>
+                            {% endif %}
                             <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.sales' %}active{% endif %}"
                                     href="{{ url_for('petroleum.sales') }}"><i class="fas fa-gas-pump me-2"></i>
                                     Iibka</a></li>
+                            {% if current_user.is_authenticated and current_user.role.lower() not in ['cashier', 'staff', 'casheir'] %}
                             <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.deliveries' %}active{% endif %}"
                                     href="{{ url_for('petroleum.deliveries') }}"><i
                                         class="fas fa-truck-loading me-2"></i> Soo-dejin</a></li>
@@ -724,6 +731,7 @@
                             <li><a class="dropdown-item py-2 px-3 {% if ep == 'petroleum.setup_wizard' %}active{% endif %}"
                                     href="{{ url_for('petroleum.setup_wizard') }}"><i class="fas fa-magic me-2"></i>
                                     Dejinta Bilowga</a></li>
+                            {% endif %}
                         </ul>
                     </div>
                 </div>

@@ -459,6 +459,7 @@ class FuelDelivery(db.Model):
     liters_received = db.Column(db.Float, nullable=False)
     unit_cost = db.Column(db.Float, nullable=False)
     total_cost = db.Column(db.Float, nullable=False)
+    paid_amount = db.Column(db.Float, default=0.0)
     waybill_no = db.Column(db.String(100), nullable=True)
     driver_name = db.Column(db.String(100), nullable=True)
     vehicle_no = db.Column(db.String(50), nullable=True)
@@ -478,6 +479,23 @@ class FuelDelivery(db.Model):
     tank = db.relationship('FuelTank', backref='deliveries')
     user = db.relationship('User', backref='fuel_deliveries')
     branch = db.relationship('Branch', backref='fuel_deliveries')
+
+
+class FuelDeliveryPayment(db.Model):
+    __tablename__ = 'fuel_delivery_payments'
+    id = db.Column(db.Integer, primary_key=True)
+    delivery_id = db.Column(db.Integer, db.ForeignKey('fuel_deliveries.id'), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    payment_method = db.Column(db.String(50), nullable=True)
+    reference_no = db.Column(db.String(100), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    payment_date = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    delivery = db.relationship('FuelDelivery', backref=db.backref('payments', lazy=True, cascade='all, delete-orphan'))
+    user = db.relationship('User', backref='fuel_delivery_payments')
 
 
 class FuelDipReading(db.Model):

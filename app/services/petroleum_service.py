@@ -87,6 +87,19 @@ class PetroleumService:
 
         invoice_no = data.get('invoice_no') or f'FS-{int(datetime.utcnow().timestamp())}'
 
+        tenant_obj = Tenant.query.get(PetroleumService._tenant_id())
+        custom_date = data.get('sale_date')
+        if custom_date:
+            try:
+                if 'T' in custom_date:
+                    sale_date_val = datetime.strptime(custom_date, '%Y-%m-%dT%H:%M')
+                else:
+                    sale_date_val = datetime.strptime(custom_date, '%Y-%m-%d')
+            except ValueError:
+                sale_date_val = tenant_now(tenant_obj).replace(tzinfo=None)
+        else:
+            sale_date_val = tenant_now(tenant_obj).replace(tzinfo=None)
+
         sale = FuelSale(
             invoice_no=invoice_no,
             pump_id=data.get('pump_id'),
@@ -106,10 +119,10 @@ class PetroleumService:
             branch_id=data.get('branch_id') or tank.branch_id,
             notes=data.get('notes'),
             shift_number=data.get('shift_number') or PetroleumService.detect_shift_number(
-                tenant_now(Tenant.query.get(PetroleumService._tenant_id()))
+                tenant_now(tenant_obj)
             ),
             tenant_id=PetroleumService._tenant_id(),
-            sale_date=tenant_now(Tenant.query.get(PetroleumService._tenant_id())).replace(tzinfo=None)
+            sale_date=sale_date_val
         )
         db.session.add(sale)
         db.session.flush()
@@ -241,6 +254,19 @@ class PetroleumService:
 
         delivery_no = data.get('delivery_no') or f'FD-{int(datetime.utcnow().timestamp())}'
 
+        tenant_obj = Tenant.query.get(PetroleumService._tenant_id())
+        custom_date = data.get('delivery_date')
+        if custom_date:
+            try:
+                if 'T' in custom_date:
+                    del_date_val = datetime.strptime(custom_date, '%Y-%m-%dT%H:%M')
+                else:
+                    del_date_val = datetime.strptime(custom_date, '%Y-%m-%d')
+            except ValueError:
+                del_date_val = tenant_now(tenant_obj).replace(tzinfo=None)
+        else:
+            del_date_val = tenant_now(tenant_obj).replace(tzinfo=None)
+
         vendor_id = data.get('vendor_id') or None
         if vendor_id:
             vendor_id = int(vendor_id)
@@ -264,10 +290,25 @@ class PetroleumService:
             notes=data.get('notes'),
             payment_method=data.get('payment_method', 'CREDIT'),
             tenant_id=PetroleumService._tenant_id(),
-            delivery_date=tenant_now(Tenant.query.get(PetroleumService._tenant_id())).replace(tzinfo=None)
+            delivery_date=del_date_val,
+            paid_amount=total_cost if data.get('payment_method') == 'CASH' else 0.0
         )
         db.session.add(delivery)
         db.session.flush()
+
+        if data.get('payment_method') == 'CASH':
+            from app.models import FuelDeliveryPayment
+            payment = FuelDeliveryPayment(
+                delivery_id=delivery.id,
+                amount=total_cost,
+                payment_method='CASH',
+                reference_no='Initial Payment',
+                notes='Full payment on delivery',
+                user_id=PetroleumService._user_id(),
+                tenant_id=PetroleumService._tenant_id(),
+                payment_date=del_date_val
+            )
+            db.session.add(payment)
 
         PetroleumService.update_tank_level(tank, liters)
         PetroleumService.add_ledger_entry(
@@ -935,6 +976,32 @@ class PetroleumService:
         return 'other'
 
     @staticmethod
+    def get_historical_pump_price(pump, target_date, tenant_id):
+        from app.models import FuelSale, FuelPriceHistory
+        # 1. First, check if there's any sale for this pump on or before target_date
+        last_sale = FuelSale.query.filter_by(tenant_id=tenant_id, pump_id=pump.id).filter(
+            db.func.date(FuelSale.sale_date) <= target_date
+        ).order_by(FuelSale.sale_date.desc()).first()
+        if last_sale:
+            return last_sale.unit_price
+            
+        # 2. Check FuelPriceHistory before or on target_date
+        history_before = FuelPriceHistory.query.filter_by(tenant_id=tenant_id, fuel_type_id=pump.fuel_type_id).filter(
+            db.func.date(FuelPriceHistory.created_at) <= target_date
+        ).order_by(FuelPriceHistory.created_at.desc()).first()
+        if history_before:
+            return history_before.new_sell_price
+            
+        # 3. Check FuelPriceHistory after target_date
+        history_after = FuelPriceHistory.query.filter_by(tenant_id=tenant_id, fuel_type_id=pump.fuel_type_id).filter(
+            db.func.date(FuelPriceHistory.created_at) > target_date
+        ).order_by(FuelPriceHistory.created_at.asc()).first()
+        if history_after:
+            return history_after.old_sell_price
+
+        return pump.selling_price if pump.selling_price > 0 else (pump.fuel_type.sell_price if pump.fuel_type else 0)
+
+    @staticmethod
     def _build_shift_pump_rows(pumps, sales, target_date, shift_number, tenant_id, tenant):
         sales_by_pump = {}
         for s in sales:
@@ -950,7 +1017,12 @@ class PetroleumService:
             ).first()
             opening = log.opening_meter if log and log.opening_meter is not None else None
             closing = log.closing_meter if log and log.closing_meter is not None else None
-            unit_price = pump.fuel_type.sell_price if pump.fuel_type else 0
+            
+            pump_sales = sales_by_pump.get(pump.id, [])
+            if pump_sales:
+                unit_price = pump_sales[-1].unit_price
+            else:
+                unit_price = PetroleumService.get_historical_pump_price(pump, target_date, tenant_id)
 
             if opening is None and shift_number == 2:
                 prev = FuelPumpShiftLog.query.filter_by(
@@ -965,11 +1037,8 @@ class PetroleumService:
                 source = 'meter'
                 has_meter = True
             else:
-                pump_sales = sales_by_pump.get(pump.id, [])
                 liters = round(sum(s.liters_sold for s in pump_sales), 2)
                 amount = round(sum(s.total_amount for s in pump_sales), 3)
-                if pump_sales:
-                    unit_price = pump_sales[0].unit_price
                 source = 'sales' if pump_sales else 'empty'
 
             rows.append({
@@ -1132,3 +1201,46 @@ class PetroleumService:
             'sales_count': len(all_sales),
             'full_report': True,
         }
+
+    @staticmethod
+    def record_delivery_payment(delivery_id, data):
+        from app.models import FuelDeliveryPayment
+        delivery = FuelDelivery.query.filter_by(
+            id=delivery_id, tenant_id=PetroleumService._tenant_id()
+        ).first_or_404()
+
+        amount = float(data.get('amount', 0))
+        if amount <= 0:
+            raise ValueError("Lacagta la bixinayo waa iney ka weynaataa eber")
+
+        remaining = delivery.total_cost - (delivery.paid_amount or 0.0)
+        if amount > remaining + 0.01:
+            raise ValueError(
+                f"Lacagtan ({amount:.2f}) way ka badan tahay haraaga ({remaining:.2f})"
+            )
+
+        payment = FuelDeliveryPayment(
+            delivery_id=delivery.id,
+            amount=amount,
+            payment_method=data.get('payment_method', 'CASH'),
+            reference_no=data.get('reference_no'),
+            notes=data.get('notes'),
+            user_id=PetroleumService._user_id(),
+            tenant_id=PetroleumService._tenant_id()
+        )
+
+        if data.get('payment_date'):
+            try:
+                fmt = '%Y-%m-%dT%H:%M' if 'T' in data['payment_date'] else '%Y-%m-%d'
+                payment.payment_date = datetime.strptime(data['payment_date'], fmt)
+            except ValueError:
+                pass
+
+        delivery.paid_amount = (delivery.paid_amount or 0.0) + amount
+        if delivery.paid_amount >= delivery.total_cost - 0.01:
+            delivery.payment_method = 'CASH'
+
+        db.session.add(payment)
+        log_audit('DELIVERY_PAYMENT', 'PETROLEUM',
+                  f'Paid {amount} for {delivery.delivery_no}')
+        return payment

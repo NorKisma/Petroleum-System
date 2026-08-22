@@ -230,9 +230,9 @@
         {% set log = logs[pump.id] %}
         {% set liters = ((log.closing - log.opening) if (log.closing is not none and log.opening is not none and
         log.closing >= log.opening) else 0) %}
-        {% set pump_price = pump.selling_price if pump.selling_price > 0 else pump.fuel_type.sell_price %}
+        {% set pump_price = log.price %}
         {% set pump_revenue = liters * pump_price %}
-        {% set pump_cost = liters * pump.fuel_type.buy_price %}
+        {% set pump_cost = liters * log.cost %}
         {% set pump_profit = pump_revenue - pump_cost %}
         <div class="pump-row-card" id="pumpCard_{{ pump.id }}">
             <div class="row align-items-center g-2">
@@ -318,9 +318,9 @@
                     {% set log = logs[pump.id] %}
                     {% set liters = ((log.closing - log.opening) if (log.closing is not none and log.opening is not none
                     and log.closing >= log.opening) else 0) %}
-                    {% set price = pump.selling_price if pump.selling_price > 0 else pump.fuel_type.sell_price %}
+                    {% set price = log.price %}
                     {% set rev = liters * price %}
-                    {% set prof = rev - (liters * pump.fuel_type.buy_price) %}
+                    {% set prof = rev - (liters * log.cost) %}
                     {% set ns.total_l = ns.total_l + liters %}
                     {% set ns.total_rev = ns.total_rev + rev %}
                     {% set ns.total_prof = ns.total_prof + prof %}
@@ -361,8 +361,8 @@
     const PRICES = {
     {% for pump in pumps %}
     {{ pump.id }}: {
-        sell: {{ pump.selling_price if pump.selling_price > 0 else pump.fuel_type.sell_price }},
-        buy: {{ pump.fuel_type.buy_price }}
+        sell: {{ logs[pump.id].price }},
+        buy: {{ logs[pump.id].cost }}
     },
     {% endfor %}
     };

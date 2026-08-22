@@ -1,0 +1,20 @@
+[2026-08-22 10:00:26 +0200] [6] [INFO] Starting gunicorn 26.0.0
+[2026-08-22 10:00:26 +0200] [6] [INFO] Listening at: unix:/opt/Petroleum-System/app.sock (6)
+[2026-08-22 10:00:26 +0200] [6] [INFO] Using worker: sync
+[2026-08-22 10:00:26 +0200] [7] [INFO] Booting worker with pid: 7
+[2026-08-22 10:00:26 +0200] [8] [INFO] Booting worker with pid: 8
+[2026-08-22 10:00:26 +0200] [6] [ERROR] Control server error: [Errno 30] Read-only file system: '/root/.gunicorn'
+[2026-08-22 10:05:30 +0200] [7] [INFO] Starting gunicorn 26.0.0
+[2026-08-22 10:05:30 +0200] [7] [INFO] Listening at: unix:/opt/Petroleum-System/app.sock (7)
+[2026-08-22 10:05:30 +0200] [7] [INFO] Using worker: sync
+[2026-08-22 10:05:30 +0200] [8] [INFO] Booting worker with pid: 8
+[2026-08-22 10:05:30 +0200] [9] [INFO] Booting worker with pid: 9
+[2026-08-22 10:05:30 +0200] [10] [INFO] Booting worker with pid: 10
+[2026-08-22 10:05:30 +0200] [7] [ERROR] Control server error: [Errno 30] Read-only file system: '/root/.gunicorn'
+[2026-08-22 10:08:21 +0200] [6] [INFO] Starting gunicorn 26.0.0
+[2026-08-22 10:08:21 +0200] [6] [INFO] Listening at: unix:/opt/Petroleum-System/app.sock (6)
+[2026-08-22 10:08:21 +0200] [6] [INFO] Using worker: sync
+[2026-08-22 10:08:21 +0200] [7] [INFO] Booting worker with pid: 7
+[2026-08-22 10:08:21 +0200] [8] [INFO] Booting worker with pid: 8
+[2026-08-22 10:08:22 +0200] [9] [INFO] Booting worker with pid: 9
+[2026-08-22 10:08:22 +0200] [6] [ERROR] Control server error: [Errno 30] Read-only file system: '/root/.gunicorn'

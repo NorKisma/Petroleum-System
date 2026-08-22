@@ -406,12 +406,29 @@ def shift_meters():
     total_amount = 0.0
     total_profit = 0.0
     meter_total = 0.0
+    
+    start_utc, end_utc = PetroleumService.get_shift_bounds(target_date, shift, tenant)
+    
     for pump in pumps:
         log = logs.get(pump.id, {'opening': None, 'closing': None})
+        
+        # Get historical price from sales
+        shift_sales = FuelSale.query.filter_by(tenant_id=current_user.tenant_id, pump_id=pump.id).filter(
+            FuelSale.sale_date >= start_utc,
+            FuelSale.sale_date < end_utc
+        ).all()
+        
+        if shift_sales:
+            price = shift_sales[-1].unit_price
+        else:
+            price = PetroleumService.get_historical_pump_price(pump, target_date, current_user.tenant_id)
+            
+        cost = pump.fuel_type.buy_price if pump.fuel_type else 0
+        logs[pump.id]['price'] = price
+        logs[pump.id]['cost'] = cost
+        
         if log['opening'] is not None and log['closing'] is not None and log['closing'] >= log['opening']:
             liters = log['closing'] - log['opening']
-            price = pump.selling_price if pump.selling_price > 0 else pump.fuel_type.sell_price
-            cost = pump.fuel_type.buy_price
             total_liters += liters
             total_amount += liters * price
             total_profit += liters * (price - cost)
@@ -617,9 +634,13 @@ def deliveries():
     tanks = FuelTank.query.filter_by(tenant_id=current_user.tenant_id, is_active=True).all()
     fuel_types = FuelType.query.filter_by(tenant_id=current_user.tenant_id, is_active=True).all()
     vendors = Vendor.query.filter_by(tenant_id=current_user.tenant_id).all()
+    tenant = db.session.get(Tenant, current_user.tenant_id)
+    cur = tenant.currency if tenant else '$'
+    is_admin = current_user.role in ('admin', 'manager', 'developer')
     return render_template('petroleum/deliveries.html',
                            deliveries=all_deliveries, tanks=tanks,
-                           fuel_types=fuel_types, vendors=vendors)
+                           fuel_types=fuel_types, vendors=vendors,
+                           is_admin=is_admin, cur=cur)
 
 
 @petroleum.route('/petroleum/deliveries/add', methods=['POST'])
@@ -651,6 +672,7 @@ def update_delivery(id):
         return jsonify({'success': False, 'message': str(e)})
 
 
+
 @petroleum.route('/petroleum/deliveries/<int:id>/delete', methods=['DELETE'])
 @login_required
 @petroleum_required
@@ -663,6 +685,58 @@ def delete_delivery(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)})
+
+
+@petroleum.route('/petroleum/deliveries/<int:id>/pay', methods=['POST'])
+@login_required
+@petroleum_required
+@roles_required('admin', 'manager', 'developer')
+def pay_delivery(id):
+    data = request.get_json() or request.form
+    try:
+        PetroleumService.record_delivery_payment(id, data)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Lacagta waa la qabtay!'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@petroleum.route('/petroleum/deliveries/<int:id>/payments', methods=['GET'])
+@login_required
+@petroleum_required
+def get_delivery_payments(id):
+    from app.models import FuelDeliveryPayment
+    delivery = FuelDelivery.query.filter_by(
+        id=id, tenant_id=current_user.tenant_id
+    ).first_or_404()
+    payments = FuelDeliveryPayment.query.filter_by(
+        delivery_id=id, tenant_id=current_user.tenant_id
+    ).order_by(FuelDeliveryPayment.payment_date.asc()).all()
+
+    cur = db.session.get(Tenant, current_user.tenant_id)
+    currency = cur.currency if cur else '$'
+
+    payments_list = [{
+        'id': p.id,
+        'amount': p.amount,
+        'payment_method': p.payment_method,
+        'reference_no': p.reference_no or '—',
+        'notes': p.notes or '',
+        'payment_date': p.payment_date.strftime('%d/%m/%Y %H:%M'),
+        'user': p.user.username if p.user else '—',
+    } for p in payments]
+
+    remaining = delivery.total_cost - (delivery.paid_amount or 0.0)
+    return jsonify({
+        'success': True,
+        'delivery_no': delivery.delivery_no,
+        'total_cost': delivery.total_cost,
+        'paid_amount': delivery.paid_amount or 0.0,
+        'remaining': max(remaining, 0.0),
+        'currency': currency,
+        'payments': payments_list,
+    })
 
 
 # ─── Morning Automation ───────────────────────────────────────────────────────

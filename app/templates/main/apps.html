@@ -8,7 +8,7 @@
     body[data-theme='light'] {
         background-color: #f1f5f9;
     }
-    
+
     .apps-container {
         max-width: 1000px;
         margin: 40px auto;
@@ -71,9 +71,10 @@
     [data-theme='dark'] .app-label {
         color: #e2e8f0;
     }
-    
+
     /* Hide specific nav elements since this is the main hub */
-    .petro-nav, .petro-mobile-toggle {
+    .petro-nav,
+    .petro-mobile-toggle {
         display: none !important;
     }
 </style>
@@ -82,7 +83,23 @@
 {% block content %}
 <div class="apps-container">
     <div class="app-grid">
-        
+
+        {% set role = current_user.role.lower() if current_user.is_authenticated else '' %}
+        {% set is_restricted = role in ['cashier', 'staff'] %}
+        {% set is_developer = role == 'developer' or current_user.is_super_admin %}
+
+        {# ── PETROLEUM — always visible ── #}
+        <a href="{{ url_for('petroleum.sales') if is_restricted else url_for('petroleum.dashboard') }}"
+            class="app-icon-wrapper">
+            <div class="app-icon">
+                <i class="fas fa-gas-pump" style="color: #ea580c;"></i>
+            </div>
+            <div class="app-label">Petroleum</div>
+        </a>
+
+        {# ── ALL OTHER APPS — hidden for cashier/staff ── #}
+        {% if not is_restricted %}
+
         <!-- Dashboards -->
         <a href="{{ url_for('accounting.dashboard') }}" class="app-icon-wrapper">
             <div class="app-icon">
@@ -91,15 +108,7 @@
             <div class="app-label">Dashboards</div>
         </a>
 
-        <!-- Petroleum Core -->
-        <a href="{{ url_for('petroleum.dashboard') }}" class="app-icon-wrapper">
-            <div class="app-icon">
-                <i class="fas fa-gas-pump" style="color: #ea580c;"></i>
-            </div>
-            <div class="app-label">Petroleum</div>
-        </a>
-
-        <!-- Contacts (Customers) -->
+        <!-- Contacts -->
         <a href="{{ url_for('customers.list_customers') }}" class="app-icon-wrapper">
             <div class="app-icon">
                 <i class="fas fa-address-book" style="color: #0d9488;"></i>
@@ -131,7 +140,7 @@
             <div class="app-label">Expenses</div>
         </a>
 
-        <!-- Purchases (Vendors) -->
+        <!-- Purchases -->
         <a href="{{ url_for('vendor.list_vendors') }}" class="app-icon-wrapper">
             <div class="app-icon">
                 <i class="fas fa-shopping-cart" style="color: #059669;"></i>
@@ -139,29 +148,33 @@
             <div class="app-label">Purchases</div>
         </a>
 
-        <!-- Employees & Payroll -->
+        <!-- Employees -->
         <a href="{{ url_for('staff.list_staff') }}" class="app-icon-wrapper">
             <div class="app-icon">
                 <i class="fas fa-users" style="color: #475569;"></i>
             </div>
             <div class="app-label">Employees</div>
         </a>
-        
-        <!-- Payroll (Staff Payroll) -->
+
+        <!-- Payroll -->
         <a href="{{ url_for('staff.list_payroll') }}" class="app-icon-wrapper">
             <div class="app-icon">
                 <i class="fas fa-hand-holding-usd" style="color: #8b5cf6;"></i>
             </div>
             <div class="app-label">Payroll</div>
         </a>
-        
-        <!-- Settings -->
+
+        {# ── SETTINGS — developer only ── #}
+        {% if is_developer %}
         <a href="{{ url_for('settings.index') }}" class="app-icon-wrapper">
             <div class="app-icon">
                 <i class="fas fa-cog" style="color: #1e293b;"></i>
             </div>
             <div class="app-label">Settings</div>
         </a>
+        {% endif %}
+
+        {% endif %}{# end not is_restricted #}
 
     </div>
 </div>

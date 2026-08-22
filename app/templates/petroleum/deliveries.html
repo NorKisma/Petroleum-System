@@ -82,6 +82,11 @@
                     <input type="number" id="delCost" class="form-control rounded-3" step="0.01" min="0"
                         oninput="calcDelTotal()">
                 </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">5. Taariikhda (Xilliga Soo-dejinta)</label>
+                    <input type="datetime-local" id="delDate" class="form-control rounded-3">
+                    <small class="text-muted" style="font-size: 0.75rem;">Ka tag haddii ay tahay hadda. Geli haddii aad rabto inaad dib u diiwaangeliso soo-dejin hore.</small>
+                </div>
                 <div class="mb-3 p-3 bg-success bg-opacity-10 rounded-4 text-center">
                     <small class="text-muted">Wadarta Qiimaha</small>
                     <h2 class="fw-bold text-success mb-0"><span id="delTotalCur">{{ cur }}</span><span
@@ -111,31 +116,47 @@
                             <th>Litir</th>
                             <th>Qiimo</th>
                             <th>Taariikh</th>
-                            {% if is_admin %}<th class="text-end pe-4">Fal</th>{% endif %}
+                            <th class="text-end pe-4">Fal</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for d in deliveries %}
+                        {% set paid = d.paid_amount or 0.0 %}
+                        {% set remaining = d.total_cost - paid %}
                         <tr>
                             <td class="ps-4 fw-bold small">{{ d.delivery_no }}</td>
                             <td>
-                                {% if d.payment_method == 'CASH' %}
-                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2"
-                                    style="font-size:0.65rem;">LA BIXIYAY</span>
+                                {% if paid >= d.total_cost - 0.01 %}
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2" style="font-size:0.65rem;">LA BIXIYAY</span>
+                                {% elif paid > 0 %}
+                                <span class="badge bg-info bg-opacity-10 text-info rounded-pill px-2" style="font-size:0.65rem;" title="Haraa: {{ cur }}{{ '{:,.2f}'.format(remaining) }}">QAYB BIXIYAY</span>
                                 {% else %}
-                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2"
-                                    style="font-size:0.65rem;">LAMA BIXIN</span>
+                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2" style="font-size:0.65rem;">LAMA BIXIN</span>
                                 {% endif %}
                             </td>
                             <td class="small">{{ d.purchase_name or (d.vendor.name if d.vendor else '—') }}</td>
                             <td>{{ d.fuel_type.name }}</td>
                             <td>{{ "{:,.1f}".format(d.liters_received) }} L</td>
-                            <td class="fw-bold">{{ cur }}{{ "{:,.2f}".format(d.total_cost) }}</td>
+                            <td class="fw-bold">{{ cur }}{{ "{:,.2f}".format(d.total_cost) }}
+                                {% if paid > 0 and paid < d.total_cost - 0.01 %}
+                                <br><small class="text-danger fw-normal">Haraa: {{ cur }}{{ '{:,.2f}'.format(remaining) }}</small>
+                                {% endif %}
+                            </td>
                             <td class="small text-muted">{{ d.delivery_date.strftime('%d/%m/%Y %H:%M') }}</td>
-                            {% if is_admin %}
                             <td class="text-end pe-4 text-nowrap">
+                                {% if remaining > 0.01 %}
+                                <button class="btn btn-sm btn-warning rounded-pill px-2 py-0 me-1 pay-del-btn" title="Bixi Lacag"
+                                    data-id="{{ d.id }}" data-no="{{ d.delivery_no }}"
+                                    data-total="{{ d.total_cost }}" data-paid="{{ paid }}"
+                                    style="font-size:0.7rem;">
+                                    <i class="fas fa-money-bill-wave me-1"></i>Bixi
+                                </button>
+                                {% else %}
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2" style="font-size:0.65rem;">Dhammaystay</span>
+                                {% endif %}
+                                {% if is_admin %}
                                 {% if not d.is_locked %}
-                                <button class="btn btn-link text-primary p-0 me-2 edit-del-btn" title="Beddel"
+                                <button class="btn btn-link text-primary p-0 me-1 edit-del-btn" title="Beddel"
                                     data-id="{{ d.id }}" data-no="{{ d.delivery_no }}"
                                     data-liters="{{ d.liters_received }}" data-cost="{{ d.unit_cost }}"
                                     data-purchase="{{ d.purchase_name or (d.vendor.name if d.vendor else '') }}">
@@ -146,13 +167,12 @@
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                                 {% else %}<i class="fas fa-lock text-muted small"></i>{% endif %}
+                                {% endif %}
                             </td>
-                            {% endif %}
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="{{ 7 if is_admin else 6 }}" class="text-center text-muted py-4">Soo-dejin ma
-                                jirto</td>
+                            <td colspan="8" class="text-center text-muted py-4">Soo-dejin ma jirto</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -161,7 +181,9 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block modals %}
 {% if is_admin %}
 <div class="modal fade" id="editDelModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -179,13 +201,11 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold small">Litir</label>
-                    <input type="number" id="editDelLiters" class="form-control rounded-3" step="0.1"
-                        oninput="calcEditDelTotal()">
+                    <input type="number" id="editDelLiters" class="form-control rounded-3" step="0.1" oninput="calcEditDelTotal()">
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold small">Qiimo/Litr</label>
-                    <input type="number" id="editDelCost" class="form-control rounded-3" step="0.01"
-                        oninput="calcEditDelTotal()">
+                    <input type="number" id="editDelCost" class="form-control rounded-3" step="0.01" oninput="calcEditDelTotal()">
                 </div>
                 <div class="p-3 bg-light rounded-3 text-center">
                     <small class="text-muted">Wadarta</small>
@@ -194,13 +214,87 @@
             </div>
             <div class="modal-footer border-0 pt-0">
                 <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Jooji</button>
-                <button type="button" class="btn btn-success rounded-pill fw-bold"
-                    onclick="saveEditDel()">Kaydi</button>
+                <button type="button" class="btn btn-success rounded-pill fw-bold" onclick="saveEditDel()">Kaydi</button>
             </div>
         </div>
     </div>
 </div>
 {% endif %}
+
+<!-- Payment Modal — dhammaan users -->
+<div class="modal fade" id="payDelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0" style="background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:1rem 1rem 0 0;">
+                <div>
+                    <h6 class="modal-title fw-bold text-white mb-0"><i class="fas fa-money-bill-wave me-2"></i>Bixi Lacagta Soo-dejinta</h6>
+                    <small class="text-white-50" id="payDelNo"></small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" style="background:#f8fafc;">
+                <!-- Summary Bar -->
+                <div class="row g-3 mb-4">
+                    <div class="col-4">
+                        <div class="p-3 rounded-3 text-center" style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2);">
+                            <small class="text-muted d-block" style="color:#475569 !important;">Wadarta</small>
+                            <strong style="color:#1e293b;" id="payTotal">—</strong>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 rounded-3 text-center" style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2);">
+                            <small class="text-muted d-block" style="color:#475569 !important;">La Bixiyay</small>
+                            <strong class="text-success" id="payPaid">—</strong>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 rounded-3 text-center" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2);">
+                            <small class="text-muted d-block" style="color:#475569 !important;">Haraa</small>
+                            <strong class="text-danger" id="payRemaining">—</strong>
+                        </div>
+                    </div>
+                </div>
+                <!-- Payment Form -->
+                <div class="row g-3 mb-4">
+                    <input type="hidden" id="payDelId">
+                    <div class="col-sm-6">
+                        <label class="form-label fw-bold small" style="color:#334155;">Lacagta Aad Bixinayso</label>
+                        <div class="input-group">
+                            <span class="input-group-text" style="background:#e2e8f0; color:#1e293b; border-color:#cbd5e1; font-weight:600;">{{ cur }}</span>
+                            <input type="number" id="payAmount" class="form-control rounded-end" step="0.01" min="0.01" placeholder="0.00"
+                                style="background:#ffffff !important; border-color:#cbd5e1 !important; color:#1e293b !important; font-size:1.1rem; font-weight:600;">
+                        </div>
+                        <small class="text-muted" id="payMaxHint" style="color:#64748b !important;"></small>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-bold small" style="color:#334155;">Hab-Bixinta</label>
+                        <select id="payMethod" class="form-select" style="background:#ffffff !important; border-color:#cbd5e1 !important; color:#1e293b !important;">
+                            <option value="CASH">💵 Caddaan (Cash)</option>
+                            <option value="EVC Plus">📱 EVC Plus</option>
+                            <option value="eDahab">💳 E-Dahab</option>
+                            <option value="Bank Transfer">🏦 Bank Transfer</option>
+                            <option value="Cheque">📄 Cheque</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-bold small" style="color:#334155;">Lambarka Xilka (Reference)</label>
+                        <input type="text" id="payRef" class="form-control" placeholder="e.g. TXN-001"
+                            style="background:#ffffff !important; border-color:#cbd5e1 !important; color:#1e293b !important;">
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label fw-bold small" style="color:#334155;">Faallo (Ikhtiyaari)</label>
+                        <input type="text" id="payNotes" class="form-control" placeholder="Wax faallo ah..."
+                            style="background:#ffffff !important; border-color:#cbd5e1 !important; color:#1e293b !important;">
+                    </div>
+                </div>
+                <button class="btn btn-success w-100 rounded-pill fw-bold py-2 mb-4" onclick="submitDeliveryPayment()">
+                    <i class="fas fa-check-circle me-2"></i>Kaydi Lacag-bixinta
+                </button>
+                <!-- Payment History Removed -->
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -251,7 +345,8 @@
                 purchase_name: purchaseName,
                 waybill_no: document.getElementById('delWaybill').value,
                 vehicle_no: document.getElementById('delPlate').value,
-                payment_method: document.getElementById('delPaymentMethod').value
+                payment_method: document.getElementById('delPaymentMethod').value,
+                delivery_date: document.getElementById('delDate') ? document.getElementById('delDate').value : null
             })
         }).then(r => r.json()).then(d => {
             btn.disabled = false;
@@ -310,6 +405,55 @@
                     .then(x => x.json()).then(d => { if (d.success) location.reload(); else Swal.fire('Cillad', d.message, 'error'); });
             });
         });
+
+        // Payment modal trigger
+        $(document).on('click', '.pay-del-btn', function () {
+            const id = $(this).data('id');
+            document.getElementById('payDelId').value = id;
+            document.getElementById('payDelNo').textContent = $(this).data('no');
+            document.getElementById('payAmount').value = '';
+            document.getElementById('payRef').value = '';
+            document.getElementById('payNotes').value = '';
+            new bootstrap.Modal(document.getElementById('payDelModal')).show();
+            loadDeliveryPayments(id);
+            setTimeout(function() { document.getElementById('payAmount').focus(); }, 500);
+        });
     });
+
+    function loadDeliveryPayments(id) {
+        fetch('/petroleum/deliveries/' + id + '/payments')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success) return;
+                var cur = data.currency;
+                var fmt = function(n) { return parseFloat(n).toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}); };
+                document.getElementById('payTotal').textContent = cur + fmt(data.total_cost);
+                document.getElementById('payPaid').textContent = cur + fmt(data.paid_amount);
+                document.getElementById('payRemaining').textContent = cur + fmt(data.remaining);
+                document.getElementById('payAmount').max = data.remaining;
+                document.getElementById('payMaxHint').textContent = 'Ugu badan: ' + cur + parseFloat(data.remaining).toFixed(2);
+            });
+    }
+
+    function submitDeliveryPayment() {
+        var id = document.getElementById('payDelId').value;
+        var amount = parseFloat(document.getElementById('payAmount').value);
+        if (!amount || amount <= 0) { Swal.fire('Fiiro', 'Geli lacagta aad bixinayso!', 'warning'); return; }
+        fetch('/petroleum/deliveries/' + id + '/pay', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount: amount,
+                payment_method: document.getElementById('payMethod').value,
+                reference_no: document.getElementById('payRef').value,
+                notes: document.getElementById('payNotes').value
+            })
+        }).then(function(r) { return r.json(); }).then(function(d) {
+            if (d.success) {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: d.message, showConfirmButton: false, timer: 1800 })
+                    .then(function() { location.reload(); });
+            } else { Swal.fire('Cillad', d.message, 'error'); }
+        });
+    }
 </script>
 {% endblock %}

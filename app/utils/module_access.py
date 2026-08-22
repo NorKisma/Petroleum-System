@@ -4,6 +4,9 @@ from functools import wraps
 from flask import abort, flash, redirect, url_for
 from flask_login import current_user
 
+# Roles that are restricted to the Petroleum module only
+RESTRICTED_ROLES = {'cashier', 'staff', 'casheir'}
+
 # Short key → user column on User model (staff permission toggles)
 USER_MODULE_FIELDS = {
     'pos': 'module_pos',
@@ -129,6 +132,10 @@ def module_required(module_key, redirect_endpoint='main.dashboard'):
         def wrapped(*args, **kwargs):
             if not current_user.is_authenticated:
                 abort(403)
+            # Cashier / Staff are restricted to petroleum — always allow them through
+            role = getattr(current_user, 'role', '').lower()
+            if module_key == 'petroleum' and role in RESTRICTED_ROLES:
+                return f(*args, **kwargs)
             from app.models import Tenant
             from app import db
             tenant = db.session.get(Tenant, current_user.tenant_id)
